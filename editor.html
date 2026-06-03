@@ -618,7 +618,7 @@
   /* ── State ── */
   let uploadedImages = [], currentToken = null, currentEmail = null;
   let currentName = '', currentPicture = '', trialStart = null, currentMenu = null;
-  let currentLogo = null;
+  let currentLogo = null, currentLogoColors = null;
   const TRIAL_DAYS = 7;
 
   /* ── Init ── */
@@ -994,7 +994,8 @@
       } else if (data.ok && data.menu) {
         currentMenu = data.menu;
         if (currentLogo) currentMenu.logo = currentLogo;
-        renderMenu(data.menu);
+        if (currentLogoColors) currentMenu.palette = { ...currentMenu.palette, ...currentLogoColors };
+        renderMenu(currentMenu);
       } else {
         const detail = [data.error, data.detail, data.raw, data.http ? `HTTP ${data.http}` : ''].filter(Boolean).join(' · ');
         results.innerHTML = `<div class="card" style="padding:32px;text-align:center;"><p style="font-size:22px;margin-bottom:12px;">⚠️</p><p style="font-size:14px;font-weight:600;color:var(--navy);">Błąd generowania</p><p style="font-size:12px;color:rgba(27,42,74,.5);margin-top:6px;word-break:break-all;">${detail || 'Nieoczekiwany błąd. Spróbuj ponownie.'}</p></div>`;
@@ -1245,14 +1246,67 @@
   }
 
   /* ── Logo upload ── */
+  function _cpx(d,w,x,y){const i=(y*w+x)*4;return[d[i],d[i+1],d[i+2]];}
+  function _cavg(cs){const n=cs.length;return[Math.round(cs.reduce((s,c)=>s+c[0],0)/n),Math.round(cs.reduce((s,c)=>s+c[1],0)/n),Math.round(cs.reduce((s,c)=>s+c[2],0)/n)];}
+  function _cdiff([r1,g1,b1],[r2,g2,b2]){return Math.sqrt((r1-r2)**2+(g1-g2)**2+(b1-b2)**2);}
+  function _clum([r,g,b]){return(0.299*r+0.587*g+0.114*b)/255;}
+  function _csat([r,g,b]){const mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/510;return mx===mn?0:(mx-mn)/(l>.5?510-mx-mn:mx+mn);}
+  function _chex([r,g,b]){return'#'+[r,g,b].map(v=>Math.max(0,Math.min(255,v)).toString(16).padStart(2,'0')).join('');}
+
+  function extractLogoColors(dataUrl) {
+    return new Promise(resolve => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const S = 100;
+          const cv = document.createElement('canvas');
+          cv.width = cv.height = S;
+          const ctx = cv.getContext('2d');
+          ctx.drawImage(img, 0, 0, S, S);
+          const d = ctx.getImageData(0, 0, S, S).data;
+
+          // Background: average 4 corners (8×8 each)
+          const corners = [];
+          for (let y=0;y<8;y++) for (let x=0;x<8;x++) {
+            corners.push(_cpx(d,S,x,y),_cpx(d,S,S-1-x,y),_cpx(d,S,x,S-1-y),_cpx(d,S,S-1-x,S-1-y));
+          }
+          const bg = _cavg(corners);
+
+          // Accent: most saturated non-bg pixel
+          let accent = null, bestSat = 0;
+          for (let y=4;y<S-4;y+=3) for (let x=4;x<S-4;x+=3) {
+            const px = _cpx(d,S,x,y);
+            if (_cdiff(px,bg) < 25) continue;
+            const sat = _csat(px);
+            if (sat > bestSat) { bestSat = sat; accent = px; }
+          }
+          if (!accent || bestSat < 0.08) accent = bg;
+
+          const mode = _clum(bg) > 0.45 ? 'light' : 'dark';
+          const text = mode === 'dark' ? [235,225,210] : [25,18,10];
+          const price = [Math.min(255,accent[0]+25), Math.max(0,accent[1]-10), Math.max(0,accent[2]-25)];
+
+          resolve({ bg: _chex(bg), accent: _chex(accent), price: _chex(price), text: _chex(text), mode });
+        } catch { resolve(null); }
+      };
+      img.onerror = () => resolve(null);
+      img.src = dataUrl;
+    });
+  }
+
   async function handleLogoFile(file) {
     if (!file || !file.type.startsWith('image/')) { showToast('Wybierz plik graficzny.', 'warn'); return; }
     if (file.size > 15 * 1024 * 1024) { showToast('Plik za duży (max 15 MB).', 'warn'); return; }
     const dataUrl = await compressImage(file, 400, 400, 0.88);
     if (!dataUrl) { showToast('Błąd kompresji pliku.', 'warn'); return; }
     currentLogo = dataUrl;
+    currentLogoColors = await extractLogoColors(dataUrl);
     renderLogoPreview(file.name);
-    if (currentMenu) { currentMenu.logo = currentLogo; updateMenuPreview(); }
+    if (currentMenu) {
+      currentMenu.logo = currentLogo;
+      if (currentLogoColors) currentMenu.palette = { ...currentMenu.palette, ...currentLogoColors };
+      updateMenuPreview();
+    }
     showToast('Logo dodane!', 'ok');
   }
 
@@ -1276,6 +1330,7 @@
 
   function removeLogo() {
     currentLogo = null;
+    currentLogoColors = null;
     renderLogoPreview();
     if (currentMenu) { delete currentMenu.logo; updateMenuPreview(); }
     showToast('Logo usunięte.', 'ok');

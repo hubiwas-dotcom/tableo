@@ -197,9 +197,9 @@ module.exports = async function handler(req, res) {
 
   const requestBody = JSON.stringify({
     model: 'claude-opus-4-8',
-    max_tokens: 16000,
+    max_tokens: 32000,
     thinking: { type: 'adaptive' },
-    output_config: { effort: 'high' },
+    output_config: { effort: 'medium' },
     system: SYSTEM_PROMPT,
     messages: [
       { role: 'user', content }

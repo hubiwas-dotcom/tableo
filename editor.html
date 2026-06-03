@@ -1160,6 +1160,7 @@
 
     results.scrollIntoView({ behavior:'smooth', block:'start' });
     renderDishPhotoEditor();
+    renderChatSection();
   }
 
   /* ── Export ── */
@@ -1435,6 +1436,109 @@
     const all = (currentMenu.categories||[]).flatMap(c => c.items||[]);
     el.textContent = `${all.filter(i=>i.image).length} / ${all.length} z zdjęciem`;
   }
+  /* ── Menu chat editor ── */
+  function renderChatSection() {
+    const existing = document.getElementById('menuChatSection');
+    if (existing) existing.remove();
+    if (!currentMenu) return;
+    const section = document.createElement('div');
+    section.id = 'menuChatSection';
+    section.style.cssText = 'margin-top:20px;';
+    section.innerHTML = `
+      <div class="card fade-up" style="padding:0;overflow:hidden;">
+        <div style="padding:18px 24px 14px;border-bottom:1px solid rgba(27,42,74,.07);">
+          <div style="font-size:13px;font-weight:700;color:var(--navy);">Edytuj menu przez czat</div>
+          <div style="font-size:11.5px;color:rgba(27,42,74,.4);margin-top:3px;">np. "dodaj język angielski", "usuń kategorię Napoje", "dodaj danie Zupa dnia za 18 zł"</div>
+        </div>
+        <div id="chatMessages" style="padding:14px 16px;min-height:52px;max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;"></div>
+        <div style="padding:10px 14px 14px;border-top:1px solid rgba(27,42,74,.07);display:flex;gap:8px;align-items:center;">
+          <input id="chatInput" type="text" class="field"
+            style="flex:1;margin:0;font-size:13px;padding:10px 14px;"
+            placeholder='Napisz co zmienić w menu…'
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMessage();}">
+          <button onclick="sendChatMessage()" id="chatSendBtn"
+            style="background:var(--navy);color:white;border:none;border-radius:12px;padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;white-space:nowrap;flex-shrink:0;transition:opacity 150ms;">
+            Wyślij
+          </button>
+        </div>
+      </div>`;
+    document.getElementById('results').appendChild(section);
+  }
+
+  function _chatMsg(role, text) {
+    const container = document.getElementById('chatMessages');
+    if (!container) return;
+    const isUser = role === 'user';
+    const div = document.createElement('div');
+    div.style.cssText = `display:flex;justify-content:${isUser ? 'flex-end' : 'flex-start'};`;
+    div.innerHTML = `<div style="max-width:82%;padding:9px 14px;border-radius:${isUser ? '14px 14px 4px 14px' : '14px 14px 14px 4px'};background:${isUser ? 'var(--navy)' : 'rgba(27,42,74,.06)'};color:${isUser ? 'white' : 'var(--navy)'};font-size:13px;line-height:1.5;word-break:break-word;">${text}</div>`;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+  }
+
+  async function sendChatMessage() {
+    const input = document.getElementById('chatInput');
+    const btn   = document.getElementById('chatSendBtn');
+    if (!input || !currentMenu) return;
+    const msg = input.value.trim();
+    if (!msg) return;
+
+    input.value = '';
+    _chatMsg('user', msg);
+    btn.disabled = true;
+    btn.style.opacity = '.5';
+
+    // Typing indicator
+    const typingId = 'chat-typing-' + Date.now();
+    const typing = document.createElement('div');
+    typing.id = typingId;
+    typing.style.cssText = 'display:flex;justify-content:flex-start;';
+    typing.innerHTML = `<div style="padding:9px 16px;border-radius:14px 14px 14px 4px;background:rgba(27,42,74,.06);color:rgba(27,42,74,.4);font-size:20px;letter-spacing:4px;">···</div>`;
+    document.getElementById('chatMessages').appendChild(typing);
+    document.getElementById('chatMessages').scrollTop = 99999;
+
+    try {
+      const res  = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentToken}` },
+        body: JSON.stringify({ menu: currentMenu, message: msg })
+      });
+      const data = await res.json();
+      typing.remove();
+
+      if (data.ok && data.menu) {
+        // Preserve logo + logo-extracted palette
+        const prevLogo    = currentMenu.logo;
+        const prevPalette = currentLogoColors
+          ? { ...data.menu.palette, ...currentLogoColors }
+          : data.menu.palette;
+        // Preserve per-item images
+        (currentMenu.categories || []).forEach((cat, ci) => {
+          (cat.items || []).forEach((item, ii) => {
+            if (item.image && data.menu.categories?.[ci]?.items?.[ii]) {
+              data.menu.categories[ci].items[ii].image = item.image;
+            }
+          });
+        });
+        currentMenu = data.menu;
+        if (prevLogo) currentMenu.logo = prevLogo;
+        currentMenu.palette = prevPalette;
+        updateMenuPreview();
+        renderDishPhotoEditor();
+        _chatMsg('ai', data.reply || 'Gotowe!');
+      } else {
+        _chatMsg('ai', data.error || 'Wystąpił błąd. Spróbuj ponownie.');
+      }
+    } catch {
+      typing.remove();
+      _chatMsg('ai', 'Błąd połączenia. Sprawdź internet i spróbuj ponownie.');
+    }
+
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    input.focus();
+  }
+
   /* ── Stands modal ── */
   function openStandsModal() {
     const m = document.getElementById('standsModal');

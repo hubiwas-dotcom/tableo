@@ -159,17 +159,20 @@ function buildMenuPage(menu, slug) {
     .hero-rule{position:absolute;bottom:0;left:0;right:0;height:1px;
       background:linear-gradient(90deg,transparent,rgba(123,170,143,.14),rgba(201,146,74,.2),rgba(123,170,143,.14),transparent);}
 
-    /* ── Category grid ── */
+    /* ── Category scroll bar ── */
     .cat-grid{position:sticky;top:var(--nav-h);z-index:99;
       background:rgba(${v.bgRgb},.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
       border-bottom:1px solid var(--border);
-      padding:8px 14px;display:flex;flex-wrap:wrap;justify-content:center;gap:2px 5px;}
+      display:flex;flex-wrap:nowrap;overflow-x:auto;gap:0;
+      -ms-overflow-style:none;scrollbar-width:none;}
+    .cat-grid::-webkit-scrollbar{display:none;}
     .cat-link{font-family:${f.heading};font-size:8px;font-weight:500;
       letter-spacing:.18em;text-transform:uppercase;text-decoration:none;
-      color:var(--cream-muted);padding:5px 7px;border-radius:3px;
-      transition:color 150ms,background 150ms;white-space:nowrap;
+      color:var(--cream-muted);padding:12px 14px;flex-shrink:0;
+      border-bottom:2px solid transparent;
+      transition:color 150ms,border-color 150ms;white-space:nowrap;
       -webkit-tap-highlight-color:transparent;}
-    .cat-link:hover,.cat-link.active{color:var(--gold-light);background:rgba(${v.pRgb},.07);}
+    .cat-link:hover,.cat-link.active{color:var(--gold-light);border-bottom-color:var(--gold);}
 
     /* ── Content ── */
     main{max-width:680px;margin:0 auto;padding:14px 16px 100px;}
@@ -216,7 +219,6 @@ function buildMenuPage(menu, slug) {
   <div class="hero-glow"></div>
   <div class="hero-eyebrow">Menu</div>
   <h1 class="hero-name">${name}</h1>
-  ${tagline ? `<p class="hero-tagline">${tagline}</p>` : ''}
   <div class="hero-rule"></div>
 </header>
 

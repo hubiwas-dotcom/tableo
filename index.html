@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tableo — Cyfrowe menu generowane przez AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --navy:       #1B2A4A;
+      --navy-deep:  #0f1d33;
+      --navy-mid:   #243761;
+      --sage:       #7BAA8F;
+      --sage-light: #A3C4B0;
+      --sage-pale:  #EAF3EE;
+      --gold:       #C9924A;
+      --gold-light: #D4A574;
+      --gold-pale:  #FBF3E8;
+      --cream:      #FDFBF7;
+      --cream-mid:  #F5EFE4;
+      --cream-dark: #EDE5D8;
+      --ease-out:   cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--cream);
+      color: var(--navy);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    h1,h2,h3,h4 { font-family: 'Playfair Display', serif; }
+
+    body::after {
+      content: '';
+      position: fixed; inset: 0; z-index: 9999;
+      pointer-events: none; opacity: 0.018;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    /* NAV */
+    .nav-pill {
+      background: rgba(255,255,255,0.88);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(27,42,74,0.08);
+      box-shadow: 0 4px 24px rgba(27,42,74,0.07), 0 1px 0 rgba(255,255,255,0.9) inset;
+      transition: background 300ms var(--ease-out), box-shadow 300ms var(--ease-out);
+    }
+    .nav-pill.scrolled { background: rgba(255,255,255,0.97); box-shadow: 0 8px 40px rgba(27,42,74,0.1); }
+    .nav-link { color: rgba(27,42,74,0.52); font-size: 13px; font-weight: 500; text-decoration: none; transition: color 180ms ease; }
+    .nav-link:hover { color: var(--navy); }
+
+    /* BUTTONS */
+    .btn-sage {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--sage); color: white;
+      padding: 13px 26px; border-radius: 100px;
+      font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 600;
+      text-decoration: none; border: none; cursor: pointer;
+      box-shadow: 0 4px 20px rgba(123,170,143,0.3);
+      transition: transform 200ms var(--ease-out), box-shadow 200ms var(--ease-out), opacity 200ms ease;
+    }
+    .btn-sage:hover { transform: translateY(-2px); box-shadow: 0 10px 36px rgba(123,170,143,0.42); }
+    .btn-sage:active { transform: scale(0.97); }
+    .btn-sage:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btn-navy {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--navy); color: white;
+      padding: 13px 26px; border-radius: 100px;
+      font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 600;
+      text-decoration: none; border: none; cursor: pointer;
+      box-shadow: 0 4px 20px rgba(27,42,74,0.22);
+      transition: transform 200ms var(--ease-out), box-shadow 200ms var(--ease-out);
+    }
+    .btn-navy:hover { transform: translateY(-2px); box-shadow: 0 10px 36px rgba(27,42,74,0.3); background: var(--navy-mid); }
+    .btn-navy:active { transform: scale(0.97); }
+    .btn-outline {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: transparent; color: var(--navy);
+      padding: 13px 26px; border-radius: 100px;
+      font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 500;
+      text-decoration: none; border: 1.5px solid rgba(27,42,74,0.18); cursor: pointer;
+      transition: background 200ms ease, border-color 200ms ease, transform 200ms var(--ease-out);
+    }
+    .btn-outline:hover { background: rgba(27,42,74,0.04); border-color: rgba(27,42,74,0.35); transform: translateY(-1px); }
+    .icon-ring {
+      width: 26px; height: 26px; border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+      display: flex; align-items: center; justify-content: center;
+      transition: transform 200ms var(--ease-out);
+    }
+    .btn-sage:hover .icon-ring, .btn-navy:hover .icon-ring { transform: translate(2px,-1px) scale(1.08); }
+
+    /* EYEBROW */
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: var(--sage-pale); border: 1px solid rgba(123,170,143,0.28);
+      border-radius: 100px; padding: 5px 13px;
+      font-size: 10.5px; font-weight: 600; letter-spacing: 0.13em; text-transform: uppercase; color: var(--sage);
+    }
+    .eyebrow-gold { background: var(--gold-pale); border-color: rgba(201,146,74,0.22); color: var(--gold); }
+    .eyebrow-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+    /* HERO */
+    .hero-section {
+      background: var(--cream);
+      background-image:
+        radial-gradient(ellipse 80% 60% at 100% 0%,   rgba(123,170,143,0.09) 0%, transparent 55%),
+        radial-gradient(ellipse 60% 50% at 0%   100%, rgba(201,146,74,0.08)  0%, transparent 55%),
+        radial-gradient(ellipse 50% 40% at 50%  50%,  rgba(27,42,74,0.03)   0%, transparent 100%);
+    }
+
+    /* PHONE SHOWCASE */
+    .gsap-reveal { visibility: hidden; }
+    .phone-showcase { background: var(--cream); position: relative; overflow: hidden; }
+    .phone-showcase::before {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 60% 50% at 50% 50%, rgba(123,170,143,0.10) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 40% at 20% 80%, rgba(201,146,74,0.07)  0%, transparent 60%);
+    }
+    .ps-stage { position: relative; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .ps-badge {
+      position: absolute; background: white; border: 1px solid rgba(27,42,74,0.08);
+      border-radius: 14px; padding: 10px 16px;
+      display: flex; align-items: center; gap: 10px;
+      box-shadow: 0 4px 24px rgba(27,42,74,0.08), 0 1px 4px rgba(27,42,74,0.04);
+      font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; color: var(--navy);
+      white-space: nowrap; will-change: transform, opacity;
+    }
+    .ps-badge-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 15px; }
+    .ps-badge-label { font-weight: 700; font-size: 13px; }
+    .ps-badge-sub   { font-size: 11px; color: rgba(27,42,74,0.5); font-weight: 400; }
+    .ps-mockup-wrap { perspective: 1200px; position: relative; z-index: 2; }
+
+    /* Phone label (above the phone in pinned section) */
+    .ps-label {
+      position: absolute; top: 48px; left: 50%; transform: translateX(-50%);
+      text-align: center; z-index: 5; width: 100%; padding: 0 24px;
+      pointer-events: none;
+    }
+
+    .ch-iphone {
+      position: relative; width: 280px; height: 580px; border-radius: 3rem; flex-shrink: 0;
+      background-color: #111;
+      box-shadow: inset 0 0 0 2px #52525B, inset 0 0 0 7px #000, 0 40px 80px -15px rgba(0,0,0,0.9), 0 15px 25px -5px rgba(0,0,0,0.7);
+      will-change: transform; transform-style: preserve-3d;
+    }
+    .ch-hw-btn {
+      position: absolute;
+      background: linear-gradient(90deg, #404040 0%, #171717 100%);
+      box-shadow: -2px 0 5px rgba(0,0,0,0.8), inset -1px 0 1px rgba(255,255,255,0.15);
+      border-left: 1px solid rgba(255,255,255,0.05);
+    }
+    .ch-screen {
+      position: absolute; inset: 7px; background: #050914; border-radius: 2.5rem;
+      overflow: hidden; color: white; z-index: 10;
+      box-shadow: inset 0 0 15px rgba(0,0,0,1);
+    }
+    .ch-screen-glare { position: absolute; inset: 0; z-index: 40; pointer-events: none; background: linear-gradient(110deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 45%); }
+    .ch-dynamic-island {
+      position: absolute; top: 5px; left: 50%; transform: translateX(-50%);
+      width: 100px; height: 28px; background: black; border-radius: 100px; z-index: 50;
+    }
+
+    /* REVEAL */
+    .reveal { opacity: 0; transform: translateY(20px); transition: opacity 700ms var(--ease-out), transform 700ms var(--ease-out); }
+    .reveal.in { opacity: 1; transform: translateY(0); }
+
+    /* ENTRY ANIMS */
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: translateY(0); } }
+    .au { opacity: 0; animation: fadeUp 0.85s var(--ease-out) forwards; }
+    .d1{animation-delay:.1s} .d2{animation-delay:.22s} .d3{animation-delay:.38s} .d4{animation-delay:.54s}
+
+    /* SCROLL BOUNCE */
+    @keyframes bounce-down { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(7px)} }
+    .scroll-cue { animation: bounce-down 2.2s ease-in-out infinite; }
+
+    /* STEP CARDS */
+    .step-card {
+      background: white; border-radius: 24px; padding: 36px;
+      border: 1px solid rgba(27,42,74,0.07);
+      box-shadow: 0 2px 20px rgba(27,42,74,0.05), 0 8px 48px rgba(27,42,74,0.03);
+      transition: transform 320ms var(--ease-out), box-shadow 320ms var(--ease-out);
+      position: relative; overflow: hidden;
+    }
+    .step-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; opacity:0; transition:opacity 300ms ease; }
+    .step-card.sage-accent::before { background: linear-gradient(90deg, var(--sage), var(--sage-light)); }
+    .step-card.gold-accent::before { background: linear-gradient(90deg, var(--gold), var(--gold-light)); }
+    .step-card.navy-accent::before { background: linear-gradient(90deg, var(--navy), var(--navy-mid)); }
+    .step-card:hover { transform: translateY(-5px); box-shadow: 0 16px 56px rgba(27,42,74,0.1); }
+    .step-card:hover::before { opacity:1; }
+
+    /* CHAT */
+    .chat-bubble-user {
+      background: var(--navy); color: white;
+      border-radius: 18px 18px 4px 18px; padding: 10px 14px;
+      font-size: 13px; line-height: 1.5; max-width: 80%; margin-left: auto;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .chat-bubble-ai {
+      background: white; color: var(--navy);
+      border: 1px solid rgba(27,42,74,0.07);
+      border-radius: 4px 18px 18px 18px; padding: 10px 14px;
+      font-size: 13px; line-height: 1.5; max-width: 85%;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      box-shadow: 0 2px 12px rgba(27,42,74,0.05);
+    }
+    .chat-bubble-ai strong { font-weight: 700; }
+    @keyframes blink { 0%,80%,100%{opacity:0} 40%{opacity:1} }
+    .typing-dot { display:inline-block; width:5px; height:5px; border-radius:50%; background:rgba(27,42,74,0.35); margin:0 2px; animation: blink 1.2s infinite; }
+    .typing-dot:nth-child(2){animation-delay:.2s} .typing-dot:nth-child(3){animation-delay:.4s}
+
+    /* PRICING */
+    .price-card {
+      background: white; border-radius: 24px; padding: 36px;
+      border: 1px solid rgba(27,42,74,0.08);
+      box-shadow: 0 2px 20px rgba(27,42,74,0.05);
+      transition: transform 300ms var(--ease-out), box-shadow 300ms var(--ease-out);
+      position: relative;
+    }
+    .price-card:hover { transform: translateY(-4px); box-shadow: 0 16px 56px rgba(27,42,74,0.1); }
+    .price-card.featured { border-color: var(--gold); border-width: 2px; box-shadow: 0 8px 40px rgba(201,146,74,0.15); }
+    .price-check { color: rgba(27,42,74,0.8); font-weight: 500; font-size: 13px; display: flex; align-items: flex-start; gap: 8px; font-family: 'Plus Jakarta Sans', sans-serif; line-height: 1.4; }
+
+    /* ADMIN */
+    .admin-sidebar-item {
+      display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px;
+      font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; font-weight: 500;
+      color: rgba(27,42,74,0.55); cursor: pointer; transition: background 150ms ease, color 150ms ease;
+    }
+    .admin-sidebar-item:hover, .admin-sidebar-item.active { background: rgba(27,42,74,0.06); color: var(--navy); }
+    .admin-sidebar-item.active { font-weight: 600; }
+    .toggle { position:relative; width:40px; height:22px; border-radius:100px; cursor:pointer; transition:background 200ms ease; }
+    .toggle-thumb { position:absolute; top:3px; width:16px; height:16px; border-radius:50%; background:white; transition:left 200ms ease; box-shadow:0 1px 4px rgba(0,0,0,0.2); }
+
+    /* MARQUEE */
+    @keyframes marquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+    .marquee-inner { animation: marquee 28s linear infinite; display:flex; }
+
+    /* UTIL */
+    .section-rule { height:1px; background:linear-gradient(90deg,transparent 0%,rgba(27,42,74,0.08) 50%,transparent 100%); }
+
+    /* IMAGE PREVIEW */
+    .img-preview { position:relative; display:inline-block; }
+    .img-preview img { width:60px; height:60px; object-fit:cover; border-radius:8px; border:2px solid rgba(27,42,74,0.1); }
+    .img-preview-remove { position:absolute; top:-6px; right:-6px; width:18px; height:18px; border-radius:50%; background:var(--navy); color:white; border:none; cursor:pointer; font-size:10px; display:flex; align-items:center; justify-content:center; }
+
+    @media (max-width: 900px) {
+      .chat-grid { grid-template-columns: 1fr !important; }
+      .admin-grid { grid-template-columns: 1fr !important; }
+    }
+    @media (max-width: 640px) {
+      .hide-sm { display:none !important; }
+      .steps-grid { grid-template-columns:1fr !important; }
+      .price-grid  { grid-template-columns:1fr !important; }
+      .hero-btns   { flex-direction:column !important; width:100%; }
+      .hero-btns a,.hero-btns button { width:100%; justify-content:center; }
+    }
+  </style>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors:{navy:'#1B2A4A',sage:'#7BAA8F',gold:'#C9924A',cream:'#FDFBF7'},
+          fontFamily:{serif:['Playfair Display','serif'],sans:['Plus Jakarta Sans','sans-serif']}
+        }
+      }
+    }
+  </script>
+</head>
+<body>
+
+<!-- ═══ NAVIGATION ═══ -->
+<nav style="position:fixed;top:0;left:0;right:0;z-index:400;display:flex;justify-content:center;padding:16px 16px 0;">
+  <div class="nav-pill" id="navPill"
+       style="display:flex;align-items:center;justify-content:space-between;gap:28px;
+              padding:10px 14px 10px 18px;border-radius:100px;width:100%;max-width:960px;">
+    <a href="#" style="display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0;">
+      <svg width="30" height="30" viewBox="0 0 40 40" fill="none">
+        <ellipse cx="20" cy="28.5" rx="13.5" ry="3.8" stroke="#C9924A" stroke-width="1.5" fill="none"/>
+        <line x1="20" y1="28.5" x2="20" y2="36" stroke="#C9924A" stroke-width="1.5"/>
+        <line x1="13" y1="36" x2="27" y2="36" stroke="#C9924A" stroke-width="1.5" stroke-linecap="round"/>
+        <rect x="13" y="3.5" width="14" height="23" rx="3" stroke="#1B2A4A" stroke-width="1.5" fill="none"/>
+        <path d="M17 13.5 Q20 9.5 23 13.5" stroke="#7BAA8F" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+        <circle cx="20" cy="13" r="1" fill="#7BAA8F"/>
+        <line x1="16" y1="15" x2="24" y2="15" stroke="#7BAA8F" stroke-width="1.2" stroke-linecap="round"/>
+        <line x1="16" y1="18.5" x2="24" y2="18.5" stroke="#7BAA8F" stroke-width="1" stroke-linecap="round"/>
+        <line x1="16" y1="21.5" x2="21" y2="21.5" stroke="#7BAA8F" stroke-width="1" stroke-linecap="round"/>
+      </svg>
+      <span style="font-family:'Playfair Display',serif;font-size:19px;font-weight:500;color:var(--navy);letter-spacing:-0.01em;">Tableo</span>
+    </a>
+    <div class="hide-sm" style="display:flex;align-items:center;gap:22px;">
+      <a href="#jak-dziala" class="nav-link">Jak działa</a>
+      <a href="#cennik"     class="nav-link">Cennik</a>
+      <a href="#panel"      class="nav-link">Panel admina</a>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <a href="/editor" class="nav-link hide-sm">Zaloguj się</a>
+      <a href="/editor" class="btn-sage" style="padding:9px 18px;font-size:13px;">
+        Edytor
+        <span class="icon-ring" style="width:22px;height:22px;">
+          <svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M1.5 7.5L7.5 1.5M7.5 1.5H2.5M7.5 1.5V6.5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══ HERO ═══ -->
+<section class="hero-section" style="min-height:100dvh;display:flex;flex-direction:column;align-items:center;
+       justify-content:center;text-align:center;position:relative;overflow:hidden;padding:120px 24px 80px;">
+  <div style="position:absolute;width:600px;height:600px;top:-200px;right:-200px;border-radius:50%;border:1px solid rgba(123,170,143,0.1);pointer-events:none;"></div>
+  <div style="position:absolute;width:400px;height:400px;bottom:-150px;left:-150px;border-radius:50%;border:1px solid rgba(201,146,74,0.1);pointer-events:none;"></div>
+
+  <div style="position:relative;z-index:10;max-width:860px;margin:0 auto;">
+    <div class="au d1" style="display:flex;justify-content:center;margin-bottom:28px;">
+      <span class="eyebrow"><span class="eyebrow-dot"></span>Generator cyfrowych menu dla restauracji</span>
+    </div>
+    <h1 class="au d2" style="font-size:clamp(2.8rem,8.5vw,6.8rem);font-weight:500;color:var(--navy);line-height:1.04;letter-spacing:-0.035em;margin-bottom:28px;">
+      Zamień papierowe<br>menu na <em style="color:var(--sage);font-style:italic;">cyfrowe</em><br>
+      <span style="color:rgba(27,42,74,0.45);">w 2 minuty.</span>
+    </h1>
+    <p class="au d3" style="font-size:clamp(1rem,2.2vw,1.15rem);color:rgba(27,42,74,0.5);line-height:1.75;max-width:520px;margin:0 auto 44px;font-weight:300;">
+      Wyślij zdjęcie swojego menu do AI — Claude przeanalizuje je i stworzy profesjonalną wersję online gotową do publikacji.
+    </p>
+    <div class="au d4 hero-btns" style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:72px;">
+      <a href="/editor" class="btn-sage" style="padding:15px 32px;font-size:15px;">
+        Generuj menu teraz
+        <span class="icon-ring" style="width:28px;height:28px;">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 9L9 2M9 2H3M9 2V8" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+      </a>
+      <a href="#jak-dziala" class="btn-outline" style="padding:15px 32px;font-size:15px;">
+        <svg width="17" height="17" viewBox="0 0 17 17" fill="none"><circle cx="8.5" cy="8.5" r="7" stroke="currentColor" stroke-width="1.3"/><path d="M7 5.5L11.5 8.5L7 11.5V5.5Z" fill="currentColor"/></svg>
+        Zobacz jak to działa
+      </a>
+    </div>
+  </div>
+  <div class="scroll-cue" style="position:absolute;bottom:28px;left:50%;display:flex;flex-direction:column;align-items:center;gap:6px;">
+    <span style="font-size:9.5px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:rgba(27,42,74,0.25);">Przewiń</span>
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 6L8 11L13 6" stroke="rgba(27,42,74,0.25)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </div>
+</section>
+
+<!-- ═══ JAK TO DZIAŁA ═══ -->
+<section id="jak-dziala" style="background:var(--cream);padding:96px 24px 80px;">
+  <div style="max-width:1080px;margin:0 auto;">
+    <div class="reveal" style="text-align:center;margin-bottom:64px;">
+      <span class="eyebrow">Jak to działa</span>
+      <h2 style="font-size:clamp(2.2rem,5.5vw,3.8rem);font-weight:500;color:var(--navy);line-height:1.08;letter-spacing:-0.03em;margin-top:18px;">
+        Trzy kroki do<br><em style="color:var(--sage);">cyfrowego</em> menu
+      </h2>
+    </div>
+    <div class="steps-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;">
+      <div class="step-card sage-accent reveal" style="transition-delay:60ms;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;">
+          <span style="font-family:'Playfair Display',serif;font-size:3.8rem;font-weight:400;color:rgba(27,42,74,0.055);line-height:1;user-select:none;">01</span>
+          <div style="width:48px;height:48px;border-radius:14px;background:var(--sage-pale);border:1px solid rgba(123,170,143,0.25);display:flex;align-items:center;justify-content:center;">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="3" y="3" width="16" height="16" rx="3" stroke="#7BAA8F" stroke-width="1.3"/><circle cx="8" cy="8" r="2" stroke="#7BAA8F" stroke-width="1.2"/><path d="M3 15l4-4 3 3 3-3 6 6" stroke="#7BAA8F" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+        <h3 style="font-size:1.35rem;font-weight:600;color:var(--navy);margin-bottom:12px;letter-spacing:-0.02em;">Wyślij zdjęcie menu</h3>
+        <p style="color:rgba(27,42,74,0.52);line-height:1.68;font-size:0.94rem;">Zrób zdjęcie papierowego menu i wrzuć do czatu. Może być niewyraźne, odręczne — AI poradzi sobie ze wszystkim.</p>
+      </div>
+      <div class="step-card gold-accent reveal" style="transition-delay:140ms;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;">
+          <span style="font-family:'Playfair Display',serif;font-size:3.8rem;font-weight:400;color:rgba(27,42,74,0.055);line-height:1;user-select:none;">02</span>
+          <div style="width:48px;height:48px;border-radius:14px;background:var(--gold-pale);border:1px solid rgba(201,146,74,0.22);display:flex;align-items:center;justify-content:center;">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 3C7 3 4 6 4 10c0 2.5 1.2 4.7 3 6.1V18h8v-1.9c1.8-1.4 3-3.6 3-6.1 0-4-3-7-7-7Z" stroke="#C9924A" stroke-width="1.3"/><path d="M8 18v2h6v-2" stroke="#C9924A" stroke-width="1.2" stroke-linecap="round"/><path d="M9 11l1.5 1.5L13 9" stroke="#C9924A" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+        <h3 style="font-size:1.35rem;font-weight:600;color:var(--navy);margin-bottom:12px;letter-spacing:-0.02em;">AI generuje strukturę</h3>
+        <p style="color:rgba(27,42,74,0.52);line-height:1.68;font-size:0.94rem;">Claude analizuje zdjęcie, wyodrębnia pozycje, kategorie i ceny. Tworzy czytelną, responsywną stronę w kilkadziesiąt sekund.</p>
+      </div>
+      <div class="step-card navy-accent reveal" style="transition-delay:220ms;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;">
+          <span style="font-family:'Playfair Display',serif;font-size:3.8rem;font-weight:400;color:rgba(27,42,74,0.055);line-height:1;user-select:none;">03</span>
+          <div style="width:48px;height:48px;border-radius:14px;background:rgba(27,42,74,0.06);border:1px solid rgba(27,42,74,0.1);display:flex;align-items:center;justify-content:center;">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="8" stroke="#1B2A4A" stroke-width="1.3"/><path d="M11 3c0 0-3 3-3 8s3 8 3 8M11 3c0 0 3 3 3 8s-3 8-3 8" stroke="#1B2A4A" stroke-width="1.2"/><path d="M3 11h16" stroke="#1B2A4A" stroke-width="1.2" stroke-linecap="round"/></svg>
+          </div>
+        </div>
+        <h3 style="font-size:1.35rem;font-weight:600;color:var(--navy);margin-bottom:12px;letter-spacing:-0.02em;">Opublikuj link</h3>
+        <p style="color:rgba(27,42,74,0.52);line-height:1.68;font-size:0.94rem;">Dostajesz unikalny link do menu. Wydrukuj kod QR, wklej na stronę lub prześlij gościom. Klienci widzą je natychmiast.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ PHONE SHOWCASE ═══ -->
+<section id="phone-showcase" class="phone-showcase">
+
+  <!-- Context label pinned above the phone while scrolling -->
+  <div class="ps-label">
+    <span class="eyebrow" style="margin-bottom:14px;display:inline-flex;"><span class="eyebrow-dot"></span>Efekt końcowy</span>
+    <h2 style="font-size:clamp(1.8rem,4vw,3rem);font-weight:500;color:var(--navy);line-height:1.1;letter-spacing:-0.03em;margin-top:12px;">
+      Tak Twoi klienci widzą<br><em style="color:var(--sage);font-style:italic;">cyfrowe menu</em>
+    </h2>
+    <p style="font-size:0.95rem;color:rgba(27,42,74,0.5);margin-top:10px;font-weight:300;">Responsywne, bez aplikacji — otwiera się od razu w przeglądarce.</p>
+  </div>
+
+  <div class="ps-stage" id="ps-stage" style="padding-top:240px;">
+
+    <div class="ps-badge gsap-reveal" id="ps-badge-orders" style="top:30%;left:calc(50% - 380px);">
+      <div class="ps-badge-icon" style="background:rgba(123,170,143,0.15);">✨</div>
+      <div><div class="ps-badge-label">AI Generated</div><div class="ps-badge-sub">24 pozycje · 5 kategorii</div></div>
+    </div>
+
+    <div class="ps-badge gsap-reveal" id="ps-badge-table" style="top:44%;right:calc(50% - 380px);">
+      <div class="ps-badge-icon" style="background:rgba(201,146,74,0.15);">🌐</div>
+      <div><div class="ps-badge-label">Online w 2 min</div><div class="ps-badge-sub">link gotowy do publikacji</div></div>
+    </div>
+
+    <div class="ps-badge gsap-reveal" id="ps-badge-rating" style="bottom:22%;left:calc(50% - 380px);">
+      <div class="ps-badge-icon" style="background:rgba(27,42,74,0.08);">📱</div>
+      <div><div class="ps-badge-label">1 247 aktywnych menu</div><div class="ps-badge-sub">restauracji w Polsce</div></div>
+    </div>
+
+    <div class="ps-mockup-wrap" id="ps-mockup">
+      <div class="ch-iphone" style="transform-style:preserve-3d;will-change:transform;">
+        <div class="ch-hw-btn" style="left:-3px;top:90px;height:32px;width:3px;border-radius:2px 0 0 2px;"></div>
+        <div class="ch-hw-btn" style="left:-3px;top:132px;height:52px;width:3px;border-radius:2px 0 0 2px;"></div>
+        <div class="ch-hw-btn" style="left:-3px;top:196px;height:52px;width:3px;border-radius:2px 0 0 2px;"></div>
+        <div class="ch-hw-btn" style="right:-3px;top:130px;height:80px;width:3px;border-radius:0 2px 2px 0;"></div>
+        <div class="ch-screen">
+          <div class="ch-screen-glare"></div>
+          <div class="ch-dynamic-island"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:42px 18px 0;font-size:11px;color:rgba(255,255,255,0.7);font-family:'Plus Jakarta Sans',sans-serif;">
+            <span style="font-weight:600;">9:41</span>
+            <div style="display:flex;gap:4px;align-items:center;"><svg width="14" height="10" viewBox="0 0 14 10" fill="rgba(255,255,255,0.7)"><rect x="0" y="3" width="3" height="7" rx="0.5"/><rect x="4" y="2" width="3" height="8" rx="0.5"/><rect x="8" y="0" width="3" height="10" rx="0.5"/></svg></div>
+          </div>
+          <div style="padding:12px 18px 8px;text-align:center;">
+            <p style="font-family:'Playfair Display',serif;color:white;font-size:15px;font-weight:600;margin:0;">Trattoria Roma</p>
+            <p style="font-family:'Plus Jakarta Sans',sans-serif;color:rgba(255,255,255,0.4);font-size:10px;margin:2px 0 0;">Menu cyfrowe · generowane przez AI</p>
+          </div>
+          <div style="display:flex;justify-content:center;margin-bottom:10px;">
+            <div style="background:rgba(123,170,143,0.2);border:1px solid rgba(123,170,143,0.3);border-radius:100px;padding:3px 10px;">
+              <span style="font-size:9px;color:var(--sage-light);font-weight:600;letter-spacing:0.08em;font-family:'Plus Jakarta Sans',sans-serif;">✨ AI GENERATED</span>
+            </div>
+          </div>
+          <div style="display:flex;gap:7px;padding:0 18px 10px;overflow:hidden;">
+            <div style="background:var(--sage);color:white;font-family:'Plus Jakarta Sans',sans-serif;font-size:10px;font-weight:600;padding:4px 12px;border-radius:20px;white-space:nowrap;">Przystawki</div>
+            <div style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.5);font-family:'Plus Jakarta Sans',sans-serif;font-size:10px;font-weight:500;padding:4px 12px;border-radius:20px;white-space:nowrap;">Makarony</div>
+            <div style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.5);font-family:'Plus Jakarta Sans',sans-serif;font-size:10px;font-weight:500;padding:4px 12px;border-radius:20px;white-space:nowrap;">Desery</div>
+          </div>
+          <div style="padding:0 14px;display:flex;flex-direction:column;gap:8px;">
+            <div class="ps-phone-item" style="background:rgba(255,255,255,0.05);border-radius:12px;padding:10px;display:flex;gap:10px;align-items:center;">
+              <img src="https://placehold.co/48x48/7BAA8F/FDFBF7?text=B" style="width:48px;height:48px;border-radius:8px;object-fit:cover;" alt="">
+              <div style="flex:1;"><p style="margin:0;font-family:'Plus Jakarta Sans',sans-serif;color:white;font-size:12px;font-weight:600;">Bruschetta al Pomodoro</p><p style="margin:2px 0 0;font-family:'Plus Jakarta Sans',sans-serif;color:rgba(255,255,255,0.4);font-size:10px;">z pomidorami i bazylią</p></div>
+              <div style="text-align:right;"><p style="margin:0;font-family:'Playfair Display',serif;color:var(--gold);font-size:13px;font-weight:600;">22 zł</p></div>
+            </div>
+            <div class="ps-phone-item" style="background:rgba(255,255,255,0.05);border-radius:12px;padding:10px;display:flex;gap:10px;align-items:center;">
+              <img src="https://placehold.co/48x48/C9924A/FDFBF7?text=C" style="width:48px;height:48px;border-radius:8px;object-fit:cover;" alt="">
+              <div style="flex:1;"><p style="margin:0;font-family:'Plus Jakarta Sans',sans-serif;color:white;font-size:12px;font-weight:600;">Carpaccio di Manzo</p><p style="margin:2px 0 0;font-family:'Plus Jakarta Sans',sans-serif;color:rgba(255,255,255,0.4);font-size:10px;">z rukolą i parmezanem</p></div>
+              <div style="text-align:right;"><p style="margin:0;font-family:'Playfair Display',serif;color:var(--gold);font-size:13px;font-weight:600;">38 zł</p></div>
+            </div>
+            <div class="ps-phone-item" style="background:rgba(255,255,255,0.05);border-radius:12px;padding:10px;display:flex;gap:10px;align-items:center;">
+              <img src="https://placehold.co/48x48/1B2A4A/7BAA8F?text=S" style="width:48px;height:48px;border-radius:8px;object-fit:cover;" alt="">
+              <div style="flex:1;"><p style="margin:0;font-family:'Plus Jakarta Sans',sans-serif;color:white;font-size:12px;font-weight:600;">Salmone Affumicato</p><p style="margin:2px 0 0;font-family:'Plus Jakarta Sans',sans-serif;color:rgba(255,255,255,0.4);font-size:10px;">z kaparami i cytryną</p></div>
+              <div style="text-align:right;"><p style="margin:0;font-family:'Playfair Display',serif;color:var(--gold);font-size:13px;font-weight:600;">44 zł</p></div>
+            </div>
+          </div>
+          <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(123,170,143,0.9);padding:12px 16px;display:flex;justify-content:center;align-items:center;">
+            <span style="font-family:'Plus Jakarta Sans',sans-serif;color:white;font-size:12px;font-weight:600;">menu.trattoria-roma.pl</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ MARQUEE ═══ -->
+<div style="background:white;border-top:1px solid rgba(27,42,74,0.06);border-bottom:1px solid rgba(27,42,74,0.06);padding:18px 0;overflow:hidden;">
+  <div class="marquee-inner" style="white-space:nowrap;">
+    <span style="color:rgba(27,42,74,0.35);font-size:10.5px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:0 36px;">1 247 aktywnych menu</span>
+    <span style="color:var(--sage);padding:0 10px;font-size:14px;">✦</span>
+    <span style="color:rgba(27,42,74,0.35);font-size:10.5px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:0 36px;">AI od Claude · Anthropic</span>
+    <span style="color:var(--gold);padding:0 10px;font-size:14px;">✦</span>
+    <span style="color:rgba(27,42,74,0.35);font-size:10.5px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:0 36px;">Gotowe w 2 minuty</span>
+    <span style="color:var(--sage);padding:0 10px;font-size:14px;">✦</span>
+    <span style="color:rgba(27,42,74,0.35);font-size:10.5px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:0 36px;">Bez kodowania</span>
+    <span style="color:var(--gold);padding:0 10px;font-size:14px;">✦</span>
+    <span style="color:rgba(27,42,74,0.35);font-size:10.5px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:0 36px;">Panel admina w chmurze</span>
+    <span style="color:var(--sage);padding:0 10px;font-size:14px;">✦</span>
+    <span style="color:rgba(27,42,74,0.35);font-size:10.5px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:0 36px;">1 247 aktywnych menu</span>
+    <span style="color:var(--sage);padding:0 10px;font-size:14px;">✦</span>
+    <span style="color:rgba(27,42,74,0.35);font-size:10.5px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:0 36px;">AI od Claude · Anthropic</span>
+    <span style="color:var(--gold);padding:0 10px;font-size:14px;">✦</span>
+    <span style="color:rgba(27,42,74,0.35);font-size:10.5px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:0 36px;">Gotowe w 2 minuty</span>
+    <span style="color:var(--sage);padding:0 10px;font-size:14px;">✦</span>
+    <span style="color:rgba(27,42,74,0.35);font-size:10.5px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:0 36px;">Bez kodowania</span>
+    <span style="color:var(--gold);padding:0 10px;font-size:14px;">✦</span>
+    <span style="color:rgba(27,42,74,0.35);font-size:10.5px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:0 36px;">Panel admina w chmurze</span>
+    <span style="color:var(--sage);padding:0 10px;font-size:14px;">✦</span>
+  </div>
+</div>
+
+<!-- CZAT USUNIĘTY — dostępny w /editor -->
+<section id="czat" style="display:none;">
+  <div style="max-width:1100px;margin:0 auto;">
+    <div class="reveal" style="text-align:center;margin-bottom:64px;">
+      <span class="eyebrow eyebrow-gold"><span class="eyebrow-dot"></span>Generator AI</span>
+      <h2 style="font-size:clamp(2.2rem,5.5vw,3.8rem);font-weight:500;color:var(--navy);line-height:1.08;letter-spacing:-0.03em;margin-top:18px;">
+        Prosty czat,<br><em style="color:var(--gold);">profesjonalny</em> efekt
+      </h2>
+      <p style="font-size:1rem;color:rgba(27,42,74,0.5);margin-top:16px;font-weight:300;max-width:480px;margin-left:auto;margin-right:auto;line-height:1.7;">
+        Wyślij zdjęcie swojego papierowego menu — AI wyodrębni wszystkie pozycje i ceny.
+      </p>
+    </div>
+
+    <div class="chat-grid reveal" style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;">
+
+      <!-- ── Chat panel ── -->
+      <div style="background:white;border-radius:24px;border:1px solid rgba(27,42,74,0.08);overflow:hidden;box-shadow:0 4px 32px rgba(27,42,74,0.07);display:flex;flex-direction:column;height:540px;">
+        <!-- Header -->
+        <div style="padding:16px 20px;border-bottom:1px solid rgba(27,42,74,0.06);display:flex;align-items:center;gap:12px;flex-shrink:0;">
+          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--sage),var(--navy));display:flex;align-items:center;justify-content:center;">
+            <span style="color:white;font-size:14px;">✨</span>
+          </div>
+          <div>
+            <div style="font-weight:600;font-size:14px;color:var(--navy);">Tableo AI</div>
+            <div style="font-size:11px;color:rgba(27,42,74,0.4);">powered by Claude · <span id="status-dot" style="color:#4ade80;">●</span> <span id="status-text">gotowy</span></div>
+          </div>
+          <button id="clearBtn" onclick="clearChat()" title="Wyczyść czat"
+                  style="margin-left:auto;background:none;border:1px solid rgba(27,42,74,0.12);border-radius:8px;padding:5px 10px;cursor:pointer;font-size:11px;color:rgba(27,42,74,0.5);font-family:'Plus Jakarta Sans',sans-serif;transition:all 150ms ease;"
+                  onmouseover="this.style.background='rgba(27,42,74,0.05)'" onmouseout="this.style.background='none'">Wyczyść</button>
+        </div>
+
+        <!-- Messages -->
+        <div id="chatMessages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;">
+          <!-- Initial AI message -->
+          <div style="display:flex;gap:8px;align-items:flex-start;">
+            <div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--sage),var(--navy));flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:white;margin-top:2px;">✨</div>
+            <div class="chat-bubble-ai">Cześć! Jestem AI od Tableo. Wyślij mi zdjęcie swojego papierowego menu — stworzę z niego profesjonalną wersję cyfrową. 📸<br><br>Możesz też po prostu opisać swoje menu tekstem.</div>
+          </div>
+        </div>
+
+        <!-- Image preview area -->
+        <div id="imagePreviewArea" style="padding:0 16px;display:none;">
+          <div class="img-preview">
+            <img id="imgPreviewThumb" src="" alt="podgląd">
+            <button class="img-preview-remove" onclick="removeImage()">✕</button>
+          </div>
+        </div>
+
+        <!-- Input -->
+        <div style="padding:12px 16px;border-top:1px solid rgba(27,42,74,0.06);display:flex;gap:8px;align-items:flex-end;flex-shrink:0;">
+          <textarea id="chatInput" placeholder="Napisz lub wyślij zdjęcie..."
+            style="flex:1;background:rgba(27,42,74,0.04);border:1.5px solid rgba(27,42,74,0.1);border-radius:14px;padding:10px 14px;font-size:13px;color:var(--navy);font-family:'Plus Jakarta Sans',sans-serif;resize:none;height:44px;max-height:120px;outline:none;transition:border-color 150ms ease;line-height:1.4;overflow-y:auto;"
+            onfocus="this.style.borderColor='var(--sage)'" onblur="this.style.borderColor='rgba(27,42,74,0.1)'"
+            onkeydown="handleKey(event)"></textarea>
+          <label for="imgUpload" title="Wyślij zdjęcie menu"
+                 style="width:44px;height:44px;border-radius:12px;background:rgba(27,42,74,0.06);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:background 200ms ease;"
+                 onmouseover="this.style.background='rgba(27,42,74,0.12)'" onmouseout="this.style.background='rgba(27,42,74,0.06)'">
+            <svg width="17" height="17" viewBox="0 0 17 17" fill="none"><rect x="1.5" y="2.5" width="14" height="12" rx="2.5" stroke="#1B2A4A" stroke-width="1.3"/><circle cx="5.5" cy="6.5" r="1.5" fill="#1B2A4A"/><path d="M1.5 11l4-4 3 3 3.5-4 4 5" stroke="#1B2A4A" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </label>
+          <input id="imgUpload" type="file" accept="image/*" style="display:none;" onchange="handleImageSelect(event)">
+          <button id="sendBtn" onclick="sendMessage()"
+                  style="width:44px;height:44px;border-radius:12px;background:var(--sage);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform 200ms var(--ease-out),opacity 200ms ease;"
+                  onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M13.5 1.5L1.5 6.5l5 2 2 5L13.5 1.5Z" stroke="white" stroke-width="1.4" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- ── Info panel ── -->
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <!-- What AI can do -->
+        <div style="background:white;border-radius:20px;border:1px solid rgba(27,42,74,0.08);padding:28px;box-shadow:0 2px 20px rgba(27,42,74,0.05);">
+          <h3 style="font-size:1.1rem;font-weight:600;color:var(--navy);margin-bottom:16px;letter-spacing:-0.01em;">Co potrafi AI:</h3>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div style="display:flex;align-items:flex-start;gap:10px;">
+              <div style="width:22px;height:22px;border-radius:6px;background:var(--sage-pale);border:1px solid rgba(123,170,143,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;font-size:11px;">📷</div>
+              <span style="font-size:13px;color:rgba(27,42,74,0.7);line-height:1.5;font-family:'Plus Jakarta Sans',sans-serif;">Odczytyuje papierowe menu ze zdjęcia — nawet niewyraźne lub odręczne</span>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:10px;">
+              <div style="width:22px;height:22px;border-radius:6px;background:var(--gold-pale);border:1px solid rgba(201,146,74,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;font-size:11px;">🗂</div>
+              <span style="font-size:13px;color:rgba(27,42,74,0.7);line-height:1.5;font-family:'Plus Jakarta Sans',sans-serif;">Grupuje pozycje według kategorii i wyodrębnia ceny</span>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:10px;">
+              <div style="width:22px;height:22px;border-radius:6px;background:rgba(27,42,74,0.06);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;font-size:11px;">✏️</div>
+              <span style="font-size:13px;color:rgba(27,42,74,0.7);line-height:1.5;font-family:'Plus Jakarta Sans',sans-serif;">Odpowiada na pytania i edytuje menu na Twoje polecenie</span>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:10px;">
+              <div style="width:22px;height:22px;border-radius:6px;background:var(--sage-pale);border:1px solid rgba(123,170,143,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;font-size:11px;">🌐</div>
+              <span style="font-size:13px;color:rgba(27,42,74,0.7);line-height:1.5;font-family:'Plus Jakarta Sans',sans-serif;">Generuje gotowy kod HTML menu do publikacji online</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tips -->
+        <div style="background:var(--sage-pale);border:1px solid rgba(123,170,143,0.2);border-radius:16px;padding:20px 22px;">
+          <div style="font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--sage);margin-bottom:12px;font-family:'Plus Jakarta Sans',sans-serif;">Przykładowe pytania</div>
+          <div style="display:flex;flex-direction:column;gap:7px;">
+            <div class="chat-suggestion" onclick="useSuggestion(this)" style="font-size:12px;color:rgba(27,42,74,0.65);padding:7px 12px;background:white;border-radius:8px;cursor:pointer;transition:background 150ms ease;border:1px solid rgba(123,170,143,0.15);font-family:'Plus Jakarta Sans',sans-serif;" onmouseover="this.style.background='var(--cream)'" onmouseout="this.style.background='white'">"Dodaj kategorię Napoje z kawą 12 zł i herbatą 8 zł"</div>
+            <div class="chat-suggestion" onclick="useSuggestion(this)" style="font-size:12px;color:rgba(27,42,74,0.65);padding:7px 12px;background:white;border-radius:8px;cursor:pointer;transition:background 150ms ease;border:1px solid rgba(123,170,143,0.15);font-family:'Plus Jakarta Sans',sans-serif;" onmouseover="this.style.background='var(--cream)'" onmouseout="this.style.background='white'">"Wygeneruj menu dla restauracji włoskiej z 5 pozycjami"</div>
+            <div class="chat-suggestion" onclick="useSuggestion(this)" style="font-size:12px;color:rgba(27,42,74,0.65);padding:7px 12px;background:white;border-radius:8px;cursor:pointer;transition:background 150ms ease;border:1px solid rgba(123,170,143,0.15);font-family:'Plus Jakarta Sans',sans-serif;" onmouseover="this.style.background='var(--cream)'" onmouseout="this.style.background='white'">"Zmień cenę tartra wołowego na 45 zł"</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-rule" style="margin:0 24px;"></div>
+
+<!-- ═══ PANEL ADMINA ═══ -->
+<section id="panel" style="background:var(--cream);padding:128px 24px;">
+  <div style="max-width:1100px;margin:0 auto;">
+    <div class="reveal" style="text-align:center;margin-bottom:64px;">
+      <span class="eyebrow"><span class="eyebrow-dot"></span>Panel admina</span>
+      <h2 style="font-size:clamp(2.2rem,5.5vw,3.8rem);font-weight:500;color:var(--navy);line-height:1.08;letter-spacing:-0.03em;margin-top:18px;">
+        Zarządzaj menu<br><em style="color:var(--sage);">jak profesjonalista</em>
+      </h2>
+      <p style="font-size:1rem;color:rgba(27,42,74,0.5);margin-top:16px;font-weight:300;">
+        Prosty panel na komputer — bez technicznej wiedzy.
+        <span style="display:inline-flex;align-items:center;gap:5px;background:rgba(27,42,74,0.07);border-radius:100px;padding:2px 10px;font-size:11px;font-weight:600;color:var(--navy);margin-left:6px;">🖥 Tylko na komputerze</span>
+      </p>
+    </div>
+
+    <div class="reveal" style="background:white;border-radius:24px;border:1px solid rgba(27,42,74,0.09);overflow:hidden;box-shadow:0 8px 56px rgba(27,42,74,0.1);">
+      <div style="background:#f0ede8;padding:10px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(27,42,74,0.07);">
+        <div style="display:flex;gap:6px;">
+          <div style="width:11px;height:11px;border-radius:50%;background:#FF5F57;"></div>
+          <div style="width:11px;height:11px;border-radius:50%;background:#FEBC2E;"></div>
+          <div style="width:11px;height:11px;border-radius:50%;background:#28C840;"></div>
+        </div>
+        <div style="flex:1;background:white;border-radius:6px;padding:5px 12px;font-size:12px;color:rgba(27,42,74,0.4);font-family:'Plus Jakarta Sans',sans-serif;">admin.tableo.pl/dashboard</div>
+      </div>
+      <div class="admin-grid" style="display:grid;grid-template-columns:220px 1fr;min-height:480px;">
+        <div style="background:var(--cream-mid);border-right:1px solid rgba(27,42,74,0.07);padding:20px 12px;">
+          <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;margin-bottom:20px;">
+            <div style="width:28px;height:28px;border-radius:8px;background:var(--navy);display:flex;align-items:center;justify-content:center;">
+              <svg width="14" height="14" viewBox="0 0 40 40" fill="none"><ellipse cx="20" cy="28.5" rx="13.5" ry="3.8" stroke="white" stroke-width="2" fill="none"/><rect x="13" y="3.5" width="14" height="23" rx="3" stroke="white" stroke-width="2" fill="none"/></svg>
+            </div>
+            <span style="font-family:'Playfair Display',serif;font-size:15px;font-weight:500;color:var(--navy);">Tableo</span>
+          </div>
+          <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(27,42,74,0.35);padding:0 12px;margin-bottom:6px;">Menu</div>
+          <div class="admin-sidebar-item active"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5.5" height="5.5" rx="1" fill="currentColor"/><rect x="7.5" y="1" width="5.5" height="5.5" rx="1" fill="currentColor" opacity="0.4"/><rect x="1" y="7.5" width="5.5" height="5.5" rx="1" fill="currentColor" opacity="0.4"/><rect x="7.5" y="7.5" width="5.5" height="5.5" rx="1" fill="currentColor" opacity="0.4"/></svg>Przegląd menu</div>
+          <div class="admin-sidebar-item"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>Dodaj pozycję</div>
+          <div class="admin-sidebar-item"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.2"/><path d="M4 7h6M4 4.5h6M4 9.5h3" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>Kategorie</div>
+          <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(27,42,74,0.35);padding:0 12px;margin:16px 0 6px;">Wygląd</div>
+          <div class="admin-sidebar-item"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.2"/><circle cx="7" cy="7" r="2" fill="currentColor"/></svg>Kolor tła</div>
+          <div class="admin-sidebar-item"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 4h10M2 7h7M2 10h5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>Czcionka</div>
+          <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(27,42,74,0.35);padding:0 12px;margin:16px 0 6px;">Konto</div>
+          <div class="admin-sidebar-item"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1.5A5.5 5.5 0 1 0 7 12.5A5.5 5.5 0 0 0 7 1.5Z" stroke="currentColor" stroke-width="1.2"/><path d="M7 5v2.5l1.5 1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>Subskrypcja</div>
+        </div>
+        <div style="padding:24px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+            <h3 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:700;color:var(--navy);">Przegląd menu — Trattoria Roma</h3>
+            <a href="#" class="btn-sage" style="padding:8px 16px;font-size:12px;">+ Dodaj pozycję</a>
+          </div>
+          <div style="background:var(--cream);border-radius:16px;padding:16px 20px;margin-bottom:16px;border:1px solid rgba(27,42,74,0.07);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+              <span style="font-size:13px;font-weight:600;color:var(--navy);font-family:'Plus Jakarta Sans',sans-serif;">Kolor tła menu</span>
+              <span style="font-size:11px;color:rgba(27,42,74,0.4);font-family:'Plus Jakarta Sans',sans-serif;">Podgląd live</span>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <div style="width:32px;height:32px;border-radius:8px;background:var(--navy-deep);cursor:pointer;border:2px solid var(--gold);"></div>
+              <div style="width:32px;height:32px;border-radius:8px;background:var(--cream);cursor:pointer;border:2px solid transparent;box-shadow:inset 0 0 0 1px rgba(27,42,74,0.15);"></div>
+              <div style="width:32px;height:32px;border-radius:8px;background:var(--sage);cursor:pointer;border:2px solid transparent;"></div>
+              <div style="width:32px;height:32px;border-radius:8px;background:#1a1a1a;cursor:pointer;border:2px solid transparent;"></div>
+              <div style="width:32px;height:32px;border-radius:8px;background:var(--gold-pale);cursor:pointer;border:2px solid transparent;box-shadow:inset 0 0 0 1px rgba(201,146,74,0.2);"></div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="background:var(--cream);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;border:1px solid rgba(27,42,74,0.07);">
+              <img src="https://placehold.co/40x40/7BAA8F/FDFBF7?text=B" style="width:40px;height:40px;border-radius:8px;" alt="">
+              <div style="flex:1;"><div style="font-size:13px;font-weight:600;color:var(--navy);font-family:'Plus Jakarta Sans',sans-serif;">Bruschetta al Pomodoro</div><div style="font-size:11px;color:rgba(27,42,74,0.4);font-family:'Plus Jakarta Sans',sans-serif;">Przystawki</div></div>
+              <div style="font-family:'Playfair Display',serif;font-size:14px;font-weight:600;color:var(--navy);">22 zł</div>
+              <div class="toggle" style="background:var(--sage);"><div class="toggle-thumb" style="left:20px;"></div></div>
+              <button style="background:none;border:none;cursor:pointer;color:rgba(27,42,74,0.3);font-size:15px;" onmouseover="this.style.color='var(--navy)'" onmouseout="this.style.color='rgba(27,42,74,0.3)'">✎</button>
+            </div>
+            <div style="background:var(--cream);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;border:1px solid rgba(27,42,74,0.07);">
+              <img src="https://placehold.co/40x40/C9924A/FDFBF7?text=C" style="width:40px;height:40px;border-radius:8px;" alt="">
+              <div style="flex:1;"><div style="font-size:13px;font-weight:600;color:var(--navy);font-family:'Plus Jakarta Sans',sans-serif;">Carpaccio di Manzo</div><div style="font-size:11px;color:rgba(27,42,74,0.4);font-family:'Plus Jakarta Sans',sans-serif;">Przystawki</div></div>
+              <div style="font-family:'Playfair Display',serif;font-size:14px;font-weight:600;color:var(--navy);">38 zł</div>
+              <div class="toggle" style="background:var(--sage);"><div class="toggle-thumb" style="left:20px;"></div></div>
+              <button style="background:none;border:none;cursor:pointer;color:rgba(27,42,74,0.3);font-size:15px;" onmouseover="this.style.color='var(--navy)'" onmouseout="this.style.color='rgba(27,42,74,0.3)'">✎</button>
+            </div>
+            <div style="background:var(--cream);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;border:1px solid rgba(27,42,74,0.07);opacity:0.55;">
+              <img src="https://placehold.co/40x40/EDE5D8/1B2A4A?text=S" style="width:40px;height:40px;border-radius:8px;" alt="">
+              <div style="flex:1;"><div style="font-size:13px;font-weight:600;color:var(--navy);font-family:'Plus Jakarta Sans',sans-serif;">Salmone Affumicato</div><div style="font-size:11px;color:rgba(27,42,74,0.4);font-family:'Plus Jakarta Sans',sans-serif;">Przystawki · <span style="color:rgba(201,146,74,0.8);">niedostępne</span></div></div>
+              <div style="font-family:'Playfair Display',serif;font-size:14px;font-weight:600;color:var(--navy);">44 zł</div>
+              <div class="toggle" style="background:rgba(27,42,74,0.12);"><div class="toggle-thumb" style="left:3px;"></div></div>
+              <button style="background:none;border:none;cursor:pointer;color:rgba(27,42,74,0.3);font-size:15px;" onmouseover="this.style.color='var(--navy)'" onmouseout="this.style.color='rgba(27,42,74,0.3)'">✎</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-rule" style="margin:0 24px;"></div>
+
+<!-- ═══ CENNIK ═══ -->
+<section id="cennik" style="background:var(--cream);padding:128px 24px;">
+  <div style="max-width:1000px;margin:0 auto;">
+    <div class="reveal" style="text-align:center;margin-bottom:64px;">
+      <span class="eyebrow eyebrow-gold"><span class="eyebrow-dot"></span>Abonament</span>
+      <h2 style="font-size:clamp(2.2rem,5.5vw,3.8rem);font-weight:500;color:var(--navy);line-height:1.08;letter-spacing:-0.03em;margin-top:18px;">
+        Prosty cennik,<br><em style="color:var(--gold);">bez ukrytych</em> opłat
+      </h2>
+    </div>
+    <div class="price-grid reveal" style="display:grid;grid-template-columns:repeat(2,1fr);gap:20px;align-items:center;max-width:740px;margin:0 auto;">
+
+      <!-- ABONAMENT -->
+      <div class="price-card">
+        <div style="margin-bottom:24px;">
+          <div style="font-size:10.5px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(27,42,74,0.4);margin-bottom:10px;font-family:'Plus Jakarta Sans',sans-serif;">Abonament miesięczny</div>
+          <div style="display:flex;align-items:baseline;gap:4px;">
+            <span style="font-family:'Playfair Display',serif;font-size:3.4rem;font-weight:600;color:var(--navy);">49</span>
+            <span style="color:rgba(27,42,74,0.4);font-size:14px;font-family:'Plus Jakarta Sans',sans-serif;">zł / mies</span>
+          </div>
+          <p style="font-size:13px;color:rgba(27,42,74,0.5);margin-top:8px;line-height:1.55;font-family:'Plus Jakarta Sans',sans-serif;">Pełny dostęp do edytora AI. Anuluj kiedy chcesz.</p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:28px;">
+          <div class="price-check"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="7" cy="7" r="6" fill="var(--sage-pale)"/><path d="M4.5 7l2 2 3-3" stroke="var(--sage)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Edytor AI — nieograniczone menu</div>
+          <div class="price-check"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="7" cy="7" r="6" fill="var(--sage-pale)"/><path d="M4.5 7l2 2 3-3" stroke="var(--sage)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Analiza zdjęć papierowego menu</div>
+          <div class="price-check"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="7" cy="7" r="6" fill="var(--sage-pale)"/><path d="M4.5 7l2 2 3-3" stroke="var(--sage)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Link publiczny + kod QR</div>
+          <div class="price-check"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="7" cy="7" r="6" fill="var(--sage-pale)"/><path d="M4.5 7l2 2 3-3" stroke="var(--sage)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Eksport HTML gotowy do wklejenia</div>
+        </div>
+        <a href="/editor" class="btn-outline" style="width:100%;justify-content:center;font-size:14px;">Zacznij teraz</a>
+      </div>
+
+      <!-- WYKUP STRONY -->
+      <div class="price-card featured" style="transform:translateY(-8px);">
+        <div style="position:absolute;top:-1px;left:50%;transform:translateX(-50%);">
+          <div style="background:var(--gold);color:white;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:4px 14px;border-radius:0 0 10px 10px;font-family:'Plus Jakarta Sans',sans-serif;">Najpopularniejszy</div>
+        </div>
+        <div style="margin-bottom:24px;margin-top:16px;">
+          <div style="font-size:10.5px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;font-family:'Plus Jakarta Sans',sans-serif;">Wykup strony — raz na zawsze</div>
+          <div style="display:flex;align-items:baseline;gap:4px;">
+            <span style="font-family:'Playfair Display',serif;font-size:3.4rem;font-weight:600;color:var(--navy);">500</span>
+            <span style="color:rgba(27,42,74,0.4);font-size:14px;font-family:'Plus Jakarta Sans',sans-serif;">zł jednorazowo</span>
+          </div>
+          <p style="font-size:13px;color:rgba(27,42,74,0.5);margin-top:8px;line-height:1.55;font-family:'Plus Jakarta Sans',sans-serif;">Płacisz raz — korzystasz zawsze. Żadnych subskrypcji.</p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:28px;">
+          <div class="price-check"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="7" cy="7" r="6" fill="var(--sage-pale)"/><path d="M4.5 7l2 2 3-3" stroke="var(--sage)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Wszystko z planu miesięcznego</div>
+          <div class="price-check"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="7" cy="7" r="6" fill="var(--sage-pale)"/><path d="M4.5 7l2 2 3-3" stroke="var(--sage)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Dostęp dożywotni — bez opłat</div>
+          <div class="price-check"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="7" cy="7" r="6" fill="var(--sage-pale)"/><path d="M4.5 7l2 2 3-3" stroke="var(--sage)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Własna domena restauracji</div>
+          <div class="price-check"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="7" cy="7" r="6" fill="var(--sage-pale)"/><path d="M4.5 7l2 2 3-3" stroke="var(--sage)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Panel admina bez limitu</div>
+          <div class="price-check"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="7" cy="7" r="6" fill="var(--sage-pale)"/><path d="M4.5 7l2 2 3-3" stroke="var(--sage)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Priorytetowe wsparcie techniczne</div>
+        </div>
+        <a href="/editor" class="btn-navy" style="width:100%;justify-content:center;font-size:14px;">Wykup dostęp</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CTA ═══ -->
+<section style="background:var(--sage-pale);padding:96px 24px;text-align:center;position:relative;overflow:hidden;">
+  <div style="position:absolute;inset:0;background:radial-gradient(ellipse 60% 80% at 50% 50%,rgba(123,170,143,0.15) 0%,transparent 70%);pointer-events:none;"></div>
+  <div style="max-width:620px;margin:0 auto;position:relative;z-index:1;">
+    <div class="reveal">
+      <span class="eyebrow" style="margin-bottom:24px;display:inline-flex;"><span class="eyebrow-dot"></span>Zacznij teraz</span>
+      <h2 style="font-size:clamp(2.2rem,5.5vw,3.8rem);font-weight:500;color:var(--navy);line-height:1.08;letter-spacing:-0.03em;margin:18px 0 20px;">
+        Gotowy na <em style="color:var(--sage);">cyfrowe</em> menu?
+      </h2>
+      <p style="font-size:1.05rem;color:rgba(27,42,74,0.55);line-height:1.7;font-weight:300;margin-bottom:36px;">Pierwsza generacja menu gratis. Żadna karta kredytowa nie jest wymagana na start.</p>
+      <a href="/editor" class="btn-sage" style="padding:15px 36px;font-size:15px;">
+        Generuj pierwsze menu
+        <span class="icon-ring" style="width:28px;height:28px;">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 9L9 2M9 2H3M9 2V8" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer style="background:var(--navy);padding:56px 24px 32px;">
+  <div style="max-width:1080px;margin:0 auto;">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:40px;margin-bottom:48px;">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+          <svg width="28" height="28" viewBox="0 0 40 40" fill="none">
+            <ellipse cx="20" cy="28.5" rx="13.5" ry="3.8" stroke="#C9924A" stroke-width="1.5" fill="none"/>
+            <line x1="20" y1="28.5" x2="20" y2="36" stroke="#C9924A" stroke-width="1.5"/>
+            <line x1="13" y1="36" x2="27" y2="36" stroke="#C9924A" stroke-width="1.5" stroke-linecap="round"/>
+            <rect x="13" y="3.5" width="14" height="23" rx="3" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" fill="none"/>
+            <path d="M17 13.5 Q20 9.5 23 13.5" stroke="#A3C4B0" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+            <circle cx="20" cy="13" r="1" fill="#A3C4B0"/>
+            <line x1="16" y1="15" x2="24" y2="15" stroke="#A3C4B0" stroke-width="1.2" stroke-linecap="round"/>
+            <line x1="16" y1="18.5" x2="24" y2="18.5" stroke="#A3C4B0" stroke-width="1" stroke-linecap="round"/>
+          </svg>
+          <span style="font-family:'Playfair Display',serif;font-size:18px;font-weight:500;color:white;">Tableo</span>
+        </div>
+        <p style="font-size:13px;color:rgba(255,255,255,0.35);line-height:1.7;font-weight:300;max-width:220px;">Zamień papierowe menu na cyfrowe w 2 minuty — dzięki AI od Claude.</p>
+      </div>
+      <div>
+        <div style="font-size:10.5px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.25);margin-bottom:16px;font-family:'Plus Jakarta Sans',sans-serif;">Produkt</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <a href="#jak-dziala" style="font-size:13px;color:rgba(255,255,255,0.5);text-decoration:none;font-family:'Plus Jakarta Sans',sans-serif;transition:color 150ms ease;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">Jak działa</a>
+          <a href="#cennik"     style="font-size:13px;color:rgba(255,255,255,0.5);text-decoration:none;font-family:'Plus Jakarta Sans',sans-serif;transition:color 150ms ease;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">Cennik</a>
+          <a href="#panel"      style="font-size:13px;color:rgba(255,255,255,0.5);text-decoration:none;font-family:'Plus Jakarta Sans',sans-serif;transition:color 150ms ease;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">Panel admina</a>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:10.5px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.25);margin-bottom:16px;font-family:'Plus Jakarta Sans',sans-serif;">Kontakt</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <a href="#" style="font-size:13px;color:rgba(255,255,255,0.5);text-decoration:none;font-family:'Plus Jakarta Sans',sans-serif;transition:color 150ms ease;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">kontakt@tableo.pl</a>
+          <a href="#" style="font-size:13px;color:rgba(255,255,255,0.5);text-decoration:none;font-family:'Plus Jakarta Sans',sans-serif;transition:color 150ms ease;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">Wsparcie techniczne</a>
+        </div>
+      </div>
+    </div>
+    <div style="border-top:1px solid rgba(255,255,255,0.07);padding-top:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+      <span style="font-size:12px;color:rgba(255,255,255,0.2);font-family:'Plus Jakarta Sans',sans-serif;">© 2025 Tableo. Wszystkie prawa zastrzeżone.</span>
+      <span style="font-size:12px;color:rgba(255,255,255,0.2);font-family:'Plus Jakarta Sans',sans-serif;">Powered by Claude · Anthropic</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ── Nav scroll ──────────────────────────────────────────────────────
+  const navPill = document.getElementById('navPill');
+  window.addEventListener('scroll', () => navPill.classList.toggle('scrolled', window.scrollY > 60), { passive: true });
+
+  // ── Reveal on scroll ────────────────────────────────────────────────
+  const revObs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); revObs.unobserve(e.target); } });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => revObs.observe(el));
+
+  // ── Phone showcase (GSAP) ───────────────────────────────────────────
+  (function initPhoneShowcase() {
+    const section = document.getElementById('phone-showcase');
+    if (!section || typeof gsap === 'undefined') return;
+    gsap.registerPlugin(ScrollTrigger);
+    const mockup = document.getElementById('ps-mockup');
+    const badges = document.querySelectorAll('.ps-badge');
+    const items  = document.querySelectorAll('.ps-phone-item');
+    const iphone = mockup?.querySelector('.ch-iphone');
+    let rafId = 0;
+
+    gsap.set(mockup, { y: 120, rotationX: 18, autoAlpha: 0, scale: 0.88 });
+    gsap.set(badges, { y: 30, autoAlpha: 0, scale: 0.85 });
+    gsap.set(items,  { x: 20, autoAlpha: 0 });
+
+    const tl = gsap.timeline({
+      scrollTrigger: { trigger: section, start: 'top top', end: '+=2200', pin: true, scrub: 0.8, anticipatePin: 1 }
+    });
+    tl
+      .to(mockup, { y: 0, rotationX: 0, autoAlpha: 1, scale: 1, ease: 'expo.out', duration: 2 }, 0)
+      .to(items,  { x: 0, autoAlpha: 1, ease: 'power3.out', duration: 1.2, stagger: 0.1 }, 0)
+      .to(badges, { y: 0, autoAlpha: 1, scale: 1, ease: 'back.out(1.4)', duration: 1, stagger: 0.25 }, 0.8)
+      .to({}, { duration: 1.5 })
+      .to(mockup, { y: -60, autoAlpha: 0, scale: 0.94, ease: 'power3.in', duration: 1.2 })
+      .to(badges, { y: -20, autoAlpha: 0, scale: 0.9,  ease: 'power3.in', duration: 0.8 }, '<');
+
+    if (iphone) {
+      window.addEventListener('mousemove', e => {
+        cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(() => {
+          const rect = section.getBoundingClientRect();
+          if (rect.bottom < 0 || rect.top > window.innerHeight) return;
+          gsap.to(iphone, { rotationY: (e.clientX/window.innerWidth-0.5)*16, rotationX: -(e.clientY/window.innerHeight-0.5)*12, ease: 'power2.out', duration: 1.4 });
+        });
+      });
+    }
+  })();
+
+  // ── Chat ────────────────────────────────────────────────────────────
+  const SYSTEM_PROMPT = `Jesteś asystentem AI platformy Tableo — systemu do tworzenia cyfrowych menu restauracji.
+
+Twoje główne zadania:
+- Gdy użytkownik wyśle zdjęcie papierowego menu: przeanalizuj je dokładnie, wyodrębnij wszystkie pozycje z podziałem na kategorie, nazwy dań, opisy i ceny.
+- Odpowiadaj na pytania dotyczące menu restauracji.
+- Pomagaj edytować, dodawać lub usuwać pozycje z menu.
+- Na życzenie generuj gotowy kod HTML strony z menu.
+
+Formatuj odpowiedzi czytelnie. Używaj pogrubień dla nazw dań. Zawsze odpowiadaj po polsku. Bądź zwięzły i pomocny.`;
+
+  let conversationHistory = [];
+  let pendingImageBase64 = null;
+  let pendingImageType = null;
+  let isSending = false;
+
+  const chatMessages = document.getElementById('chatMessages');
+  const chatInput    = document.getElementById('chatInput');
+  const sendBtn      = document.getElementById('sendBtn');
+  const statusDot    = document.getElementById('status-dot');
+  const statusText   = document.getElementById('status-text');
+
+  function scrollToBottom() {
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function addMessage(role, html, imageUrl = null) {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;gap:8px;align-items:flex-start;';
+
+    if (role === 'ai') {
+      wrap.innerHTML = `
+        <div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--sage),var(--navy));flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:white;margin-top:2px;">✨</div>
+        <div class="chat-bubble-ai">${html}</div>`;
+    } else {
+      const imgPart = imageUrl ? `<img src="${imageUrl}" style="display:block;width:100%;max-width:200px;border-radius:8px;margin-bottom:6px;" alt="">` : '';
+      const textPart = html ? `<span>${html}</span>` : '';
+      wrap.innerHTML = `<div class="chat-bubble-user" style="margin-left:auto;">${imgPart}${textPart}</div>`;
+      wrap.style.justifyContent = 'flex-end';
+    }
+    chatMessages.appendChild(wrap);
+    scrollToBottom();
+    return wrap;
+  }
+
+  function addTyping() {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;gap:8px;align-items:flex-start;';
+    wrap.id = 'typingIndicator';
+    wrap.innerHTML = `
+      <div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--sage),var(--navy));flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:white;margin-top:2px;">✨</div>
+      <div class="chat-bubble-ai" style="padding:12px 16px;">
+        <span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>
+      </div>`;
+    chatMessages.appendChild(wrap);
+    scrollToBottom();
+    return wrap;
+  }
+
+  function setStatus(text, color) {
+    statusDot.style.color = color;
+    statusText.textContent = text;
+  }
+
+  function setLoading(loading) {
+    isSending = loading;
+    sendBtn.disabled = loading;
+    sendBtn.style.opacity = loading ? '0.5' : '1';
+    if (loading) {
+      setStatus('pisze...', '#F59E0B');
+    } else {
+      setStatus('gotowy', '#4ade80');
+    }
+  }
+
+  // ── Smart demo responses (no API needed) ───────────────────────────
+  const menuExample = `<strong>✅ Gotowe! Wygenerowałem cyfrowe menu:</strong><br><br>
+<strong>🥗 Przystawki</strong><br>
+• Bruschetta al Pomodoro — 22 zł<br>
+• Carpaccio di Manzo — 38 zł<br>
+• Burrata con Prosciutto — 46 zł<br><br>
+<strong>🍝 Makarony</strong><br>
+• Spaghetti Carbonara — 34 zł<br>
+• Tagliatelle al Ragù — 36 zł<br>
+• Penne all'Arrabbiata — 28 zł<br><br>
+<strong>🍖 Dania główne</strong><br>
+• Tagliata di Manzo — 68 zł<br>
+• Branzino al Forno — 54 zł<br><br>
+<strong>🍰 Desery</strong><br>
+• Tiramisù — 22 zł<br>
+• Panna cotta — 18 zł<br><br>
+Link do menu: <strong>menu.twoja-restauracja.pl</strong> 🎉`;
+
+  function getDemoReply(text, hasImage) {
+    const t = text.toLowerCase();
+    if (hasImage) return { delay: 2800, text: menuExample };
+    if (t.includes('cen') || t.includes('kosztuj') || t.includes('ile')) return { delay: 1200, text: 'Ceny abonamentów zaczynają się od <strong>49 zł / miesiąc</strong> (plan Starter). Pierwsza generacja menu jest całkowicie <strong>bezpłatna</strong> — bez karty kredytowej. 🎁' };
+    if (t.includes('zmień') || t.includes('zmien') || t.includes('edytuj') || t.includes('cen') || t.includes('zł')) return { delay: 1400, text: 'Gotowe! ✅ Zaktualizowałem cenę. Zmiana jest widoczna natychmiast dla wszystkich odwiedzających Twoje menu. Możesz też edytować dowolną pozycję w panelu admina.' };
+    if (t.includes('dodaj') || t.includes('nową') || t.includes('nowa') || t.includes('pozycj')) return { delay: 1600, text: 'Dodałem nową pozycję do menu! ✅ Aby trwale zapisać zmiany, przejdź do panelu admina → Dodaj pozycję. Możesz tam też dodać zdjęcie dania i opis alergenów.' };
+    if (t.includes('usuń') || t.includes('usun') || t.includes('usuwa')) return { delay: 1200, text: 'Pozycja usunięta ✅. Zmiana widoczna natychmiast. Jeśli chcesz tylko tymczasowo ukryć danie (np. sezonowe), użyj przełącznika dostępności w panelu admina zamiast usuwania.' };
+    if (t.includes('kolor') || t.includes('tło') || t.includes('wyglad') || t.includes('wygląd')) return { delay: 1300, text: 'Kolor tła możesz zmienić w <strong>panelu admina → Wygląd → Kolor tła</strong>. Dostępne są gotowe palety oraz własny kolor (hex). Zmiana widoczna live dla wszystkich gości. 🎨' };
+    if (t.includes('qr') || t.includes('kod')) return { delay: 1100, text: 'Kod QR generujesz automatycznie w panelu admina → Pobierz QR. Dostępny w formacie PDF gotowym do druku — możesz go umieścić na stoliku, drzwiach lub witrynie. 📱' };
+    if (t.includes('html') || t.includes('kod') || t.includes('strona')) return { delay: 2000, text: 'Oto szkielet HTML Twojego menu:<br><br><code style="background:rgba(27,42,74,0.06);padding:8px;border-radius:6px;display:block;font-size:11px;line-height:1.7">&lt;section class="menu"&gt;<br>&nbsp;&nbsp;&lt;h2&gt;Przystawki&lt;/h2&gt;<br>&nbsp;&nbsp;&lt;div class="item"&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;span&gt;Bruschetta&lt;/span&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;price&gt;22 zł&lt;/price&gt;<br>&nbsp;&nbsp;&lt;/div&gt;<br>&lt;/section&gt;</code><br><br>Pełny kod możesz pobrać z panelu admina.' };
+    if (t.includes('jak') || t.includes('działa') || t.includes('co')) return { delay: 1200, text: 'Działam tak: <strong>(1)</strong> Wysyłasz mi zdjęcie papierowego menu lub opisujesz je tekstem. <strong>(2)</strong> Wyodrębniam wszystkie pozycje, kategorie i ceny. <strong>(3)</strong> Tworzę gotowe menu online z unikalnym linkiem. Zmiany możesz wprowadzać przez panel admina. 🚀' };
+    if (t.length < 5) return { delay: 800, text: 'Możesz wysłać mi zdjęcie swojego papierowego menu albo opisać co chcesz zrobić — np. "dodaj pozycję", "zmień cenę", "wygeneruj menu włoskie". 😊' };
+    return { delay: 1500, text: `Rozumiem! Pracuję nad Twoim zapytaniem...<br><br>Aby w pełni skorzystać z możliwości AI, wyślij zdjęcie swojego menu lub skorzystaj z przykładowych poleceń po prawej stronie. Mogę też <strong>wygenerować przykładowe menu</strong> dla Twojej restauracji — wystarczy podać kuchnię i liczbę pozycji. 🍽️` };
+  }
+
+  async function sendMessage() {
+    if (isSending) return;
+    const text = chatInput.value.trim();
+    if (!text && !pendingImageBase64) return;
+
+    const hasImage = !!pendingImageBase64;
+    const displayImg = hasImage ? 'data:' + pendingImageType + ';base64,' + pendingImageBase64 : null;
+
+    addMessage('user', text, displayImg);
+    chatInput.value = '';
+    chatInput.style.height = '44px';
+    removeImage();
+
+    setLoading(true);
+    const typing = addTyping();
+
+    const { delay, text: reply } = getDemoReply(text, hasImage);
+    await new Promise(r => setTimeout(r, delay));
+
+    typing.remove();
+    addMessage('ai', reply);
+    setLoading(false);
+  }
+
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+    // Auto-resize textarea
+    chatInput.style.height = '44px';
+    chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
+  }
+
+  function handleImageSelect(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const dataUrl = ev.target.result;
+      const comma = dataUrl.indexOf(',');
+      pendingImageBase64 = dataUrl.substring(comma + 1);
+      pendingImageType = file.type || 'image/jpeg';
+      document.getElementById('imgPreviewThumb').src = dataUrl;
+      document.getElementById('imagePreviewArea').style.display = 'block';
+      document.getElementById('imagePreviewArea').style.padding = '8px 16px 0';
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  }
+
+  function removeImage() {
+    pendingImageBase64 = null;
+    pendingImageType = null;
+    document.getElementById('imagePreviewArea').style.display = 'none';
+    document.getElementById('imgPreviewThumb').src = '';
+  }
+
+  function clearChat() {
+    conversationHistory = [];
+    chatMessages.innerHTML = `
+      <div style="display:flex;gap:8px;align-items:flex-start;">
+        <div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--sage),var(--navy));flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:white;margin-top:2px;">✨</div>
+        <div class="chat-bubble-ai">Cześć! Jestem AI od Tableo. Wyślij mi zdjęcie swojego papierowego menu — stworzę z niego profesjonalną wersję cyfrową. 📸<br><br>Możesz też po prostu opisać swoje menu tekstem.</div>
+      </div>`;
+    removeImage();
+  }
+
+  function useSuggestion(el) {
+    const text = el.textContent.replace(/^"|"$/g, '');
+    chatInput.value = text;
+    chatInput.focus();
+    chatInput.style.height = '44px';
+    chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
+  }
+</script>
+</body>
+</html>

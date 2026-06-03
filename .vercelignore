@@ -1,0 +1,7 @@
+node_modules/
+serve.mjs
+screenshot.mjs
+screenshot-scroll.mjs
+screenshot-section.mjs
+temporary screenshots/
+CLAUDE.md

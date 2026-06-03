@@ -1,0 +1,1483 @@
+﻿<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edytor — Tableo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://accounts.google.com/gsi/client" async></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+
+  <style>
+    :root {
+      --navy:      #1B2A4A; --navy-deep: #0f1d33; --navy-mid: #243761;
+      --sage:      #7BAA8F; --sage-light:#A3C4B0; --sage-pale:#EAF3EE;
+      --gold:      #C9924A; --gold-light:#D4A574; --gold-pale:#FBF3E8;
+      --cream:     #FDFBF7; --cream-mid: #F5EFE4; --cream-dark:#EDE5D8;
+      --ease-out:  cubic-bezier(0.23,1,0.32,1);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--cream);color:var(--navy);-webkit-font-smoothing:antialiased;}
+    h1,h2,h3,h4{font-family:'Playfair Display',serif;}
+
+    body::after{content:'';position:fixed;inset:0;z-index:9999;pointer-events:none;opacity:0.015;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");}
+
+    /* ── Login ── */
+    #loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
+      background:var(--cream);
+      background-image:radial-gradient(ellipse 70% 60% at 80% 10%,rgba(123,170,143,.09) 0%,transparent 55%),
+                       radial-gradient(ellipse 50% 50% at 15% 90%,rgba(201,146,74,.07) 0%,transparent 55%);}
+
+    /* ── Editor ── */
+    #editorScreen{display:none;min-height:100vh;}
+
+    /* ── Top bar ── */
+    .top-bar{position:fixed;top:0;left:0;right:0;z-index:200;height:58px;
+      background:rgba(253,251,247,.93);backdrop-filter:blur(20px);
+      border-bottom:1px solid rgba(27,42,74,.08);
+      display:flex;align-items:center;padding:0 24px;justify-content:space-between;}
+
+    /* ── Trial badge ── */
+    .trial-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:100px;
+      font-size:11px;font-weight:700;letter-spacing:.05em;}
+    .trial-ok   {background:rgba(123,170,143,.12);color:var(--sage);}
+    .trial-warn {background:rgba(201,146,74,.12);color:var(--gold);}
+    .trial-end  {background:rgba(239,68,68,.1);color:#DC2626;}
+
+    /* ── Fields ── */
+    .field{width:100%;padding:11px 14px;border:1.5px solid rgba(27,42,74,.13);border-radius:12px;
+      font-family:'Plus Jakarta Sans',sans-serif;font-size:13.5px;color:var(--navy);
+      background:white;outline:none;transition:border-color 180ms ease,box-shadow 180ms ease;resize:none;}
+    .field:focus{border-color:var(--sage);box-shadow:0 0 0 3px rgba(123,170,143,.12);}
+    .field::placeholder{color:rgba(27,42,74,.3);}
+    select.field{cursor:pointer;-webkit-appearance:none;appearance:none;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%231B2A4A' stroke-opacity='.4' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;}
+    .field-label{display:block;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(27,42,74,.45);margin-bottom:7px;}
+
+    /* ── Drop zone ── */
+    .drop-zone{border:2px dashed rgba(123,170,143,.35);border-radius:20px;background:white;
+      transition:all 220ms var(--ease-out);cursor:pointer;user-select:none;}
+    .drop-zone:hover{border-color:var(--sage);background:rgba(234,243,238,.5);}
+    .drop-zone.drag-over{border-color:var(--sage);background:var(--sage-pale);transform:scale(1.01);}
+    .drop-zone.has-images{border-style:solid;border-color:rgba(123,170,143,.3);}
+
+    /* ── Thumb ── */
+    .img-thumb{position:relative;border-radius:12px;overflow:hidden;border:2px solid rgba(27,42,74,.07);
+      flex-shrink:0;background:var(--cream-mid);box-shadow:0 2px 12px rgba(27,42,74,.08);}
+    .img-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+    .img-thumb-remove{position:absolute;top:5px;right:5px;width:22px;height:22px;
+      background:rgba(15,29,51,.85);color:white;border:none;border-radius:50%;cursor:pointer;font-size:12px;
+      display:flex;align-items:center;justify-content:center;transition:background 150ms ease;}
+    .img-thumb-remove:hover{background:var(--navy);}
+
+    /* ── Buttons ── */
+    .btn-primary{display:flex;align-items:center;justify-content:center;gap:9px;
+      background:var(--navy);color:white;padding:14px 28px;border-radius:100px;
+      font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:600;
+      border:none;cursor:pointer;width:100%;
+      box-shadow:0 4px 24px rgba(27,42,74,.22);
+      transition:transform 200ms var(--ease-out),box-shadow 200ms var(--ease-out),background 150ms ease;}
+    .btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 36px rgba(27,42,74,.3);background:var(--navy-mid);}
+    .btn-primary:active{transform:scale(.98);}
+    .btn-primary:disabled{opacity:.55;cursor:not-allowed;transform:none!important;box-shadow:none;}
+
+    .btn-outline{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+      background:transparent;color:var(--navy);padding:11px 20px;border-radius:100px;
+      font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:500;
+      border:1.5px solid rgba(27,42,74,.18);cursor:pointer;
+      transition:background 180ms ease,border-color 180ms ease,transform 200ms var(--ease-out);}
+    .btn-outline:hover{background:rgba(27,42,74,.04);border-color:rgba(27,42,74,.32);transform:translateY(-1px);}
+
+    /* ── Card ── */
+    .card{background:white;border-radius:20px;padding:28px;
+      border:1px solid rgba(27,42,74,.08);
+      box-shadow:0 2px 18px rgba(27,42,74,.05),0 1px 0 rgba(255,255,255,.9) inset;}
+
+    /* ── Eyebrow ── */
+    .eyebrow{display:inline-flex;align-items:center;gap:7px;background:var(--sage-pale);
+      border:1px solid rgba(123,170,143,.28);border-radius:100px;padding:4px 12px;
+      font-size:10px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--sage);}
+    .eyebrow-dot{width:5px;height:5px;border-radius:50%;background:currentColor;}
+
+    /* ── iPhone 17 Pro mockup ── */
+    .phone-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;flex-shrink:0;}
+    .iphone{
+      position:relative;width:272px;height:570px;
+      background:linear-gradient(160deg,#2c2c2e 0%,#1c1c1e 40%,#141414 100%);
+      border-radius:46px;
+      box-shadow:0 0 0 1px #3a3a3c,0 0 0 2px #111,0 40px 100px rgba(0,0,0,.55),0 0 80px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.08);
+    }
+    /* Side buttons */
+    .iphone::before{content:'';position:absolute;left:-3px;top:112px;width:3px;height:28px;background:linear-gradient(#3a3a3c,#2c2c2e);border-radius:3px 0 0 3px;box-shadow:-1px 0 4px rgba(0,0,0,.4);}
+    .iphone::after{content:'';position:absolute;right:-3px;top:150px;width:3px;height:68px;background:linear-gradient(#3a3a3c,#2c2c2e);border-radius:0 3px 3px 0;box-shadow:1px 0 4px rgba(0,0,0,.4);}
+    .btn-vol-up{position:absolute;left:-3px;top:152px;width:3px;height:36px;background:linear-gradient(#3a3a3c,#2c2c2e);border-radius:3px 0 0 3px;box-shadow:-1px 0 4px rgba(0,0,0,.4);}
+    .btn-vol-dn{position:absolute;left:-3px;top:198px;width:3px;height:36px;background:linear-gradient(#3a3a3c,#2c2c2e);border-radius:3px 0 0 3px;box-shadow:-1px 0 4px rgba(0,0,0,.4);}
+    /* Camera bar (top back - decorative on front) */
+    .iphone-screen-wrap{position:absolute;inset:9px;border-radius:38px;overflow:hidden;background:#000;}
+    .iphone-screen-inner{position:absolute;inset:0;overflow:hidden;border-radius:38px;}
+    .dynamic-island{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:100px;height:29px;background:#000;border-radius:20px;z-index:20;box-shadow:0 0 0 1px rgba(255,255,255,.05);}
+    .status-time{position:absolute;top:12px;left:22px;font-family:'-apple-system','SF Pro Display',sans-serif;font-size:13px;font-weight:700;color:white;letter-spacing:-.3px;z-index:19;}
+    .status-icons{position:absolute;top:13px;right:18px;display:flex;gap:4px;align-items:center;z-index:19;}
+    .menu-iframe{position:absolute;top:0;left:0;width:390px;height:848px;border:none;transform:scale(0.651);transform-origin:top left;background:#0d1520;}
+    /* USB-C port */
+    .usbc{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:40px;height:5px;background:#111;border-radius:3px;border:1px solid #333;}
+
+    /* ── Menu preview ── */
+    .menu-item-row{display:flex;justify-content:space-between;align-items:flex-start;padding:13px 0;border-bottom:1px solid rgba(27,42,74,.05);gap:16px;}
+    .menu-item-row:last-child{border-bottom:none;padding-bottom:0;}
+
+    /* ── Upgrade banner ── */
+    .upgrade-banner{background:linear-gradient(135deg,var(--navy),var(--navy-mid));color:white;
+      padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+
+    /* ── Google button wrapper ── */
+    #googleBtnWrap{display:flex;justify-content:center;margin:4px 0;}
+    #googleBtnWrap iframe{border-radius:100px!important;}
+
+    /* ── Animations ── */
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .spin{animation:spin .75s linear infinite;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+    .fade-up{animation:fadeUp .55s var(--ease-out) both;}
+    @keyframes shimmer{to{background-position:-200% 0}}
+    .skel{background:linear-gradient(90deg,rgba(27,42,74,.06) 25%,rgba(27,42,74,.1) 50%,rgba(27,42,74,.06) 75%);
+      background-size:200% 100%;border-radius:6px;animation:shimmer 1.4s infinite;}
+
+    /* ── Magic button ── */
+    @keyframes magicGrad{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+    @keyframes magicGlow{0%,100%{box-shadow:0 4px 24px rgba(27,42,74,.22)}50%{box-shadow:0 6px 36px rgba(201,146,74,.45),0 0 0 3px rgba(201,146,74,.12)}}
+    @keyframes starPop{0%{transform:scale(0) rotate(0deg);opacity:1}100%{transform:scale(1.4) rotate(180deg);opacity:0}}
+    .btn-magic{
+      background:linear-gradient(270deg,#1B2A4A,#2a4a7a,#C9924A,#7BAA8F,#1B2A4A);
+      background-size:400% 400%;
+      animation:magicGrad 5s ease infinite,magicGlow 3s ease-in-out infinite;
+      transition:transform 200ms var(--ease-out);}
+    .btn-magic:hover{transform:translateY(-3px)!important;}
+    .btn-magic:active{transform:scale(.97)!important;}
+    .btn-magic:disabled{animation:none!important;background:rgba(27,42,74,.3)!important;}
+
+    /* ── Magic loader ── */
+    @keyframes orbitA{from{transform:rotate(0deg) translateX(34px)}to{transform:rotate(360deg) translateX(34px)}}
+    @keyframes orbitB{from{transform:rotate(120deg) translateX(26px)}to{transform:rotate(480deg) translateX(26px)}}
+    @keyframes orbitC{from{transform:rotate(240deg) translateX(20px)}to{transform:rotate(600deg) translateX(20px)}}
+    @keyframes pulseStar{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(1.18);opacity:1}}
+    @keyframes dotBlink{0%,80%,100%{opacity:.2}40%{opacity:1}}
+
+    @media(max-width:900px){.editor-grid{grid-template-columns:1fr!important;}}
+    @media(max-width:640px){.top-bar-email{display:none;}}
+  </style>
+</head>
+<body>
+
+<!-- ══════════════ LOGIN ══════════════ -->
+<div id="loginScreen">
+  <div style="width:100%;max-width:440px;">
+
+    <div style="text-align:center;margin-bottom:36px;">
+      <a href="/" style="display:inline-flex;align-items:center;gap:10px;text-decoration:none;margin-bottom:10px;">
+        <svg width="34" height="34" viewBox="0 0 40 40" fill="none">
+          <ellipse cx="20" cy="28.5" rx="13.5" ry="3.8" stroke="#C9924A" stroke-width="1.5" fill="none"/>
+          <line x1="20" y1="28.5" x2="20" y2="36" stroke="#C9924A" stroke-width="1.5"/>
+          <line x1="13" y1="36" x2="27" y2="36" stroke="#C9924A" stroke-width="1.5" stroke-linecap="round"/>
+          <rect x="13" y="3.5" width="14" height="23" rx="3" stroke="#1B2A4A" stroke-width="1.5" fill="none"/>
+          <path d="M17 13.5 Q20 9.5 23 13.5" stroke="#7BAA8F" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+          <circle cx="20" cy="13" r="1" fill="#7BAA8F"/>
+          <line x1="16" y1="15" x2="24" y2="15" stroke="#7BAA8F" stroke-width="1.2" stroke-linecap="round"/>
+          <line x1="16" y1="18.5" x2="24" y2="18.5" stroke="#7BAA8F" stroke-width="1" stroke-linecap="round"/>
+        </svg>
+        <span style="font-family:'Playfair Display',serif;font-size:22px;font-weight:500;color:var(--navy);">Tableo</span>
+      </a>
+      <p style="font-size:12.5px;color:rgba(27,42,74,.4);font-weight:300;">Edytor menu restauracji</p>
+    </div>
+
+    <div class="card" style="padding:0;overflow:hidden;">
+
+      <!-- Tabs -->
+      <div style="display:flex;border-bottom:1px solid rgba(27,42,74,.08);">
+        <button id="tabLogin" onclick="switchTab('login')"
+          style="flex:1;padding:16px 12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13.5px;font-weight:600;border:none;cursor:pointer;transition:all 180ms ease;background:var(--navy);color:white;border-radius:0;">
+          Zaloguj się
+        </button>
+        <button id="tabRegister" onclick="switchTab('register')"
+          style="flex:1;padding:16px 12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13.5px;font-weight:600;border:none;cursor:pointer;transition:all 180ms ease;background:transparent;color:rgba(27,42,74,.45);border-radius:0;">
+          Zarejestruj się
+        </button>
+      </div>
+
+      <div style="padding:32px 36px;">
+
+        <!-- Trial badge -->
+        <div style="display:flex;justify-content:center;margin-bottom:24px;">
+          <div style="display:inline-flex;align-items:center;gap:8px;background:var(--sage-pale);border:1px solid rgba(123,170,143,.3);border-radius:100px;padding:7px 16px;">
+            <span style="font-size:15px;">🎁</span>
+            <span style="font-size:12.5px;font-weight:600;color:var(--sage);">7 dni za darmo · bez karty kredytowej</span>
+          </div>
+        </div>
+
+        <!-- Error -->
+        <div id="loginError" style="display:none;background:#FEF2F2;border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#991B1B;font-weight:500;text-align:center;"></div>
+
+        <!-- ═══ LOGIN PANEL ═══ -->
+        <div id="panelLogin">
+          <!-- Google button -->
+          <div id="googleBtnWrap" style="min-height:44px;display:flex;align-items:center;justify-content:center;">
+            <div id="googleBtn"></div>
+          </div>
+          <div id="googleLoading" style="text-align:center;padding:10px 0;">
+            <div style="width:20px;height:20px;border:2px solid rgba(27,42,74,.1);border-top-color:var(--sage);border-radius:50%;margin:0 auto;animation:spin .8s linear infinite;"></div>
+          </div>
+
+          <!-- Divider -->
+          <div style="display:flex;align-items:center;gap:12px;margin:20px 0;">
+            <div style="flex:1;height:1px;background:rgba(27,42,74,.1);"></div>
+            <span style="font-size:11px;color:rgba(27,42,74,.3);font-weight:600;letter-spacing:.06em;text-transform:uppercase;">lub</span>
+            <div style="flex:1;height:1px;background:rgba(27,42,74,.1);"></div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px;">
+            <div>
+              <label class="field-label">Email</label>
+              <input id="loginEmail" type="email" class="field" placeholder="twoj@email.pl" autocomplete="email">
+            </div>
+            <div>
+              <label class="field-label">Hasło</label>
+              <input id="loginPassword" type="password" class="field" placeholder="••••••••" autocomplete="current-password">
+            </div>
+          </div>
+          <button id="loginBtn" class="btn-primary" style="background:var(--sage);box-shadow:0 4px 18px rgba(123,170,143,.28);" onclick="doEmailLogin()">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M2 7.5h11M8.5 3l4.5 4.5-4.5 4.5" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Zaloguj się przez email
+          </button>
+
+          <div style="margin-top:20px;text-align:center;">
+            <p style="font-size:12px;color:rgba(27,42,74,.4);">
+              Nie masz konta? &nbsp;<button onclick="switchTab('register')" style="background:none;border:none;cursor:pointer;color:var(--sage);font-weight:600;font-size:12px;font-family:'Plus Jakarta Sans',sans-serif;padding:0;">Zarejestruj się →</button>
+            </p>
+          </div>
+        </div>
+
+        <!-- ═══ REGISTER PANEL ═══ -->
+        <div id="panelRegister" style="display:none;">
+          <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;">
+            <div>
+              <label class="field-label">Email</label>
+              <input id="regEmail" type="email" class="field" placeholder="twoj@email.pl" autocomplete="email">
+            </div>
+            <div>
+              <label class="field-label">Hasło <span style="font-weight:400;opacity:.55;">(min. 6 znaków)</span></label>
+              <input id="regPassword" type="password" class="field" placeholder="••••••••" autocomplete="new-password">
+            </div>
+            <div>
+              <label class="field-label">Potwierdź hasło</label>
+              <input id="regPassword2" type="password" class="field" placeholder="••••••••" autocomplete="new-password">
+            </div>
+          </div>
+          <button id="registerBtn" class="btn-primary" style="background:var(--navy);box-shadow:0 4px 18px rgba(27,42,74,.2);" onclick="doRegister()">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 1v13M1 7.5h13" stroke="white" stroke-width="1.7" stroke-linecap="round"/></svg>
+            Utwórz konto
+          </button>
+
+          <div style="margin-top:20px;text-align:center;">
+            <p style="font-size:12px;color:rgba(27,42,74,.4);">
+              Masz już konto? &nbsp;<button onclick="switchTab('login')" style="background:none;border:none;cursor:pointer;color:var(--sage);font-weight:600;font-size:12px;font-family:'Plus Jakarta Sans',sans-serif;padding:0;">Zaloguj się →</button>
+            </p>
+          </div>
+        </div>
+
+        <div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(27,42,74,.07);text-align:center;">
+          <p style="font-size:12px;color:rgba(27,42,74,.4);">
+            Po 7 dniach możesz wybrać plan &nbsp;·&nbsp;
+            <a href="/#cennik" style="color:var(--sage);font-weight:600;text-decoration:none;">Zobacz cennik →</a>
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══════════════ EDITOR ══════════════ -->
+<div id="editorScreen">
+
+  <!-- Top bar -->
+  <div class="top-bar">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <a href="/" style="display:flex;align-items:center;gap:8px;text-decoration:none;flex-shrink:0;">
+        <svg width="26" height="26" viewBox="0 0 40 40" fill="none">
+          <ellipse cx="20" cy="28.5" rx="13.5" ry="3.8" stroke="#C9924A" stroke-width="1.5" fill="none"/>
+          <line x1="20" y1="28.5" x2="20" y2="36" stroke="#C9924A" stroke-width="1.5"/>
+          <line x1="13" y1="36" x2="27" y2="36" stroke="#C9924A" stroke-width="1.5" stroke-linecap="round"/>
+          <rect x="13" y="3.5" width="14" height="23" rx="3" stroke="#1B2A4A" stroke-width="1.5" fill="none"/>
+          <path d="M17 13.5 Q20 9.5 23 13.5" stroke="#7BAA8F" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+          <circle cx="20" cy="13" r="1" fill="#7BAA8F"/>
+          <line x1="16" y1="15" x2="24" y2="15" stroke="#7BAA8F" stroke-width="1.2" stroke-linecap="round"/>
+          <line x1="16" y1="18.5" x2="24" y2="18.5" stroke="#7BAA8F" stroke-width="1" stroke-linecap="round"/>
+        </svg>
+        <span style="font-family:'Playfair Display',serif;font-size:17px;font-weight:500;color:var(--navy);">Tableo</span>
+      </a>
+      <span style="color:rgba(27,42,74,.18);font-size:16px;">/</span>
+      <span style="font-size:13px;font-weight:600;color:var(--navy);">Edytor</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div id="trialBadge"></div>
+      <img id="userAvatar" src="" alt="" style="width:28px;height:28px;border-radius:50%;display:none;border:2px solid rgba(27,42,74,.1);">
+      <span id="userEmailDisplay" class="top-bar-email" style="font-size:12px;color:rgba(27,42,74,.4);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+      <button onclick="doLogout()"
+        style="font-size:12px;color:rgba(27,42,74,.55);background:none;border:1px solid rgba(27,42,74,.14);padding:6px 13px;border-radius:8px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-weight:500;transition:all 150ms ease;"
+        onmouseover="this.style.background='rgba(27,42,74,.05)';this.style.color='var(--navy)'"
+        onmouseout="this.style.background='none';this.style.color='rgba(27,42,74,.55)'">
+        Wyloguj
+      </button>
+    </div>
+  </div>
+
+  <!-- Upgrade banner (shown when trial expired) -->
+  <div id="upgradeBanner" style="display:none;margin-top:58px;">
+    <div class="upgrade-banner">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span style="font-size:20px;">⏰</span>
+        <div>
+          <div style="font-size:13px;font-weight:700;">Okres próbny dobiegł końca</div>
+          <div style="font-size:12px;color:rgba(255,255,255,.6);margin-top:2px;">Wybierz plan aby kontynuować korzystanie z edytora.</div>
+        </div>
+      </div>
+      <a href="/#cennik" style="background:var(--gold);color:white;padding:9px 20px;border-radius:100px;font-size:13px;font-weight:600;text-decoration:none;flex-shrink:0;transition:opacity 150ms ease;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+        Wybierz plan →
+      </a>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <div style="padding:80px 24px 60px;max-width:1120px;margin:0 auto;" id="editorMain">
+
+    <div style="margin-bottom:40px;">
+      <span class="eyebrow" style="margin-bottom:16px;display:inline-flex;"><span class="eyebrow-dot"></span>Generator AI</span>
+      <h1 style="font-size:clamp(1.9rem,4vw,2.8rem);font-weight:500;color:var(--navy);letter-spacing:-.03em;line-height:1.1;margin-top:12px;">Edytor menu</h1>
+      <p style="font-size:14px;color:rgba(27,42,74,.45);margin-top:10px;font-weight:300;max-width:480px;line-height:1.7;">
+        Wyślij zdjęcia papierowego menu — AI przeanalizuje je i stworzy gotowe menu cyfrowe.
+      </p>
+    </div>
+
+    <div class="editor-grid" style="display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:start;">
+
+      <!-- Left: logo + image upload -->
+      <div>
+
+        <!-- Logo upload -->
+        <div class="card" style="padding:0;overflow:hidden;margin-bottom:16px;">
+          <div style="padding:16px 24px;border-bottom:1px solid rgba(27,42,74,.07);display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:13px;font-weight:700;color:var(--navy);">Logo restauracji</div>
+              <div style="font-size:12px;color:rgba(27,42,74,.4);margin-top:2px;">Opcjonalne — pojawi się w nagłówku menu</div>
+            </div>
+            <span style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(27,42,74,.3);">opcjonalne</span>
+          </div>
+          <div style="padding:16px 24px;">
+            <input type="file" id="logoInput" accept="image/*" style="display:none;" onchange="handleLogoFile(this.files[0])">
+            <div id="logoZone" onclick="document.getElementById('logoInput').click()"
+              style="display:flex;align-items:center;gap:16px;padding:14px 18px;border:1.5px dashed rgba(27,42,74,.14);border-radius:14px;cursor:pointer;transition:all 180ms ease;background:rgba(27,42,74,.02);"
+              onmouseover="this.style.borderColor='var(--sage)';this.style.background='rgba(123,170,143,.04)'"
+              onmouseout="this.style.borderColor='rgba(27,42,74,.14)';this.style.background='rgba(27,42,74,.02)'">
+              <div id="logoPreviewWrap" style="display:none;position:relative;flex-shrink:0;">
+                <img id="logoPreviewImg" src="" alt="" style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid rgba(201,146,74,.3);box-shadow:0 0 0 4px rgba(201,146,74,.07);display:block;">
+                <button onclick="event.stopPropagation();removeLogo()" style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;background:var(--navy);color:white;border:none;border-radius:50%;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.2);">×</button>
+              </div>
+              <div class="logo-hint" style="display:flex;align-items:center;gap:12px;">
+                <div style="width:40px;height:40px;border-radius:50%;background:var(--sage-pale);border:1px solid rgba(123,170,143,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="14" height="14" rx="7" stroke="var(--sage)" stroke-width="1.4"/><path d="M9 6v6M6 9h6" stroke="var(--sage)" stroke-width="1.4" stroke-linecap="round"/></svg>
+                </div>
+                <div>
+                  <div style="font-size:13px;font-weight:600;color:var(--navy);">Dodaj logo</div>
+                  <div style="font-size:11.5px;color:rgba(27,42,74,.4);margin-top:1px;">PNG, JPG — najlepiej kwadratowe</div>
+                </div>
+              </div>
+              <div id="logoNameDisplay" style="display:none;flex:1;font-size:13px;font-weight:600;color:var(--navy);padding-left:4px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Menu photos -->
+        <div class="card" style="padding:0;overflow:hidden;">
+          <div style="padding:20px 24px;border-bottom:1px solid rgba(27,42,74,.07);">
+            <div style="font-size:13px;font-weight:700;color:var(--navy);">Zdjęcia menu</div>
+            <div style="font-size:12px;color:rgba(27,42,74,.4);margin-top:3px;">Dodaj jedno lub więcej zdjęć papierowego menu</div>
+          </div>
+          <div style="padding:20px 24px;">
+            <input type="file" id="fileInput" multiple accept="image/*" style="display:none;">
+            <div class="drop-zone" id="dropZone"
+                 style="padding:52px 24px;text-align:center;min-height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;"
+                 onclick="document.getElementById('fileInput').click()">
+              <div style="width:56px;height:56px;border-radius:16px;background:var(--sage-pale);border:1px solid rgba(123,170,143,.25);display:flex;align-items:center;justify-content:center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M4 16l4-4 4 4M16 12l2-2 2 2" stroke="var(--sage)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M12 8v8M4 20h16" stroke="var(--sage)" stroke-width="1.5" stroke-linecap="round"/>
+                  <rect x="3" y="3" width="18" height="14" rx="3" stroke="var(--sage)" stroke-width="1.4" fill="none"/>
+                </svg>
+              </div>
+              <div>
+                <p style="font-size:14px;font-weight:600;color:var(--navy);">Przeciągnij zdjęcia tutaj</p>
+                <p style="font-size:12.5px;color:rgba(27,42,74,.4);margin-top:4px;">lub <span style="color:var(--sage);font-weight:600;">kliknij aby wybrać pliki</span></p>
+              </div>
+              <p style="font-size:11px;color:rgba(27,42,74,.3);letter-spacing:.04em;">JPG, PNG, WEBP · max 10 MB każde</p>
+            </div>
+          </div>
+        </div>
+        <div id="apiKeyNotice" style="display:none;margin-top:14px;background:var(--gold-pale);border:1px solid rgba(201,146,74,.25);border-radius:14px;padding:14px 18px;font-size:12.5px;color:var(--navy);line-height:1.6;">
+          <strong>⚠ Brak klucza API.</strong> Skonfiguruj <code style="background:rgba(27,42,74,.07);padding:1px 5px;border-radius:4px;font-size:11px;">ANTHROPIC_API_KEY</code> w Vercel → Settings → Environment Variables.
+        </div>
+      </div>
+
+      <!-- Right: controls -->
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="card">
+          <div style="margin-bottom:18px;">
+            <label class="field-label">Dodatkowe informacje</label>
+            <textarea id="notes" class="field" rows="4" placeholder="np. Włoska restauracja, elegancki styl, ok. 25 pozycji, ceny w złotych..."></textarea>
+          </div>
+          <div style="margin-bottom:24px;">
+            <label class="field-label">Styl menu</label>
+            <select id="menuStyle" class="field">
+              <option value="klasyczny">Klasyczny — elegancki i czytelny</option>
+              <option value="nowoczesny">Nowoczesny — minimalistyczny</option>
+              <option value="rustykalny">Rustykalny — ciepły i tradycyjny</option>
+              <option value="premium">Premium — luksusowy fine dining</option>
+            </select>
+          </div>
+          <button id="generateBtn" class="btn-primary btn-magic" onclick="generateMenu()">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M8 1l1.5 3.5L13 6l-2.5 2.5.5 3.5L8 10.5 5 12l.5-3.5L3 6l3.5-.5L8 1z" fill="white" opacity=".9"/>
+            </svg>
+            Generuj menu AI
+          </button>
+          <p style="text-align:center;font-size:11px;color:rgba(27,42,74,.3);margin-top:10px;line-height:1.5;">Dodaj zdjęcie lub opis aby wygenerować menu</p>
+        </div>
+
+        <div style="background:var(--sage-pale);border:1px solid rgba(123,170,143,.2);border-radius:16px;padding:18px 20px;">
+          <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sage);margin-bottom:10px;">Jak to działa</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;gap:10px;align-items:flex-start;">
+              <span style="font-size:13px;">📸</span>
+              <p style="font-size:12px;color:rgba(27,42,74,.6);line-height:1.55;">Dodaj zdjęcie papierowego menu (może być odręczne)</p>
+            </div>
+            <div style="display:flex;gap:10px;align-items:flex-start;">
+              <span style="font-size:13px;">✨</span>
+              <p style="font-size:12px;color:rgba(27,42,74,.6);line-height:1.55;">AI wyodrębnia kategorie, dania i ceny</p>
+            </div>
+            <div style="display:flex;gap:10px;align-items:flex-start;">
+              <span style="font-size:13px;">🌐</span>
+              <p style="font-size:12px;color:rgba(27,42,74,.6);line-height:1.55;">Gotowe menu do publikacji online</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ QR GENERATOR ══ -->
+    <div class="card" style="margin-top:36px;padding:0;overflow:hidden;">
+      <div style="padding:20px 24px;border-bottom:1px solid rgba(27,42,74,.07);">
+        <div style="font-size:13px;font-weight:700;color:var(--navy);">Generator kodów QR</div>
+        <div style="font-size:12px;color:rgba(27,42,74,.4);margin-top:3px;">Wygeneruj kod QR dla każdego stolika — klienci skanują i widzą menu</div>
+      </div>
+      <div style="padding:20px 24px;">
+        <div style="display:grid;grid-template-columns:1fr 180px auto;gap:12px;align-items:flex-end;margin-bottom:4px;" class="qr-controls">
+          <div>
+            <label class="field-label">URL Twojego menu</label>
+            <input id="qrUrl" type="url" class="field" placeholder="https://tableo-murex.vercel.app/menu/moja-restauracja">
+          </div>
+          <div>
+            <label class="field-label">Liczba stolików</label>
+            <input id="qrCount" type="number" class="field" value="10" min="1" max="100" placeholder="10">
+          </div>
+          <button class="btn-primary" style="width:auto;padding:12px 22px;font-size:13px;white-space:nowrap;" onclick="generateQRCodes()">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" stroke="white" stroke-width="1.3"/><rect x="8" y="1" width="5" height="5" rx="1" stroke="white" stroke-width="1.3"/><rect x="1" y="8" width="5" height="5" rx="1" stroke="white" stroke-width="1.3"/><rect x="9" y="9" width="1.5" height="1.5" fill="white"/><rect x="11.5" y="9" width="1.5" height="1.5" fill="white"/><rect x="9" y="11.5" width="1.5" height="1.5" fill="white"/><rect x="11.5" y="11.5" width="1.5" height="1.5" fill="white"/></svg>
+            Generuj QR
+          </button>
+        </div>
+        <div id="qrGrid"></div>
+      </div>
+    </div>
+
+    <div id="results" style="margin-top:36px;"></div>
+
+    <!-- ══ STANDS SHOWCASE ══ -->
+    <div class="card" style="margin-top:36px;padding:0;overflow:hidden;">
+      <div style="padding:20px 24px;border-bottom:1px solid rgba(27,42,74,.07);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--navy);">Stojaki na kody QR — druk 3D</div>
+          <div style="font-size:12px;color:rgba(27,42,74,.4);margin-top:3px;">Eleganckie stojaki do każdego stolika — skanuj i zamów menu online</div>
+        </div>
+        <a href="https://allegro.com" target="_blank"
+          style="display:inline-flex;align-items:center;gap:8px;background:var(--gold);color:white;padding:10px 20px;border-radius:100px;font-size:13px;font-weight:600;text-decoration:none;transition:opacity 150ms ease;white-space:nowrap;"
+          onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M7 1h5v5M12 1L6 7M2 3H1v9h9v-1" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Kup na Allegro
+        </a>
+      </div>
+      <div style="padding:16px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
+        <div style="border-radius:12px;overflow:hidden;border:1px solid rgba(27,42,74,.08);background:white;">
+          <div style="aspect-ratio:1;background:linear-gradient(135deg,var(--cream-mid),var(--cream-dark));display:flex;align-items:center;justify-content:center;font-size:24px;">🖨️</div>
+          <div style="padding:9px 10px;">
+            <div style="font-size:11.5px;font-weight:700;color:var(--navy);">Klasyczny</div>
+            <div style="font-size:10.5px;color:rgba(27,42,74,.4);margin-top:2px;">czarny / biały</div>
+          </div>
+        </div>
+        <div style="border-radius:12px;overflow:hidden;border:1px solid rgba(27,42,74,.08);background:white;">
+          <div style="aspect-ratio:1;background:linear-gradient(135deg,var(--sage-pale),rgba(123,170,143,.15));display:flex;align-items:center;justify-content:center;font-size:24px;">🖨️</div>
+          <div style="padding:9px 10px;">
+            <div style="font-size:11.5px;font-weight:700;color:var(--navy);">Premium</div>
+            <div style="font-size:10.5px;color:rgba(27,42,74,.4);margin-top:2px;">efekt drewna</div>
+          </div>
+        </div>
+        <div style="border-radius:12px;overflow:hidden;border:1px solid rgba(27,42,74,.08);background:white;">
+          <div style="aspect-ratio:1;background:linear-gradient(135deg,var(--gold-pale),rgba(201,146,74,.12));display:flex;align-items:center;justify-content:center;font-size:24px;">🖨️</div>
+          <div style="padding:9px 10px;">
+            <div style="font-size:11.5px;font-weight:700;color:var(--navy);">Z logo</div>
+            <div style="font-size:10.5px;color:rgba(27,42,74,.4);margin-top:2px;">własne logo</div>
+          </div>
+        </div>
+        <div style="border-radius:12px;overflow:hidden;border:1px solid rgba(27,42,74,.08);background:white;">
+          <div style="aspect-ratio:1;background:linear-gradient(135deg,rgba(27,42,74,.06),rgba(27,42,74,.1));display:flex;align-items:center;justify-content:center;font-size:24px;">🖨️</div>
+          <div style="padding:9px 10px;">
+            <div style="font-size:11.5px;font-weight:700;color:var(--navy);">Zestaw 10</div>
+            <div style="font-size:10.5px;color:rgba(27,42,74,.4);margin-top:2px;">rabat hurtowy</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<style>
+  @media(max-width:640px){.qr-controls{grid-template-columns:1fr!important;}}
+  @media print{
+    #loginScreen,#editorScreen .top-bar,#editorScreen>*:not(#editorMain){display:none!important;}
+    #editorMain>*:not(#qrGrid){display:none!important;}
+    #qrGrid{display:grid!important;}
+    .qr-card-print{break-inside:avoid;}
+  }
+</style>
+
+
+<!-- ══ STANDS MODAL ══ -->
+<div id="standsModal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(15,29,51,.6);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:24px;">
+  <div style="background:var(--cream);border-radius:24px;max-width:460px;width:100%;box-shadow:0 32px 80px rgba(15,29,51,.3);overflow:hidden;animation:fadeUp .35s var(--ease-out) both;">
+    <div style="background:linear-gradient(135deg,var(--navy),var(--navy-mid));padding:28px 32px;">
+      <div style="font-size:28px;margin-bottom:10px;">🖨️</div>
+      <h3 style="font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:500;color:white;margin-bottom:6px;">Stojaki na kody QR</h3>
+      <p style="font-size:12.5px;color:rgba(255,255,255,.5);line-height:1.55;">Drukowane 3D eleganckie stojaki z miejscem na kartę z kodem QR. Wycena indywidualna.</p>
+    </div>
+    <div style="padding:28px 32px;">
+      <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;">
+        <div>
+          <label class="field-label">Twoje imię i nazwa restauracji</label>
+          <input id="standsName" type="text" class="field" placeholder="Jan Kowalski — Pizzeria Roma">
+        </div>
+        <div>
+          <label class="field-label">Email do kontaktu</label>
+          <input id="standsEmail" type="email" class="field" placeholder="twoj@email.pl">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            <label class="field-label">Liczba stolików</label>
+            <input id="standsCount" type="number" class="field" placeholder="10" min="1" value="10">
+          </div>
+          <div>
+            <label class="field-label">Kolor stojaków</label>
+            <select id="standsColor" class="field">
+              <option value="czarny">Czarny</option>
+              <option value="biały">Biały</option>
+              <option value="drewno">Kolor drewna</option>
+              <option value="inny">Inny (opiszę)</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="field-label">Dodatkowe uwagi</label>
+          <textarea id="standsNotes" class="field" rows="2" placeholder="np. logo restauracji na stojaku, konkretny kształt..."></textarea>
+        </div>
+      </div>
+      <div id="standsError" style="display:none;background:#FEF2F2;border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#991B1B;font-weight:500;"></div>
+      <div style="display:flex;gap:10px;">
+        <button onclick="closeStandsModal()" class="btn-outline" style="flex:1;padding:12px;">Anuluj</button>
+        <button onclick="sendStandsOrder()" id="standsBtn" class="btn-primary" style="flex:2;padding:12px;font-size:13px;">Wyślij zapytanie →</button>
+      </div>
+      <p style="font-size:11px;color:rgba(27,42,74,.35);text-align:center;margin-top:12px;">Odpiszemy w ciągu 24h z wyceną i terminem realizacji</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ── State ── */
+  let uploadedImages = [], currentToken = null, currentEmail = null;
+  let currentName = '', currentPicture = '', trialStart = null, currentMenu = null;
+  let currentLogo = null;
+  const TRIAL_DAYS = 7;
+
+  /* ── Init ── */
+  document.addEventListener('DOMContentLoaded', () => {
+    const stored = localStorage.getItem('tableo_auth');
+    if (stored) {
+      try {
+        const d = JSON.parse(stored);
+        currentToken = d.token; currentEmail = d.email;
+        currentName = d.name || ''; currentPicture = d.picture || '';
+        trialStart = d.trial_start || Date.now();
+        showEditor();
+        setupDropzone();
+        return;
+      } catch {}
+    }
+    showLogin();
+    loadGoogleSignIn();
+    setupDropzone();
+
+    // Enter key shortcuts on login form
+    document.getElementById('loginEmail').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('loginPassword').focus();
+    });
+    document.getElementById('loginPassword').addEventListener('keydown', e => {
+      if (e.key === 'Enter') doEmailLogin();
+    });
+    // Enter key shortcuts on register form
+    document.getElementById('regEmail').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('regPassword').focus();
+    });
+    document.getElementById('regPassword').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('regPassword2').focus();
+    });
+    document.getElementById('regPassword2').addEventListener('keydown', e => {
+      if (e.key === 'Enter') doRegister();
+    });
+  });
+
+  /* ── Google Sign-In ── */
+  async function loadGoogleSignIn() {
+    try {
+      const cfg = await fetch('/api/config').then(r => r.json());
+      document.getElementById('googleLoading').style.display = 'none';
+      if (!cfg.google_client_id) {
+        document.getElementById('loginError').textContent = 'Logowanie przez Google nie jest skonfigurowane. Skontaktuj się z administratorem.';
+        document.getElementById('loginError').style.display = 'block';
+        return;
+      }
+      const wait = () => new Promise(r => { if (window.google) r(); else setTimeout(() => wait().then(r), 100); });
+      await wait();
+      google.accounts.id.initialize({ client_id: cfg.google_client_id, callback: handleGoogleCredential });
+      google.accounts.id.renderButton(document.getElementById('googleBtn'), {
+        type: 'standard', theme: 'outline', size: 'large',
+        shape: 'pill', text: 'signin_with', logo_alignment: 'left', width: 320
+      });
+    } catch(e) {
+      document.getElementById('googleLoading').style.display = 'none';
+      document.getElementById('loginError').textContent = 'Błąd ładowania logowania Google. Odśwież stronę.';
+      document.getElementById('loginError').style.display = 'block';
+    }
+  }
+
+  /* ── Tab switcher ── */
+  function switchTab(tab) {
+    const isLogin = tab === 'login';
+    document.getElementById('panelLogin').style.display    = isLogin ? 'block' : 'none';
+    document.getElementById('panelRegister').style.display = isLogin ? 'none'  : 'block';
+    document.getElementById('tabLogin').style.background    = isLogin ? 'var(--navy)' : 'transparent';
+    document.getElementById('tabLogin').style.color         = isLogin ? 'white' : 'rgba(27,42,74,.45)';
+    document.getElementById('tabRegister').style.background = isLogin ? 'transparent' : 'var(--navy)';
+    document.getElementById('tabRegister').style.color      = isLogin ? 'rgba(27,42,74,.45)' : 'white';
+    document.getElementById('loginError').style.display = 'none';
+  }
+
+  /* ── Register ── */
+  async function doRegister() {
+    const email  = document.getElementById('regEmail').value.trim();
+    const pwd    = document.getElementById('regPassword').value;
+    const pwd2   = document.getElementById('regPassword2').value;
+    const btn    = document.getElementById('registerBtn');
+    const errDiv = document.getElementById('loginError');
+    errDiv.style.display = 'none';
+
+    if (!email || !pwd) {
+      errDiv.textContent = 'Wpisz adres email i hasło.';
+      errDiv.style.display = 'block'; return;
+    }
+    if (pwd.length < 6) {
+      errDiv.textContent = 'Hasło musi mieć minimum 6 znaków.';
+      errDiv.style.display = 'block'; return;
+    }
+    if (pwd !== pwd2) {
+      errDiv.textContent = 'Hasła nie są identyczne.';
+      errDiv.style.display = 'block'; return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = `<svg class="spin" width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="white" stroke-width="1.5" stroke-dasharray="20" stroke-dashoffset="10"/></svg>Tworzenie konta...`;
+
+    try {
+      const res  = await fetch('/api/register', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: pwd })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        currentToken = data.token; currentEmail = data.email;
+        currentName = email.split('@')[0]; currentPicture = '';
+        trialStart = data.trial_start;
+        localStorage.setItem('tableo_auth', JSON.stringify({
+          token: data.token, email: data.email, name: currentName,
+          picture: '', trial_start: data.trial_start
+        }));
+        showEditor(); setupDropzone();
+      } else {
+        errDiv.textContent = data.error || 'Błąd rejestracji. Spróbuj ponownie.';
+        errDiv.style.display = 'block';
+      }
+    } catch {
+      errDiv.textContent = 'Błąd połączenia. Sprawdź internet i spróbuj ponownie.';
+      errDiv.style.display = 'block';
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 1v13M1 7.5h13" stroke="white" stroke-width="1.7" stroke-linecap="round"/></svg>Utwórz konto`;
+  }
+
+  async function doEmailLogin() {
+    const email    = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const btn      = document.getElementById('loginBtn');
+    const errDiv   = document.getElementById('loginError');
+    errDiv.style.display = 'none';
+
+    if (!email || !password) {
+      errDiv.textContent = 'Wpisz adres email i hasło.';
+      errDiv.style.display = 'block'; return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = `<svg class="spin" width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="white" stroke-width="1.5" stroke-dasharray="20" stroke-dashoffset="10"/></svg>Logowanie...`;
+
+    try {
+      const res  = await fetch('/api/login', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        const stored = localStorage.getItem('tableo_auth');
+        let existingTrialStart = null;
+        if (stored) { try { existingTrialStart = JSON.parse(stored).trial_start; } catch {} }
+        const ts = existingTrialStart || Date.now();
+        currentToken = data.token; currentEmail = data.email;
+        currentName = email.split('@')[0]; currentPicture = '';
+        trialStart = ts;
+        localStorage.setItem('tableo_auth', JSON.stringify({
+          token: data.token, email: data.email, name: currentName,
+          picture: '', trial_start: ts
+        }));
+        showEditor(); setupDropzone();
+      } else {
+        errDiv.textContent = data.error || 'Nieprawidłowy email lub hasło.';
+        errDiv.style.display = 'block';
+      }
+    } catch {
+      errDiv.textContent = 'Błąd połączenia. Sprawdź internet i spróbuj ponownie.';
+      errDiv.style.display = 'block';
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M2 7.5h11M8.5 3l4.5 4.5-4.5 4.5" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Zaloguj się przez email`;
+  }
+
+  async function handleGoogleCredential(response) {
+    const errDiv = document.getElementById('loginError');
+    errDiv.style.display = 'none';
+    try {
+      const stored = localStorage.getItem('tableo_auth');
+      let existingTrialStart = null;
+      if (stored) { try { existingTrialStart = JSON.parse(stored).trial_start; } catch {} }
+
+      const res  = await fetch('/api/google-auth', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credential: response.credential, trial_start: existingTrialStart })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        currentToken = data.token; currentEmail = data.email;
+        currentName = data.name || ''; currentPicture = data.picture || '';
+        trialStart = data.trial_start;
+        localStorage.setItem('tableo_auth', JSON.stringify({
+          token: data.token, email: data.email, name: data.name,
+          picture: data.picture, trial_start: data.trial_start
+        }));
+        showEditor();
+        setupDropzone();
+      } else {
+        errDiv.textContent = data.error || 'Błąd logowania. Spróbuj ponownie.';
+        errDiv.style.display = 'block';
+      }
+    } catch {
+      errDiv.textContent = 'Błąd połączenia. Sprawdź internet i spróbuj ponownie.';
+      errDiv.style.display = 'block';
+    }
+  }
+
+  /* ── Auth helpers ── */
+  function showLogin() {
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('editorScreen').style.display = 'none';
+  }
+
+  function showEditor() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('editorScreen').style.display = 'block';
+    document.getElementById('userEmailDisplay').textContent = currentName || currentEmail || '';
+    if (currentPicture) {
+      const av = document.getElementById('userAvatar');
+      av.src = currentPicture; av.style.display = 'block';
+    }
+    updateTrialUI();
+  }
+
+  function doLogout() {
+    localStorage.removeItem('tableo_auth');
+    currentToken = null; currentEmail = null; currentName = ''; currentPicture = '';
+    trialStart = null; uploadedImages = []; currentMenu = null; currentLogo = null;
+    document.getElementById('results').innerHTML = '';
+    document.getElementById('notes').value = '';
+    showLogin();
+    loadGoogleSignIn();
+    setupDropzone();
+  }
+
+  /* ── Trial UI ── */
+  function updateTrialUI() {
+    const badge   = document.getElementById('trialBadge');
+    const banner  = document.getElementById('upgradeBanner');
+    const editorMain = document.getElementById('editorMain');
+    if (!trialStart) return;
+
+    const daysUsed = Math.floor((Date.now() - trialStart) / 86400000);
+    const daysLeft = TRIAL_DAYS - daysUsed;
+
+    if (daysLeft > 3) {
+      badge.innerHTML = `<span class="trial-badge trial-ok">🎁 ${daysLeft} dni próbnych</span>`;
+      editorMain.style.paddingTop = '80px';
+    } else if (daysLeft > 0) {
+      badge.innerHTML = `<span class="trial-badge trial-warn">⏰ ${daysLeft} ${daysLeft === 1 ? 'dzień' : 'dni'} próbne</span>`;
+      editorMain.style.paddingTop = '80px';
+    } else {
+      badge.innerHTML = `<span class="trial-badge trial-end">Trial wygasł</span>`;
+      banner.style.display = 'block';
+      editorMain.style.paddingTop = '20px';
+    }
+  }
+
+  /* ── Drop zone ── */
+  function setupDropzone() {
+    const zone  = document.getElementById('dropZone');
+    const input = document.getElementById('fileInput');
+    if (!zone || !input) return;
+
+    ['dragenter','dragover'].forEach(e => zone.addEventListener(e, ev => { ev.preventDefault(); zone.classList.add('drag-over'); }));
+    ['dragleave','dragend'].forEach(e => zone.addEventListener(e, () => zone.classList.remove('drag-over')));
+    zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag-over'); handleFiles(e.dataTransfer.files); });
+    input.addEventListener('change', () => { handleFiles(input.files); input.value = ''; });
+  }
+
+  function handleFiles(files) {
+    for (const file of files) {
+      if (!file.type.startsWith('image/')) continue;
+      if (file.size > 10 * 1024 * 1024) { showToast(`Plik "${file.name}" przekracza 10 MB.`, 'warn'); continue; }
+      const reader = new FileReader();
+      reader.onload = e => {
+        const url = e.target.result, comma = url.indexOf(',');
+        uploadedImages.push({ data: url.substring(comma+1), type: file.type, url, name: file.name });
+        renderThumbs();
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  function renderThumbs() {
+    const zone = document.getElementById('dropZone');
+    if (!zone) return;
+    if (uploadedImages.length === 0) { resetDropzone(); return; }
+
+    zone.classList.add('has-images');
+    zone.style.cssText = 'padding:16px;min-height:80px;display:flex;flex-direction:row;flex-wrap:wrap;gap:8px;justify-content:flex-start;cursor:pointer;';
+    zone.innerHTML = `
+      <div style="width:100%;display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <span style="font-size:12px;font-weight:600;color:rgba(27,42,74,.5);">${uploadedImages.length} zdjęcie${uploadedImages.length > 1 ? (uploadedImages.length < 5 ? 'a' : '') : ''}</span>
+        <span style="font-size:12px;color:var(--sage);font-weight:600;cursor:pointer;" onclick="event.stopPropagation();document.getElementById('fileInput').click()">+ Dodaj więcej</span>
+      </div>
+    `;
+    uploadedImages.forEach((img, i) => {
+      const div = document.createElement('div');
+      div.className = 'img-thumb'; div.style.cssText = 'width:80px;height:80px;';
+      div.innerHTML = `<img src="${img.url}" alt="${img.name}"><button class="img-thumb-remove" onclick="event.stopPropagation();removeImage(${i})">×</button>`;
+      zone.appendChild(div);
+    });
+  }
+
+  function removeImage(i) { uploadedImages.splice(i, 1); renderThumbs(); }
+
+  function resetDropzone() {
+    const zone = document.getElementById('dropZone');
+    if (!zone) return;
+    zone.className = 'drop-zone';
+    zone.style.cssText = 'padding:52px 24px;text-align:center;min-height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;cursor:pointer;';
+    zone.innerHTML = `
+      <div style="width:56px;height:56px;border-radius:16px;background:var(--sage-pale);border:1px solid rgba(123,170,143,.25);display:flex;align-items:center;justify-content:center;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 16l4-4 4 4M16 12l2-2 2 2" stroke="var(--sage)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 8v8M4 20h16" stroke="var(--sage)" stroke-width="1.5" stroke-linecap="round"/><rect x="3" y="3" width="18" height="14" rx="3" stroke="var(--sage)" stroke-width="1.4" fill="none"/></svg>
+      </div>
+      <div><p style="font-size:14px;font-weight:600;color:var(--navy);">Przeciągnij zdjęcia tutaj</p><p style="font-size:12.5px;color:rgba(27,42,74,.4);margin-top:4px;">lub <span style="color:var(--sage);font-weight:600;">kliknij aby wybrać pliki</span></p></div>
+      <p style="font-size:11px;color:rgba(27,42,74,.3);letter-spacing:.04em;">JPG, PNG, WEBP · max 10 MB każde</p>
+    `;
+  }
+
+  /* ── Generate ── */
+  async function generateMenu() {
+    const notes = document.getElementById('notes').value.trim();
+    if (uploadedImages.length === 0 && !notes) { showToast('Dodaj zdjęcie menu lub wpisz opis.','warn'); return; }
+
+    const btn = document.getElementById('generateBtn'), results = document.getElementById('results');
+    document.getElementById('apiKeyNotice').style.display = 'none';
+
+    btn.disabled = true;
+    btn.innerHTML = `<svg class="spin" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="rgba(255,255,255,.3)" stroke-width="2"/><path d="M8 2a6 6 0 0 1 6 6" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>Magia w toku...`;
+
+    results.style.display = 'block';
+    results.innerHTML = `
+      <div class="card fade-up" style="padding:56px 32px;text-align:center;overflow:hidden;position:relative;">
+        <div style="position:absolute;inset:0;background:radial-gradient(ellipse 60% 60% at 50% 50%,rgba(201,146,74,.06) 0%,transparent 70%);pointer-events:none;"></div>
+        <div style="position:relative;width:88px;height:88px;margin:0 auto 28px;display:flex;align-items:center;justify-content:center;">
+          <div style="position:absolute;width:88px;height:88px;border-radius:50%;border:1.5px solid rgba(201,146,74,.2);animation:spin 8s linear infinite;"></div>
+          <div style="position:absolute;width:66px;height:66px;border-radius:50%;border:1.5px dashed rgba(123,170,143,.3);animation:spin 5s linear infinite reverse;"></div>
+          <div style="position:absolute;width:8px;height:8px;border-radius:50%;background:var(--gold);top:0;left:50%;margin-left:-4px;animation:orbitA 2s linear infinite;box-shadow:0 0 8px rgba(201,146,74,.6);"></div>
+          <div style="position:absolute;width:6px;height:6px;border-radius:50%;background:var(--sage);top:50%;left:50%;margin:-3px;animation:orbitB 1.4s linear infinite;box-shadow:0 0 6px rgba(123,170,143,.6);"></div>
+          <div style="position:absolute;width:5px;height:5px;border-radius:50%;background:white;top:50%;left:50%;margin:-2.5px;border:1px solid rgba(27,42,74,.15);animation:orbitC 1.1s linear infinite;"></div>
+          <svg width="28" height="28" viewBox="0 0 16 16" fill="none" style="animation:pulseStar 2s ease-in-out infinite;position:relative;z-index:1;filter:drop-shadow(0 0 6px rgba(201,146,74,.5))">
+            <path d="M8 1l1.5 3.5L13 6l-2.5 2.5.5 3.5L8 10.5 5 12l.5-3.5L3 6l3.5-.5L8 1z" fill="#C9924A"/>
+          </svg>
+        </div>
+        <p style="font-size:17px;font-weight:600;color:var(--navy);letter-spacing:-.02em;margin-bottom:8px;">Teraz dzieje się magia</p>
+        <p style="font-size:13px;color:rgba(27,42,74,.4);font-weight:300;line-height:1.6;max-width:280px;margin:0 auto;">
+          AI analizuje Twoje menu i buduje strukturę cyfrową
+          <span style="display:inline-block;">
+            <span style="animation:dotBlink 1.4s .0s infinite">.</span><span style="animation:dotBlink 1.4s .2s infinite">.</span><span style="animation:dotBlink 1.4s .4s infinite">.</span>
+          </span>
+        </p>
+      </div>`;
+
+    try {
+      const res = await fetch('/api/generate-menu', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentToken}` },
+        body: JSON.stringify({
+          images: uploadedImages.map(i => ({ data: i.data, type: i.type })),
+          notes,
+          style: document.getElementById('menuStyle').value,
+          logo: currentLogo ? (() => { const comma = currentLogo.indexOf(','); return { data: currentLogo.substring(comma+1), type: 'image/jpeg' }; })() : null
+        })
+      });
+      const data = await res.json();
+      if (res.status === 401) { doLogout(); return; }
+      if (res.status === 500 && data.error && data.error.includes('ANTHROPIC_API_KEY')) {
+        document.getElementById('apiKeyNotice').style.display = 'block'; results.innerHTML = '';
+        showToast('Brak klucza API. Skonfiguruj ANTHROPIC_API_KEY w Vercel.','warn');
+      } else if (data.ok && data.menu) {
+        currentMenu = data.menu;
+        if (currentLogo) currentMenu.logo = currentLogo;
+        renderMenu(data.menu);
+      } else {
+        const detail = [data.error, data.detail, data.raw, data.http ? `HTTP ${data.http}` : ''].filter(Boolean).join(' · ');
+        results.innerHTML = `<div class="card" style="padding:32px;text-align:center;"><p style="font-size:22px;margin-bottom:12px;">⚠️</p><p style="font-size:14px;font-weight:600;color:var(--navy);">Błąd generowania</p><p style="font-size:12px;color:rgba(27,42,74,.5);margin-top:6px;word-break:break-all;">${detail || 'Nieoczekiwany błąd. Spróbuj ponownie.'}</p></div>`;
+      }
+    } catch(e) {
+      results.innerHTML = `<div class="card" style="padding:32px;text-align:center;"><p style="font-size:14px;font-weight:600;color:var(--navy);">Błąd połączenia</p><p style="font-size:12.5px;color:rgba(27,42,74,.5);margin-top:6px;">${e.message}</p></div>`;
+    }
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1l1.5 3.5L13 6l-2.5 2.5.5 3.5L8 10.5 5 12l.5-3.5L3 6l3.5-.5L8 1z" fill="white" opacity=".9"/></svg>Generuj menu AI`;
+    btn.className = 'btn-primary btn-magic';
+  }
+
+
+
+  /* ── Premium menu HTML builder (shared by preview + download) ── */
+  function _fontConfig(style) {
+    const fonts = {
+      classic: { url:'Cinzel:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400', heading:"'Cinzel',serif", dish:"'Cormorant Garamond',serif", body:"'DM Sans',sans-serif", navFs:'9.5px', catFs:'10.5px', catLs:'.22em', dishFs:'17px' },
+      modern:  { url:'Jost:wght@300;400;500;600&family=Inter:wght@300;400', heading:"'Jost',sans-serif", dish:"'Jost',sans-serif", body:"'Inter',sans-serif", navFs:'10px', catFs:'10px', catLs:'.16em', dishFs:'16px' },
+      rustic:  { url:'Playfair+Display:ital,wght@0,400;0,600;1,400&family=Lora:ital,wght@0,400;1,400&family=Source+Sans+3:wght@300;400', heading:"'Playfair Display',serif", dish:"'Lora',serif", body:"'Source Sans 3',sans-serif", navFs:'9px', catFs:'11px', catLs:'.14em', dishFs:'18px' },
+      bold:    { url:'Oswald:wght@400;500;600&family=Merriweather:ital,wght@0,300;1,300&family=Open+Sans:wght@300;400', heading:"'Oswald',sans-serif", dish:"'Merriweather',serif", body:"'Open Sans',sans-serif", navFs:'10px', catFs:'10px', catLs:'.2em', dishFs:'16px' },
+    };
+    return fonts[style] || fonts.classic;
+  }
+
+  function _paletteVars(p) {
+    const bg     = (p && p.bg)     || '#0d1520';
+    const accent = (p && p.accent) || '#7BAA8F';
+    const price  = (p && p.price)  || '#C9924A';
+    const text   = (p && p.text)   || '#E8DFD0';
+    const isHex = h => /^#[0-9a-fA-F]{3,6}$/.test(h);
+    const hr = h => { if(!isHex(h))h='#888888'; h=h.replace('#',''); if(h.length===3)h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2]; return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]; };
+    const lh = (h,a) => { const [r,g,b]=hr(h); const n=c=>Math.min(255,Math.round(c+a*255)).toString(16).padStart(2,'0'); return '#'+n(r)+n(g)+n(b); };
+    const [tr,tg,tb]    = hr(text);
+    const [ar,ag,ab]    = hr(accent);
+    const [pr,pg,pb]    = hr(price);
+    const [bgr,bgg,bgb] = hr(bg);
+    return { bg, accent, price, text, priceLight:lh(price,0.12), tRgb:`${tr},${tg},${tb}`, aRgb:`${ar},${ag},${ab}`, pRgb:`${pr},${pg},${pb}`, bgRgb:`${bgr},${bgg},${bgb}` };
+  }
+
+  function buildMenuHtml(menu) {
+    const v       = _paletteVars(menu.palette);
+    const f       = _fontConfig(menu.font_style);
+    const cats    = menu.categories || [];
+    const name    = menu.restaurant_name || 'Menu restauracji';
+    const tagline = menu.tagline || '';
+    const logo    = menu.logo || null;
+
+    const catLinks = cats.map((c, i) =>
+      `<a class="cat-link" href="#s${i}" onclick="goTo(event,${i})">${c.name}</a>`
+    ).join('');
+
+    const sections = cats.map((c, i) => {
+      const dishes = (c.items || []).map((item, k) => {
+        const imgHtml  = item.image
+          ? `<img class="dish-img" src="${item.image}" alt="${item.name}" loading="lazy">`
+          : '';
+        const descHtml = item.description
+          ? `<p class="dish-desc">${item.description}</p>`
+          : '';
+        return `<article class="dish" style="animation-delay:${k * 0.06}s">`
+             + imgHtml
+             + `<div class="dish-row"><span class="dish-name">${item.name}</span>`
+             + `<span class="dish-price">${item.price || ''}</span></div>`
+             + descHtml
+             + `</article>`;
+      }).join('');
+      return `<section class="cat-section" id="s${i}">`
+           + `<div class="cat-heading"><span class="cat-line-l"></span>`
+           + `<span class="cat-title">${c.name}</span><span class="cat-line-r"></span></div>`
+           + `<div class="dishes">${dishes}</div></section>`;
+    }).join('');
+
+    const logoHtml = logo ? `<img class="nav-logo-img" src="${logo}" alt="${name}">` : '';
+
+    return `<!DOCTYPE html><html lang="pl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>${name}</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=${f.url}&display=swap" rel="stylesheet"><style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}:root{--bg:${v.bg};--nav-h:54px;--sage:${v.accent};--gold:${v.price};--gold-light:${v.priceLight};--cream:${v.text};--cream-dim:rgba(${v.tRgb},.5);--cream-muted:rgba(${v.tRgb},.32);--border:rgba(${v.tRgb},.07);}html{background:var(--bg);}body{font-family:${f.body};background:var(--bg);color:var(--cream);-webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden;}body::after{content:'';position:fixed;inset:0;z-index:9999;pointer-events:none;opacity:.02;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23n)'/%3E%3C/svg%3E");}.topnav{position:sticky;top:0;z-index:100;display:grid;grid-template-columns:40px 1fr 40px;align-items:center;height:var(--nav-h);padding:0 10px;background:rgba(${v.bgRgb},.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}.nav-burger{background:none;border:none;cursor:pointer;display:flex;flex-direction:column;gap:4.5px;padding:6px;justify-self:start;}.nav-burger span{display:block;width:18px;height:1.5px;background:var(--cream-dim);border-radius:2px;}.nav-center{display:flex;align-items:center;justify-content:center;overflow:hidden;min-width:0;}.nav-logo-img{max-height:32px;width:auto;max-width:180px;object-fit:contain;}.nav-name{font-family:${f.heading};font-size:${f.navFs};font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.hero{position:relative;padding:38px 20px 30px;text-align:center;overflow:hidden;}.hero-glow{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 90% 70% at 50% 120%,rgba(${v.aRgb},.1) 0%,transparent 60%),radial-gradient(ellipse 50% 40% at 15% 0%,rgba(${v.pRgb},.06) 0%,transparent 50%);}.hero-eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:${f.heading};font-size:7.5px;font-weight:500;letter-spacing:.28em;text-transform:uppercase;color:var(--sage);margin-bottom:12px;opacity:.7;}.hero-eyebrow::before,.hero-eyebrow::after{content:'';width:18px;height:1px;background:currentColor;opacity:.4;}.hero-name{font-family:${f.heading};font-size:clamp(1.25rem,5.5vw,2.1rem);font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--cream);line-height:1.1;position:relative;}.hero-tagline{font-family:${f.dish};font-style:italic;font-size:13.5px;font-weight:300;color:var(--cream-muted);letter-spacing:.02em;line-height:1.7;max-width:260px;margin:10px auto 0;position:relative;}.hero-rule{position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(${v.aRgb},.14),rgba(${v.pRgb},.2),rgba(${v.aRgb},.14),transparent);}.cat-grid{position:sticky;top:var(--nav-h);z-index:99;background:rgba(${v.bgRgb},.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:8px 14px;display:flex;flex-wrap:wrap;justify-content:center;gap:2px 5px;}.cat-link{font-family:${f.heading};font-size:8px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;text-decoration:none;color:var(--cream-muted);padding:5px 7px;border-radius:3px;transition:color 150ms,background 150ms;white-space:nowrap;-webkit-tap-highlight-color:transparent;}.cat-link:hover,.cat-link.active{color:var(--gold-light);background:rgba(${v.pRgb},.07);}main{max-width:680px;margin:0 auto;padding:14px 16px 100px;}.cat-section{margin-bottom:32px;}.cat-heading{display:flex;align-items:center;gap:10px;padding:16px 0 11px;}.cat-title{font-family:${f.heading};font-size:${f.catFs};font-weight:600;letter-spacing:${f.catLs};text-transform:uppercase;color:var(--cream);white-space:nowrap;}.cat-line-l{flex:1;height:1px;background:linear-gradient(to right,transparent,rgba(${v.pRgb},.17));}.cat-line-r{flex:1;height:1px;background:linear-gradient(to left,transparent,rgba(${v.pRgb},.17));}.dish{padding:13px 0;border-bottom:1px solid var(--border);opacity:0;animation:fadeUp .4s cubic-bezier(.23,1,.32,1) both;}.dish:last-child{border-bottom:none;}@keyframes fadeUp{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}.dish-img{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:8px;margin-bottom:9px;border:1px solid rgba(232,223,208,.06);box-shadow:0 4px 18px rgba(0,0,0,.4);}.dish-row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;}.dish-name{font-family:${f.dish};font-size:${f.dishFs};font-weight:400;color:var(--cream);line-height:1.2;letter-spacing:.01em;}.dish-price{font-family:${f.heading};font-size:12px;font-weight:600;color:var(--gold);white-space:nowrap;letter-spacing:.04em;flex-shrink:0;}.dish-desc{font-size:11.5px;color:var(--cream-muted);margin-top:5px;line-height:1.65;font-weight:300;}footer{position:fixed;bottom:0;left:0;right:0;padding:12px 20px 16px;text-align:center;background:linear-gradient(to top,var(--bg) 60%,transparent);pointer-events:none;}footer span{font-size:9px;color:rgba(232,223,208,.1);letter-spacing:.06em;}footer a{color:rgba(${v.aRgb},.18);text-decoration:none;pointer-events:all;}</style></head><body><nav class="topnav"><button class="nav-burger" aria-label="Menu"><span></span><span></span><span></span></button><div class="nav-center">${logo ? logoHtml : `<span class="nav-name">${name}</span>`}</div><div></div></nav><header class="hero"><div class="hero-glow"></div><div class="hero-eyebrow">Menu</div><h1 class="hero-name">${name}</h1>${tagline ? `<p class="hero-tagline">${tagline}</p>` : ''}<div class="hero-rule"></div></header><div class="cat-grid">${catLinks}</div><main>${sections}</main><footer><span>menu cyfrowe · <a href="https://tableo-murex.vercel.app" target="_blank">tableo</a></span></footer><script>function goTo(e,i){e.preventDefault();const el=document.getElementById('s'+i);if(!el)return;const navH=document.querySelector('.topnav').offsetHeight;const gridH=document.querySelector('.cat-grid').offsetHeight;window.scrollTo({top:el.offsetTop-navH-gridH-8,behavior:'smooth'});}function langToast(){const t=document.createElement('div');t.textContent='Wielojęzyczność — wkrótce';Object.assign(t.style,{position:'fixed',bottom:'60px',left:'50%',transform:'translateX(-50%)',background:'rgba(13,21,32,.97)',color:'rgba(232,223,208,.65)',padding:'8px 18px',borderRadius:'100px',fontSize:'11px',fontFamily:"'DM Sans',sans-serif",letterSpacing:'.05em',border:'1px solid rgba(232,223,208,.08)',zIndex:'9998',whiteSpace:'nowrap'});document.body.appendChild(t);setTimeout(()=>t.remove(),2000);}const secs=Array.from(document.querySelectorAll('.cat-section'));const lnks=Array.from(document.querySelectorAll('.cat-link'));const obs=new IntersectionObserver(entries=>{entries.forEach(entry=>{if(entry.isIntersecting){const idx=secs.indexOf(entry.target);if(idx>=0){lnks.forEach((l,j)=>l.classList.toggle('active',j===idx));lnks[idx]?.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});}}});},{rootMargin:'-15% 0px -75% 0px',threshold:0});secs.forEach(s=>obs.observe(s));<\/script></body></html>`;
+  }
+
+    /* ── Render menu ── */
+  function renderMenu(menu) {
+    const results = document.getElementById('results');
+    const total   = (menu.categories||[]).reduce((n,c)=>n+(c.items?.length||0),0);
+
+    results.innerHTML = `
+      <div class="fade-up" style="display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap;">
+
+        <!-- iPhone 17 Pro mockup -->
+        <div class="phone-wrap">
+          <div class="iphone">
+            <div class="btn-vol-up"></div>
+            <div class="btn-vol-dn"></div>
+            <div class="iphone-screen-wrap">
+              <div class="dynamic-island"></div>
+              <div class="status-time">9:41</div>
+              <div class="status-icons">
+                <svg width="14" height="10" viewBox="0 0 14 10" fill="white" opacity=".9"><rect x="0" y="3" width="3" height="7" rx=".5"/><rect x="4" y="2" width="3" height="8" rx=".5"/><rect x="8" y="0" width="3" height="10" rx=".5"/><rect x="12.5" y="1" width="1.5" height="8" rx=".5" opacity=".3"/></svg>
+                <svg width="14" height="10" viewBox="0 0 16 12" fill="white" opacity=".9"><path d="M8 2.4C5.6 2.4 3.5 3.4 2 5L0 3C2.1 1.1 4.9 0 8 0s5.9 1.1 8 3l-2 2C12.5 3.4 10.4 2.4 8 2.4z"/><path d="M8 6.8c-1.4 0-2.7.6-3.6 1.5L2.5 6.4C3.8 5.2 5.8 4.4 8 4.4s4.2.8 5.5 2l-1.9 1.9C10.7 7.4 9.4 6.8 8 6.8z"/><circle cx="8" cy="10" r="2"/></svg>
+                <svg width="22" height="11" viewBox="0 0 22 11" fill="none"><rect x=".5" y=".5" width="18" height="10" rx="2.5" stroke="white" stroke-opacity=".35"/><rect x="1.5" y="1.5" width="13" height="8" rx="1.5" fill="white"/><path d="M20 3.5v4a2 2 0 0 0 0-4z" fill="white" opacity=".4"/></svg>
+              </div>
+              <div class="iphone-screen-inner">
+                <iframe id="menuPreviewFrame" class="menu-iframe" scrolling="yes"></iframe>
+              </div>
+            </div>
+            <div class="usbc"></div>
+          </div>
+          <p style="font-size:10.5px;color:rgba(27,42,74,.3);letter-spacing:.04em;font-weight:500;">PODGLĄD · iPhone 17 Pro</p>
+        </div>
+
+        <!-- Panel boczny -->
+        <div style="flex:1;min-width:260px;display:flex;flex-direction:column;gap:14px;">
+
+          <div class="card">
+            <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(27,42,74,.35);margin-bottom:10px;">Restauracja</div>
+            <div style="font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:500;color:var(--navy);margin-bottom:4px;">${menu.restaurant_name||'Twoja Restauracja'}</div>
+            ${menu.tagline?`<div style="font-size:12.5px;color:rgba(27,42,74,.45);font-weight:300;">${menu.tagline}</div>`:''}
+            <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(27,42,74,.07);display:flex;gap:16px;">
+              <div style="text-align:center;">
+                <div style="font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:600;color:var(--navy);">${total}</div>
+                <div style="font-size:10.5px;color:rgba(27,42,74,.4);font-weight:600;letter-spacing:.06em;text-transform:uppercase;">pozycji</div>
+              </div>
+              <div style="width:1px;background:rgba(27,42,74,.07);"></div>
+              <div style="text-align:center;">
+                <div style="font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:600;color:var(--navy);">${menu.categories?.length||0}</div>
+                <div style="font-size:10.5px;color:rgba(27,42,74,.4);font-weight:600;letter-spacing:.06em;text-transform:uppercase;">kategorii</div>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn-primary btn-magic" onclick="publishMenu()" id="publishBtn">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v8M4 6l3-3 3 3M2 12h10" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Opublikuj menu online
+          </button>
+
+          <div id="publishResult" style="display:none;background:var(--sage-pale);border:1px solid rgba(123,170,143,.25);border-radius:16px;padding:16px 18px;">
+            <div style="font-size:11px;font-weight:700;color:var(--sage);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">🌐 Menu live!</div>
+            <a id="publishLink" href="#" target="_blank" style="font-size:12.5px;font-weight:600;color:var(--navy);word-break:break-all;text-decoration:none;display:block;margin-bottom:10px;border-bottom:1px dashed rgba(27,42,74,.2);padding-bottom:10px;"></a>
+            <button onclick="copyPublishLink()" style="width:100%;font-size:12px;font-weight:600;color:var(--sage);background:none;border:1px solid rgba(123,170,143,.3);border-radius:9px;padding:8px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">Kopiuj link</button>
+          </div>
+
+          <button class="btn-outline" onclick="downloadStandaloneHtml()" style="font-size:13px;">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2v7M4 7l3 3 3-3M2 12h10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            Pobierz HTML (standalone)
+          </button>
+
+          <div style="background:linear-gradient(135deg,var(--navy),var(--navy-mid));border-radius:16px;padding:18px 20px;display:flex;align-items:center;gap:14px;">
+            <div style="font-size:22px;flex-shrink:0;">🖨️</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;font-weight:700;color:white;margin-bottom:3px;">Stojaki na QR</div>
+              <div style="font-size:11.5px;color:rgba(255,255,255,.45);">Drukowane 3D do każdego stolika</div>
+            </div>
+            <button onclick="openStandsModal()" style="background:var(--gold);color:white;padding:8px 14px;border-radius:100px;font-size:12px;font-weight:600;border:none;cursor:pointer;white-space:nowrap;font-family:'Plus Jakarta Sans',sans-serif;">Zamów →</button>
+          </div>
+
+        </div>
+      </div>`;
+
+    /* Load menu into iframe via Blob URL */
+    const html  = buildMenuHtml(menu);
+    const blob  = new Blob([html], { type: 'text/html' });
+    const burl  = URL.createObjectURL(blob);
+    document.getElementById('menuPreviewFrame').src = burl;
+
+    results.scrollIntoView({ behavior:'smooth', block:'start' });
+    renderDishPhotoEditor();
+  }
+
+  /* ── Export ── */
+  function generateMenuHtml(menu) {
+    return `<!DOCTYPE html><html lang="pl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${menu.restaurant_name||'Menu'}</title><style>body{font-family:Georgia,sans-serif;background:#FDFBF7;color:#1B2A4A;margin:0}header{background:#1B2A4A;padding:48px 24px;text-align:center}header h1{color:white;font-size:2.4rem;font-weight:500;margin:0}header p{color:rgba(255,255,255,.45);margin:10px 0 0;font-size:14px}main{max-width:720px;margin:0 auto;padding:40px 24px}.menu-category{margin-bottom:40px}.category-name{font-size:1.4rem;font-weight:500;border-bottom:1px solid rgba(27,42,74,.1);padding-bottom:10px;margin-bottom:16px}.menu-item{display:flex;justify-content:space-between;align-items:flex-start;padding:12px 0;border-bottom:1px solid rgba(27,42,74,.05);gap:16px}.item-info{flex:1}.item-name{display:block;font-weight:600;font-size:14px}.item-desc{display:block;font-size:12px;color:rgba(27,42,74,.5);margin-top:3px}.item-price{font-size:15px;font-weight:600;color:#C9924A;white-space:nowrap}footer{text-align:center;padding:32px;font-size:12px;color:rgba(27,42,74,.3);border-top:1px solid rgba(27,42,74,.07)}</style></head><body><header><h1>${menu.restaurant_name||'Menu'}</h1>${menu.tagline?`<p>${menu.tagline}</p>`:''}</header><main>${(menu.categories||[]).map(c=>`<section class="menu-category"><h2 class="category-name">${c.name}</h2><div>${(c.items||[]).map(i=>`<div class="menu-item"><div class="item-info"><span class="item-name">${i.emoji||''} ${i.name}</span>${i.description?`<span class="item-desc">${i.description}</span>`:''}</div><span class="item-price">${i.price||'—'}</span></div>`).join('')}</div></section>`).join('')}</main><footer>Wygenerowane przez Tableo AI</footer></body></html>`;
+  }
+
+  function copyMenuHtml() {
+    if (!currentMenu) return;
+    navigator.clipboard.writeText(generateMenuHtml(currentMenu)).then(()=>showToast('HTML skopiowany do schowka!','ok')).catch(()=>showToast('Nie można skopiować.','warn'));
+  }
+
+  function downloadMenuJson() {
+    if (!currentMenu) return;
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(currentMenu,null,2)],{type:'application/json'}));
+    a.download = `${(currentMenu.restaurant_name||'menu').replace(/\s+/g,'-').toLowerCase()}.json`;
+    a.click(); URL.revokeObjectURL(a.href);
+  }
+
+  /* ── Publish ── */
+  async function publishMenu() {
+    if (!currentMenu) return;
+    const btn = document.querySelector('[onclick="publishMenu()"]');
+    btn.disabled = true;
+    btn.innerHTML = `<svg class="spin" width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="white" stroke-width="1.5" stroke-dasharray="20" stroke-dashoffset="10"/></svg>Publikuję...`;
+    try {
+      const res  = await fetch('/api/save-menu', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentToken}` },
+        body: JSON.stringify({ menu: currentMenu })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        const pr = document.getElementById('publishResult');
+        const lk = document.getElementById('publishLink');
+        lk.href = data.url; lk.textContent = data.url;
+        pr.style.display = 'block';
+        document.getElementById('qrUrl').value = data.url;
+        showToast('Menu opublikowane! Link skopiuj poniżej.', 'ok');
+      } else {
+        showToast(data.error || 'Błąd publikacji.', 'warn');
+      }
+    } catch { showToast('Błąd połączenia.', 'warn'); }
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v8M4 6l3-3 3 3M2 12h10" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Opublikuj menu`;
+  }
+
+  function copyPublishLink() {
+    const url = document.getElementById('publishLink').href;
+    navigator.clipboard.writeText(url).then(() => showToast('Link skopiowany!', 'ok'));
+  }
+
+  function downloadStandaloneHtml() {
+    if (!currentMenu) return;
+    const menu = currentMenu;
+    const html = buildMenuHtml(menu);
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+    a.download = `${(menu.restaurant_name||'menu').replace(/\s+/g,'-').toLowerCase()}-menu.html`;
+    a.click(); URL.revokeObjectURL(a.href);
+    showToast('Pobrano standalone HTML menu.', 'ok');
+  }
+
+
+  /* ── Image compression ── */
+  function compressImage(file, maxW, maxH, quality) {
+    return new Promise(resolve => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        const ratio = Math.min(maxW / img.width, maxH / img.height, 1);
+        const w = Math.round(img.width * ratio);
+        const h = Math.round(img.height * ratio);
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(url);
+        resolve(canvas.toDataURL('image/jpeg', quality || 0.82));
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+      img.src = url;
+    });
+  }
+
+  /* ── Logo upload ── */
+  async function handleLogoFile(file) {
+    if (!file || !file.type.startsWith('image/')) { showToast('Wybierz plik graficzny.', 'warn'); return; }
+    if (file.size > 15 * 1024 * 1024) { showToast('Plik za duży (max 15 MB).', 'warn'); return; }
+    const dataUrl = await compressImage(file, 400, 400, 0.88);
+    if (!dataUrl) { showToast('Błąd kompresji pliku.', 'warn'); return; }
+    currentLogo = dataUrl;
+    renderLogoPreview(file.name);
+    if (currentMenu) { currentMenu.logo = currentLogo; updateMenuPreview(); }
+    showToast('Logo dodane!', 'ok');
+  }
+
+  function renderLogoPreview(fileName) {
+    const wrap = document.getElementById('logoPreviewWrap');
+    const img  = document.getElementById('logoPreviewImg');
+    const hint = document.querySelector('.logo-hint');
+    const name = document.getElementById('logoNameDisplay');
+    if (!wrap) return;
+    if (currentLogo) {
+      img.src = currentLogo;
+      wrap.style.display = 'block';
+      if (hint) hint.style.display = 'none';
+      if (name) { name.textContent = fileName || 'Logo dodane'; name.style.display = 'block'; }
+    } else {
+      wrap.style.display = 'none';
+      if (hint) hint.style.display = 'flex';
+      if (name) name.style.display = 'none';
+    }
+  }
+
+  function removeLogo() {
+    currentLogo = null;
+    renderLogoPreview();
+    if (currentMenu) { delete currentMenu.logo; updateMenuPreview(); }
+    showToast('Logo usunięte.', 'ok');
+  }
+
+  /* ── Update iframe preview ── */
+  function updateMenuPreview() {
+    const frame = document.getElementById('menuPreviewFrame');
+    if (!frame || !currentMenu) return;
+    const html = buildMenuHtml(currentMenu);
+    const blob = new Blob([html], { type: 'text/html' });
+    const old  = frame.src;
+    frame.src  = URL.createObjectURL(blob);
+    if (old && old.startsWith('blob:')) URL.revokeObjectURL(old);
+  }
+
+  /* ── Dish photo editor ── */
+  function renderDishPhotoEditor() {
+    const existing = document.getElementById('dishPhotoSection');
+    if (existing) existing.remove();
+    if (!currentMenu) return;
+
+    const allDishes = [];
+    (currentMenu.categories || []).forEach((cat, ci) => {
+      (cat.items || []).forEach((item, ii) => allDishes.push({ item, ci, ii }));
+    });
+    if (allDishes.length === 0) return;
+
+    const section = document.createElement('div');
+    section.id = 'dishPhotoSection';
+    section.style.cssText = 'margin-top:20px;';
+    section.innerHTML = `
+      <div class="card fade-up" style="padding:0;overflow:hidden;">
+        <div style="padding:18px 24px;border-bottom:1px solid rgba(27,42,74,.07);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--navy);">Zdjęcia dań</div>
+            <div style="font-size:12px;color:rgba(27,42,74,.4);margin-top:2px;">Przypisz zdjęcia do wybranych pozycji — pojawią się na menu</div>
+          </div>
+          <span style="font-size:11px;color:rgba(27,42,74,.3);font-weight:500;">${allDishes.filter(d=>d.item.image).length} / ${allDishes.length} z&nbsp;zdjęciem</span>
+        </div>
+        <div style="padding:8px 12px;">
+          ${allDishes.map(({ item, ci, ii }) => `
+            <div style="display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:10px;transition:background 150ms ease;"
+              onmouseover="this.style.background='rgba(27,42,74,.03)'" onmouseout="this.style.background='transparent'">
+              <div style="font-size:20px;flex-shrink:0;width:28px;text-align:center;line-height:1;">${item.emoji || '🍽️'}</div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:13px;font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.name}</div>
+                <div style="font-size:11px;color:rgba(27,42,74,.38);margin-top:1px;">${item.price || ''}</div>
+              </div>
+              <div id="dish-photo-${ci}-${ii}" style="flex-shrink:0;">
+                ${item.image ? dishThumbHtml(item.image, ci, ii) : dishUploadBtnHtml(ci, ii)}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
+
+    document.getElementById('results').appendChild(section);
+  }
+
+  function dishThumbHtml(src, ci, ii) {
+    return `<div style="position:relative;display:inline-block;">
+      <img src="${src}" loading="lazy"
+        style="width:52px;height:52px;border-radius:8px;object-fit:cover;border:1.5px solid rgba(27,42,74,.1);box-shadow:0 2px 8px rgba(27,42,74,.1);display:block;">
+      <button onclick="removeDishPhoto(${ci},${ii})"
+        style="position:absolute;top:-5px;right:-5px;width:18px;height:18px;background:var(--navy);color:white;border:none;border-radius:50%;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.25);font-family:sans-serif;">×</button>
+    </div>`;
+  }
+
+  function dishUploadBtnHtml(ci, ii) {
+    return `<label style="cursor:pointer;display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;color:var(--sage);background:rgba(123,170,143,.08);border:1px dashed rgba(123,170,143,.3);border-radius:8px;padding:7px 11px;transition:all 150ms ease;white-space:nowrap;"
+      onmouseover="this.style.background='rgba(123,170,143,.15)'" onmouseout="this.style.background='rgba(123,170,143,.08)'">
+      <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M5.5 1.5v8M1.5 5.5h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+      Zdjęcie
+      <input type="file" accept="image/*" style="display:none;" onchange="handleDishPhoto(event,${ci},${ii})">
+    </label>`;
+  }
+
+  async function handleDishPhoto(event, ci, ii) {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (file.size > 20 * 1024 * 1024) { showToast('Plik za duży (max 20 MB).', 'warn'); return; }
+    const dataUrl = await compressImage(file, 600, 600, 0.82);
+    if (!dataUrl) { showToast('Błąd kompresji zdjęcia.', 'warn'); return; }
+    currentMenu.categories[ci].items[ii].image = dataUrl;
+    document.getElementById(`dish-photo-${ci}-${ii}`).innerHTML = dishThumbHtml(dataUrl, ci, ii);
+    updateMenuPreview();
+    updateDishPhotoCount();
+    showToast('Zdjęcie dodane!', 'ok');
+  }
+
+  function removeDishPhoto(ci, ii) {
+    delete currentMenu.categories[ci].items[ii].image;
+    document.getElementById(`dish-photo-${ci}-${ii}`).innerHTML = dishUploadBtnHtml(ci, ii);
+    updateMenuPreview();
+    updateDishPhotoCount();
+  }
+
+  function updateDishPhotoCount() {
+    const el = document.querySelector('#dishPhotoSection .card > div:first-child span');
+    if (!el || !currentMenu) return;
+    const all = (currentMenu.categories||[]).flatMap(c => c.items||[]);
+    el.textContent = `${all.filter(i=>i.image).length} / ${all.length} z zdjęciem`;
+  }
+  /* ── Stands modal ── */
+  function openStandsModal() {
+    const m = document.getElementById('standsModal');
+    m.style.display = 'flex';
+    if (currentEmail) document.getElementById('standsEmail').value = currentEmail;
+  }
+  function closeStandsModal() {
+    document.getElementById('standsModal').style.display = 'none';
+  }
+  document.getElementById('standsModal').addEventListener('click', e => {
+    if (e.target === document.getElementById('standsModal')) closeStandsModal();
+  });
+  async function sendStandsOrder() {
+    const name  = document.getElementById('standsName').value.trim();
+    const email = document.getElementById('standsEmail').value.trim();
+    const count = document.getElementById('standsCount').value;
+    const color = document.getElementById('standsColor').value;
+    const notes = document.getElementById('standsNotes').value.trim();
+    const errDiv = document.getElementById('standsError');
+    errDiv.style.display = 'none';
+
+    if (!name || !email) {
+      errDiv.textContent = 'Podaj imię i adres email.';
+      errDiv.style.display = 'block'; return;
+    }
+
+    const subject = encodeURIComponent(`Zamówienie stojaków QR — ${name}`);
+    const body = encodeURIComponent(
+      `Nowe zamówienie stojaków QR\n\nImię / Restauracja: ${name}\nEmail: ${email}\nLiczba stolików: ${count}\nKolor: ${color}\nUwagi: ${notes || 'brak'}\n\n— Tableo`
+    );
+    window.location.href = `mailto:hubiwas@gmail.com?subject=${subject}&body=${body}`;
+    showToast('Otwieramy Twój klient pocztowy…', 'ok');
+    setTimeout(closeStandsModal, 1200);
+  }
+
+  /* ── QR Generator ── */
+  async function generateQRCodes() {
+    const url   = document.getElementById('qrUrl').value.trim();
+    const count = parseInt(document.getElementById('qrCount').value) || 0;
+    const grid  = document.getElementById('qrGrid');
+
+    if (!url) { showToast('Wpisz URL menu.', 'warn'); return; }
+    if (count < 1 || count > 100) { showToast('Podaj liczbę stolików 1–100.', 'warn'); return; }
+    if (typeof QRCode === 'undefined') { showToast('Biblioteka QR jeszcze się ładuje, spróbuj za chwilę.', 'warn'); return; }
+
+    grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:14px;margin-top:20px;';
+    grid.innerHTML = '';
+
+    for (let i = 1; i <= count; i++) {
+      const tableUrl = `${url}?stolik=${i}`;
+      const canvas   = document.createElement('canvas');
+      await QRCode.toCanvas(canvas, tableUrl, {
+        width: 150, margin: 2,
+        color: { dark: '#1B2A4A', light: '#FFFFFF' }
+      });
+      canvas.style.cssText = 'border-radius:8px;display:block;width:100%;height:auto;';
+
+      const dlBtn = document.createElement('button');
+      dlBtn.style.cssText = 'margin-top:7px;font-size:11px;color:var(--sage);background:none;border:none;cursor:pointer;font-family:"Plus Jakarta Sans",sans-serif;font-weight:600;width:100%;';
+      dlBtn.textContent = '↓ Pobierz PNG';
+      dlBtn.onclick = () => {
+        const a = document.createElement('a');
+        a.download = `stolik-${i}-qr.png`;
+        a.href = canvas.toDataURL('image/png');
+        a.click();
+      };
+
+      const card = document.createElement('div');
+      card.className = 'qr-card-print';
+      card.style.cssText = 'background:white;border:1px solid rgba(27,42,74,.1);border-radius:14px;padding:14px;text-align:center;box-shadow:0 2px 10px rgba(27,42,74,.06);';
+      card.appendChild(canvas);
+
+      const label = document.createElement('p');
+      label.style.cssText = 'font-size:13px;font-weight:700;color:var(--navy);margin-top:9px;';
+      label.textContent = `Stolik ${i}`;
+      card.appendChild(label);
+      card.appendChild(dlBtn);
+
+      grid.appendChild(card);
+    }
+
+    const printRow = document.createElement('div');
+    printRow.style.cssText = 'grid-column:1/-1;display:flex;justify-content:center;padding-top:8px;';
+    printRow.innerHTML = `<button class="btn-outline" style="padding:11px 24px;font-size:13px;" onclick="window.print()">🖨️ Drukuj wszystkie (${count} kodów)</button>`;
+    grid.appendChild(printRow);
+
+    grid.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  }
+
+  /* ── Toast ── */
+  function showToast(msg, type='ok') {
+    document.getElementById('toastEl')?.remove();
+    const t = document.createElement('div'); t.id = 'toastEl';
+    const bg = type==='ok' ? 'var(--sage)' : type==='warn' ? 'var(--gold)' : '#EF4444';
+    t.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9000;background:${bg};color:white;padding:12px 20px;border-radius:12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;box-shadow:0 8px 32px rgba(0,0,0,.18);animation:fadeUp .35s var(--ease-out) both;`;
+    t.textContent = msg; document.body.appendChild(t);
+    setTimeout(()=>t.remove(), 3500);
+  }
+</script>
+</body>
+</html>

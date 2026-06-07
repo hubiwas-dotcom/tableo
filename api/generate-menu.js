@@ -1,6 +1,38 @@
 const https  = require('https');
 const crypto = require('crypto');
 
+const TRIAL_MS = 7 * 24 * 60 * 60 * 1000;
+
+function isAdmin(email) {
+  const admins = (process.env.ADMIN_EMAILS || 'hubiwas@gmail.com').split(',').map(e => e.trim().toLowerCase());
+  return admins.includes((email || '').toLowerCase());
+}
+
+async function kvGet(key) {
+  const url   = process.env.KV_REST_API_URL   || process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return null;
+  try {
+    const res  = await fetch(`${url}/get/${encodeURIComponent(key)}`, { headers: { Authorization: `Bearer ${token}` } });
+    const data = await res.json();
+    return data.result ? JSON.parse(data.result) : null;
+  } catch { return null; }
+}
+
+async function kvSet(key, value) {
+  const url   = process.env.KV_REST_API_URL   || process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return false;
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(['SET', key, JSON.stringify(value)])
+    });
+    return res.ok;
+  } catch { return false; }
+}
+
 function verifyToken(token) {
   if (!token) return null;
   try {
@@ -147,9 +179,28 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'POST')   { res.status(405).end(); return; }
 
   const token = (req.headers.authorization || '').replace('Bearer ', '');
-  if (!verifyToken(token)) {
+  const user  = verifyToken(token);
+  if (!user) {
     res.status(401).json({ error: 'Sesja wygasła. Zaloguj się ponownie.' });
     return;
+  }
+
+  /* ── Trial enforcement ── */
+  const accountKey = `account:${user.email}`;
+  const account    = (await kvGet(accountKey)) || {};
+
+  if (!account.first_generated_at) {
+    account.first_generated_at = Date.now();
+    await kvSet(accountKey, account);
+  }
+
+  if (!isAdmin(user.email) && Date.now() - account.first_generated_at > TRIAL_MS) {
+    const paid   = await kvGet(`paid:${user.email}`);
+    const isPaid = paid?.active && (!paid.expires_at || Date.now() < paid.expires_at);
+    if (!isPaid) {
+      res.status(402).json({ error: 'trial_expired', message: 'Twój 7-dniowy okres próbny dobiegł końca. Wybierz plan aby kontynuować.' });
+      return;
+    }
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -264,3 +315,5 @@ module.exports = async function handler(req, res) {
     proxyReq.end();
   });
 };
+
+module.exports.config = { api: { bodyParser: { sizeLimit: '20mb' } } };

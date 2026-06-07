@@ -1,6 +1,24 @@
 const https  = require('https');
 const crypto = require('crypto');
 
+const TRIAL_MS = 7 * 24 * 60 * 60 * 1000;
+
+function isAdmin(email) {
+  const admins = (process.env.ADMIN_EMAILS || 'hubiwas@gmail.com').split(',').map(e => e.trim().toLowerCase());
+  return admins.includes((email || '').toLowerCase());
+}
+
+async function kvGet(key) {
+  const url   = process.env.KV_REST_API_URL   || process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return null;
+  try {
+    const res  = await fetch(`${url}/get/${encodeURIComponent(key)}`, { headers: { Authorization: `Bearer ${token}` } });
+    const data = await res.json();
+    return data.result ? JSON.parse(data.result) : null;
+  } catch { return null; }
+}
+
 function verifyToken(token) {
   if (!token) return null;
   try {
@@ -19,11 +37,12 @@ const SYSTEM_PROMPT = `Jesteś asystentem AI pomagającym właścicielom restaur
 Otrzymujesz aktualne menu w JSON i prośbę użytkownika. Modyfikujesz menu i zwracasz zaktualizowaną wersję.
 
 <operations>
-- Tłumaczenie: "dodaj język angielski/francuski/niemiecki/włoski/hiszpański/etc"
-  → przetłumacz names kategorii, names dań i descriptions na ten język
-  → NIE tłumacz nazwy restauracji (to własna nazwa marki)
-  → ceny zostaw bez zmian
-  → wszystkie pola tekstowe muszą być przetłumaczone
+- Dodawanie języka: "dodaj język angielski/francuski/etc."
+  → dodaj kod języka do tablicy menu.languages (np. ["pl","en"])
+  → jeśli menu.languages nie istnieje, utwórz ją: ["pl", <kod>]
+  → jeśli kod już jest w tablicy, nic nie rób (odpowiedz że już dodany)
+  → NIE tłumacz żadnych pól – oryginalne wartości pozostają bez zmian
+  → kody: angielski=en, francuski=fr, niemiecki=de, włoski=it, hiszpański=es, rosyjski=ru
 
 - Dodawanie dania: "dodaj [nazwa] za [cena] do [kategoria]"
   → dodaj do odpowiedniej kategorii, wymyśl opis jeśli nie podano
@@ -45,7 +64,7 @@ Zwróć WYŁĄCZNIE JSON w tagach <output>:
   "menu": { ...pełne zaktualizowane menu w dokładnie tej samej strukturze... }
 }
 </output>
-Nie pisz nic poza tagami. Menu musi mieć identyczną strukturę jak oryginał (restaurant_name, tagline, palette, font_style, categories).
+Nie pisz nic poza tagami. Menu musi mieć identyczną strukturę jak oryginał (restaurant_name, tagline, palette, font_style, categories, languages).
 </output_rules>`;
 
 module.exports = async function handler(req, res) {
@@ -57,9 +76,21 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'POST')   { res.status(405).end(); return; }
 
   const token = (req.headers.authorization || '').replace('Bearer ', '');
-  if (!verifyToken(token)) {
+  const user  = verifyToken(token);
+  if (!user) {
     res.status(401).json({ error: 'Sesja wygasła.' });
     return;
+  }
+
+  /* ── Trial check ── */
+  const account = (await kvGet(`account:${user.email}`)) || {};
+  if (!isAdmin(user.email) && account.first_generated_at && Date.now() - account.first_generated_at > TRIAL_MS) {
+    const paid   = await kvGet(`paid:${user.email}`);
+    const isPaid = paid?.active && (!paid.expires_at || Date.now() < paid.expires_at);
+    if (!isPaid) {
+      res.status(402).json({ error: 'trial_expired', message: 'Twój okres próbny dobiegł końca.' });
+      return;
+    }
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;

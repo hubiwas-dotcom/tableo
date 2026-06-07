@@ -7,6 +7,16 @@ function kvCreds() {
   };
 }
 
+async function kvGet(key) {
+  const { url, token } = kvCreds();
+  if (!url || !token) return null;
+  try {
+    const res  = await fetch(`${url}/get/${encodeURIComponent(key)}`, { headers: { Authorization: `Bearer ${token}` } });
+    const data = await res.json();
+    return data.result ? JSON.parse(data.result) : null;
+  } catch { return null; }
+}
+
 async function kvSet(key, value) {
   const { url, token } = kvCreds();
   if (!url || !token) throw new Error('KV_NOT_CONFIGURED');
@@ -43,13 +53,35 @@ module.exports = async function handler(req, res) {
   const { menu } = req.body || {};
   if (!menu) { res.status(400).json({ error: 'Brak danych menu.' }); return; }
 
-  const base = (menu.restaurant_name || 'menu')
-    .toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
-    .replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').slice(0, 36);
-  const slug = `${base}-${crypto.randomBytes(3).toString('hex')}`;
+  const accountKey = `account:${user.email}`;
+  const account    = (await kvGet(accountKey)) || {};
 
-  await kvSet(`menu:${slug}`, { menu, owner: user.email, published_at: Date.now() });
+  /* Reuse existing slug so the URL stays stable across republishes */
+  let slug = account.slug;
+  if (!slug) {
+    const base = (menu.restaurant_name || 'menu')
+      .toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').slice(0, 36);
+    slug = `${base}-${crypto.randomBytes(3).toString('hex')}`;
+  }
 
-  const host = (req.headers.host || 'tableo-murex.vercel.app').replace(/^www\./, '');
-  res.json({ ok: true, slug, url: `https://${host}/menu/${slug}` });
+  const host         = (req.headers.host || 'tableo-murex.vercel.app').replace(/^www\./, '');
+  const published_url = `https://${host}/menu/${slug}`;
+  const published_at  = Date.now();
+
+  /* Save menu */
+  await kvSet(`menu:${slug}`, { menu, owner: user.email, published_at });
+
+  /* Update account record */
+  account.slug          = slug;
+  account.published_url = published_url;
+  account.published_at  = published_at;
+  await kvSet(accountKey, account);
+
+  /* Keep domain index in sync if user has a custom domain */
+  if (account.custom_domain) {
+    await kvSet(`domain:${account.custom_domain}`, { slug, email: user.email });
+  }
+
+  res.json({ ok: true, slug, url: published_url });
 };

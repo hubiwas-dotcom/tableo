@@ -25,7 +25,7 @@ async function kvSet(key, value) {
   } catch { return false; }
 }
 
-const LANG_NAMES = { en: 'English', de: 'German' };
+const LANG_NAMES = { en: 'English', de: 'German', fr: 'French', it: 'Italian', es: 'Spanish', ru: 'Russian' };
 
 function callClaude(apiKey, prompt) {
   return new Promise((resolve, reject) => {
@@ -71,7 +71,7 @@ module.exports = async function handler(req, res) {
 
   const { slug, lang } = req.query || {};
 
-  if (!slug || !['en', 'de'].includes(lang)) {
+  if (!slug || !Object.keys(LANG_NAMES).includes(lang)) {
     res.status(400).json({ error: 'Wymagane: slug, lang (en|de)' });
     return;
   }

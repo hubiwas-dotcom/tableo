@@ -170,6 +170,35 @@
 
     @media(max-width:900px){.editor-grid{grid-template-columns:1fr!important;}}
     @media(max-width:640px){.top-bar-email{display:none;}}
+
+    /* ── Step flow ── */
+    .step-flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:22px;}
+    .step-item{display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(27,42,74,.38);font-weight:500;}
+    .step-item.active{color:var(--navy);}
+    .step-badge{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;font-size:10px;font-weight:700;flex-shrink:0;background:rgba(27,42,74,.14);color:rgba(27,42,74,.5);}
+    .step-item.active .step-badge{background:var(--navy);color:white;}
+    .step-div{width:20px;height:1px;background:rgba(27,42,74,.15);}
+
+    /* ── Card section header with step ── */
+    .card-step-header{display:flex;align-items:center;gap:10px;}
+
+    /* ── Entrance animations ── */
+    @keyframes slideInUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+    .anim-1{animation:slideInUp .45s var(--ease-out) .05s both;}
+    .anim-2{animation:slideInUp .45s var(--ease-out) .12s both;}
+    .anim-3{animation:slideInUp .45s var(--ease-out) .19s both;}
+    .anim-4{animation:slideInUp .45s var(--ease-out) .26s both;}
+
+    /* ── Paywall overlay ── */
+    #paywallOverlay{position:fixed;inset:0;z-index:8000;background:rgba(10,20,40,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);display:none;align-items:center;justify-content:center;padding:24px;}
+    .paywall-card{background:var(--cream);border-radius:28px;max-width:520px;width:100%;box-shadow:0 40px 100px rgba(0,0,0,.35);overflow:hidden;animation:slideInUp .4s var(--ease-out) both;}
+    .plan-card{border:1.5px solid rgba(27,42,74,.12);border-radius:18px;padding:22px;cursor:pointer;transition:border-color 200ms,box-shadow 200ms,transform 200ms var(--ease-out);}
+    .plan-card:hover{border-color:var(--sage);box-shadow:0 8px 32px rgba(123,170,143,.15);transform:translateY(-2px);}
+    .plan-card.featured{border-color:var(--gold);background:linear-gradient(135deg,var(--gold-pale),white);}
+
+    /* ── Help section ── */
+    .help-faq-item{padding:14px 16px;border-radius:12px;background:rgba(27,42,74,.03);border:1px solid rgba(27,42,74,.06);transition:background 150ms,border-color 150ms;cursor:default;}
+    .help-faq-item:hover{background:var(--sage-pale);border-color:rgba(123,170,143,.2);}
   </style>
 </head>
 <body>
@@ -263,6 +292,14 @@
 
         <!-- ═══ REGISTER PANEL ═══ -->
         <div id="panelRegister" style="display:none;">
+          <div id="googleBtnWrapReg" style="display:flex;justify-content:center;margin-bottom:4px;">
+            <div id="googleBtnReg"></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;margin:16px 0;">
+            <div style="flex:1;height:1px;background:rgba(27,42,74,.1);"></div>
+            <span style="font-size:11px;color:rgba(27,42,74,.3);font-weight:600;letter-spacing:.06em;text-transform:uppercase;">lub email</span>
+            <div style="flex:1;height:1px;background:rgba(27,42,74,.1);"></div>
+          </div>
           <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;">
             <div>
               <label class="field-label">Email</label>
@@ -357,12 +394,16 @@
   <!-- Main content -->
   <div style="padding:80px 24px 60px;max-width:1120px;margin:0 auto;" id="editorMain">
 
-    <div style="margin-bottom:40px;">
-      <span class="eyebrow" style="margin-bottom:16px;display:inline-flex;"><span class="eyebrow-dot"></span>Generator AI</span>
-      <h1 style="font-size:clamp(1.9rem,4vw,2.8rem);font-weight:500;color:var(--navy);letter-spacing:-.03em;line-height:1.1;margin-top:12px;">Edytor menu</h1>
-      <p style="font-size:14px;color:rgba(27,42,74,.45);margin-top:10px;font-weight:300;max-width:480px;line-height:1.7;">
-        Wyślij zdjęcia papierowego menu — AI przeanalizuje je i stworzy gotowe menu cyfrowe.
-      </p>
+    <div style="margin-bottom:36px;" class="anim-1">
+      <span class="eyebrow" style="margin-bottom:14px;display:inline-flex;"><span class="eyebrow-dot"></span>Generator AI</span>
+      <h1 style="font-size:clamp(1.7rem,4vw,2.6rem);font-weight:500;color:var(--navy);letter-spacing:-.03em;line-height:1.1;margin-top:10px;">Edytor menu</h1>
+      <div class="step-flow">
+        <div class="step-item active"><div class="step-badge">1</div>Wgraj zdjęcia</div>
+        <div class="step-div"></div>
+        <div class="step-item"><div class="step-badge">2</div>Generuj AI</div>
+        <div class="step-div"></div>
+        <div class="step-item"><div class="step-badge">3</div>Opublikuj online</div>
+      </div>
     </div>
 
     <div class="editor-grid" style="display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:start;">
@@ -371,13 +412,16 @@
       <div>
 
         <!-- Logo upload -->
-        <div class="card" style="padding:0;overflow:hidden;margin-bottom:16px;">
+        <div class="card anim-2" style="padding:0;overflow:hidden;margin-bottom:16px;">
           <div style="padding:16px 24px;border-bottom:1px solid rgba(27,42,74,.07);display:flex;align-items:center;justify-content:space-between;">
-            <div>
-              <div style="font-size:13px;font-weight:700;color:var(--navy);">Logo restauracji</div>
-              <div style="font-size:12px;color:rgba(27,42,74,.4);margin-top:2px;">Opcjonalne — pojawi się w nagłówku menu</div>
+            <div class="card-step-header">
+              <div class="step-badge active" style="background:var(--sage);color:white;">1</div>
+              <div>
+                <div style="font-size:13px;font-weight:700;color:var(--navy);">Logo restauracji</div>
+                <div style="font-size:12px;color:rgba(27,42,74,.4);margin-top:1px;">Opcjonalne — pojawi się w nagłówku menu</div>
+              </div>
             </div>
-            <span style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(27,42,74,.3);">opcjonalne</span>
+            <span style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(27,42,74,.25);background:rgba(27,42,74,.05);padding:3px 8px;border-radius:6px;">opcjonalne</span>
           </div>
           <div style="padding:16px 24px;">
             <input type="file" id="logoInput" accept="image/*" style="display:none;" onchange="handleLogoFile(this.files[0])">
@@ -404,10 +448,15 @@
         </div>
 
         <!-- Menu photos -->
-        <div class="card" style="padding:0;overflow:hidden;">
+        <div class="card anim-3" style="padding:0;overflow:hidden;">
           <div style="padding:20px 24px;border-bottom:1px solid rgba(27,42,74,.07);">
-            <div style="font-size:13px;font-weight:700;color:var(--navy);">Zdjęcia menu</div>
-            <div style="font-size:12px;color:rgba(27,42,74,.4);margin-top:3px;">Dodaj jedno lub więcej zdjęć papierowego menu</div>
+            <div class="card-step-header">
+              <div class="step-badge active" style="background:var(--navy);color:white;">2</div>
+              <div>
+                <div style="font-size:13px;font-weight:700;color:var(--navy);">Zdjęcia papierowego menu</div>
+                <div style="font-size:12px;color:rgba(27,42,74,.4);margin-top:1px;">Dodaj jedno lub więcej — AI odczyta całą treść</div>
+              </div>
+            </div>
           </div>
           <div style="padding:20px 24px;">
             <input type="file" id="fileInput" multiple accept="image/*" style="display:none;">
@@ -436,7 +485,11 @@
 
       <!-- Right: controls -->
       <div style="display:flex;flex-direction:column;gap:16px;">
-        <div class="card">
+        <div class="card anim-2" style="border-top:3px solid var(--gold);">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+            <div class="step-badge active" style="background:var(--gold);color:white;width:26px;height:26px;font-size:11px;">3</div>
+            <div style="font-size:13px;font-weight:700;color:var(--navy);">Generuj i dostosuj</div>
+          </div>
           <div style="margin-bottom:18px;">
             <label class="field-label">Dodatkowe informacje</label>
             <textarea id="notes" class="field" rows="4" placeholder="np. Włoska restauracja, elegancki styl, ok. 25 pozycji, ceny w złotych..."></textarea>
@@ -459,20 +512,24 @@
           <p style="text-align:center;font-size:11px;color:rgba(27,42,74,.3);margin-top:10px;line-height:1.5;">Dodaj zdjęcie lub opis aby wygenerować menu</p>
         </div>
 
-        <div style="background:var(--sage-pale);border:1px solid rgba(123,170,143,.2);border-radius:16px;padding:18px 20px;">
-          <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sage);margin-bottom:10px;">Jak to działa</div>
-          <div style="display:flex;flex-direction:column;gap:8px;">
+        <div class="card anim-3" style="padding:18px 20px;border:1px solid rgba(123,170,143,.25);background:var(--sage-pale);">
+          <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--sage);margin-bottom:12px;">Jak to działa</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
             <div style="display:flex;gap:10px;align-items:flex-start;">
-              <span style="font-size:13px;">📸</span>
-              <p style="font-size:12px;color:rgba(27,42,74,.6);line-height:1.55;">Dodaj zdjęcie papierowego menu (może być odręczne)</p>
+              <div style="width:26px;height:26px;border-radius:8px;background:rgba(123,170,143,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;">📸</div>
+              <p style="font-size:12px;color:rgba(27,42,74,.6);line-height:1.6;padding-top:4px;">Wgraj zdjęcie — może być odręczne lub niewyraźne</p>
             </div>
             <div style="display:flex;gap:10px;align-items:flex-start;">
-              <span style="font-size:13px;">✨</span>
-              <p style="font-size:12px;color:rgba(27,42,74,.6);line-height:1.55;">AI wyodrębnia kategorie, dania i ceny</p>
+              <div style="width:26px;height:26px;border-radius:8px;background:rgba(123,170,143,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;">✨</div>
+              <p style="font-size:12px;color:rgba(27,42,74,.6);line-height:1.6;padding-top:4px;">AI odczytuje kategorie, dania, ceny i dobiera styl</p>
             </div>
             <div style="display:flex;gap:10px;align-items:flex-start;">
-              <span style="font-size:13px;">🌐</span>
-              <p style="font-size:12px;color:rgba(27,42,74,.6);line-height:1.55;">Gotowe menu do publikacji online</p>
+              <div style="width:26px;height:26px;border-radius:8px;background:rgba(123,170,143,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;">💬</div>
+              <p style="font-size:12px;color:rgba(27,42,74,.6);line-height:1.6;padding-top:4px;">Edytuj przez czat: "dodaj język angielski", "zmień cenę…"</p>
+            </div>
+            <div style="display:flex;gap:10px;align-items:flex-start;">
+              <div style="width:26px;height:26px;border-radius:8px;background:rgba(123,170,143,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;">🌐</div>
+              <p style="font-size:12px;color:rgba(27,42,74,.6);line-height:1.6;padding-top:4px;">Publikuj i udostępnij link lub kod QR gościom</p>
             </div>
           </div>
         </div>
@@ -552,6 +609,88 @@
       </div>
     </div>
 
+    <!-- ══ HELP SECTION ══ -->
+    <div class="card" style="margin-top:36px;padding:0;overflow:hidden;">
+      <div style="padding:22px 24px;border-bottom:1px solid rgba(27,42,74,.07);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--navy);">Pomoc i wsparcie</div>
+          <div style="font-size:12px;color:rgba(27,42,74,.4);margin-top:2px;">Masz pytanie? Sprawdź FAQ lub napisz do nas bezpośrednio</div>
+        </div>
+        <a href="/kontakt" target="_blank"
+          style="display:inline-flex;align-items:center;gap:7px;background:var(--navy);color:white;padding:10px 18px;border-radius:100px;font-size:12.5px;font-weight:600;text-decoration:none;transition:opacity 150ms;white-space:nowrap;"
+          onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M7 1h5v5M12 1L6 7M2 3H1v9h9v-1" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Skontaktuj się z nami
+        </a>
+      </div>
+      <div style="padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;">
+        <div class="help-faq-item">
+          <div style="font-size:20px;margin-bottom:6px;">🕐</div>
+          <div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:3px;">Jak działa 7-dniowy trial?</div>
+          <div style="font-size:11.5px;color:rgba(27,42,74,.45);line-height:1.55;">7 dni od pierwszego generowania. Po triale menu wyłączone bez planu.</div>
+        </div>
+        <div class="help-faq-item">
+          <div style="font-size:20px;margin-bottom:6px;">🌐</div>
+          <div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:3px;">Własna domena</div>
+          <div style="font-size:11.5px;color:rgba(27,42,74,.45);line-height:1.55;">Wpisz domenę w panelu bocznym po publikacji, skonfiguruj CNAME i napisz do nas.</div>
+        </div>
+        <div class="help-faq-item">
+          <div style="font-size:20px;margin-bottom:6px;">💳</div>
+          <div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:3px;">Plany i płatności</div>
+          <div style="font-size:11.5px;color:rgba(27,42,74,.45);line-height:1.55;">Abonament 39 zł/mies. lub zakup strony 349 zł jednorazowo. Płatność kartą lub BLIK.</div>
+        </div>
+        <div class="help-faq-item">
+          <div style="font-size:20px;margin-bottom:6px;">💬</div>
+          <div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:3px;">Edycja przez czat</div>
+          <div style="font-size:11.5px;color:rgba(27,42,74,.45);line-height:1.55;">Po generacji edytuj chattem: "dodaj angielski", "zmień cenę X na Y", "usuń kategorię".</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ PAYWALL MODAL ══ -->
+<div id="paywallOverlay" onclick="if(event.target===this)hidePaywall()">
+  <div class="paywall-card">
+    <div style="background:linear-gradient(135deg,var(--navy),var(--navy-mid));padding:28px 32px;text-align:center;">
+      <div style="font-size:36px;margin-bottom:10px;">⏰</div>
+      <h3 style="font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:500;color:white;margin-bottom:6px;">Okres próbny dobiegł końca</h3>
+      <p style="font-size:13px;color:rgba(255,255,255,.5);line-height:1.6;">Wybierz plan aby kontynuować korzystanie z generatora i utrzymać menu online.</p>
+    </div>
+    <div style="padding:24px 28px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+
+        <div class="plan-card" onclick="startCheckout('monthly')">
+          <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(27,42,74,.4);margin-bottom:8px;">Abonament</div>
+          <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:4px;">
+            <span style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:600;color:var(--navy);">39</span>
+            <span style="font-size:13px;color:rgba(27,42,74,.5);">zł/mies.</span>
+          </div>
+          <p style="font-size:11.5px;color:rgba(27,42,74,.45);line-height:1.5;margin-bottom:14px;">Pełny dostęp do edytora, wielojęzyczność, aktualizacje. Anuluj kiedy chcesz.</p>
+          <div id="btn-monthly"
+            style="text-align:center;background:var(--navy);color:white;padding:11px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:opacity 150ms;"
+            onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">Wybierz →</div>
+        </div>
+
+        <div class="plan-card featured" onclick="startCheckout('lifetime')">
+          <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;">Jednorazowo ⭐</div>
+          <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:4px;">
+            <span style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:600;color:var(--navy);">349</span>
+            <span style="font-size:13px;color:rgba(27,42,74,.5);">zł</span>
+          </div>
+          <p style="font-size:11.5px;color:rgba(27,42,74,.45);line-height:1.5;margin-bottom:14px;">Menu aktywne na zawsze. Bez miesięcznych opłat. Wszystkie funkcje.</p>
+          <div id="btn-lifetime"
+            style="text-align:center;background:var(--gold);color:white;padding:11px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:opacity 150ms;"
+            onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">Kup teraz →</div>
+        </div>
+
+      </div>
+      <p style="font-size:11px;color:rgba(27,42,74,.3);text-align:center;line-height:1.6;">
+        Płatność obsługuje Stripe — bezpieczna, szyfrowana. Faktura VAT na życzenie.<br>
+        Pytania? <a href="/kontakt" target="_blank" style="color:var(--sage);font-weight:600;">Skontaktuj się z nami</a>
+      </p>
+    </div>
   </div>
 </div>
 
@@ -619,10 +758,21 @@
   let uploadedImages = [], currentToken = null, currentEmail = null;
   let currentName = '', currentPicture = '', trialStart = null, currentMenu = null;
   let currentLogo = null, currentLogoColors = null;
+  let currentCustomDomain = null, currentPublishedSlug = null, currentPublishedUrl = null;
   const TRIAL_DAYS = 7;
 
   /* ── Init ── */
   document.addEventListener('DOMContentLoaded', () => {
+    /* Handle Stripe return */
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('payment') === 'success') {
+      history.replaceState({}, '', '/editor');
+      showToast('Płatność zakończona! Aktywujemy Twój plan…', 'ok');
+      window._awaitingPayment = true;
+    } else if (urlParams.get('payment') === 'cancelled') {
+      history.replaceState({}, '', '/editor');
+    }
+
     const stored = localStorage.getItem('tableo_auth');
     if (stored) {
       try {
@@ -671,10 +821,9 @@
       const wait = () => new Promise(r => { if (window.google) r(); else setTimeout(() => wait().then(r), 100); });
       await wait();
       google.accounts.id.initialize({ client_id: cfg.google_client_id, callback: handleGoogleCredential });
-      google.accounts.id.renderButton(document.getElementById('googleBtn'), {
-        type: 'standard', theme: 'outline', size: 'large',
-        shape: 'pill', text: 'signin_with', logo_alignment: 'left', width: 320
-      });
+      const btnOpts = { type: 'standard', theme: 'outline', size: 'large', shape: 'pill', text: 'signin_with', logo_alignment: 'left', width: 320 };
+      google.accounts.id.renderButton(document.getElementById('googleBtn'), btnOpts);
+      google.accounts.id.renderButton(document.getElementById('googleBtnReg'), { ...btnOpts, text: 'signup_with' });
     } catch(e) {
       document.getElementById('googleLoading').style.display = 'none';
       document.getElementById('loginError').textContent = 'Błąd ładowania logowania Google. Odśwież stronę.';
@@ -842,12 +991,65 @@
       av.src = currentPicture; av.style.display = 'block';
     }
     updateTrialUI();
+    loadUserAccount();
+  }
+
+  /* ── Load saved menu on login ── */
+  async function loadUserAccount() {
+    if (!currentToken) return;
+    try {
+      const res = await fetch('/api/account', { headers: { 'Authorization': `Bearer ${currentToken}` } });
+      if (res.status === 401) { doLogout(); return; }
+      const data = await res.json();
+
+      /* Always apply trial data from server */
+      if (data.trial) {
+        trialData = data.trial;
+        if (data.trial.first_generated_at) trialStart = data.trial.first_generated_at;
+        updateTrialUI(data.trial);
+
+        /* After Stripe return: poll until paid flag appears (max ~30s) */
+        if (window._awaitingPayment && !data.trial.paid) {
+          window._awaitingPayment = false;
+          pollForPaidStatus(8, 3500);
+        } else if (window._awaitingPayment && data.trial.paid) {
+          window._awaitingPayment = false;
+          showToast('Plan aktywny! Możesz teraz korzystać z edytora.', 'ok');
+        } else if (data.trial.expired && !data.trial.paid) {
+          showPaywall();
+        }
+      }
+
+      if (!data.ok || !data.account || !data.menu) return;
+
+      currentCustomDomain  = data.account.custom_domain  || null;
+      currentPublishedSlug = data.account.slug;
+      currentPublishedUrl  = data.account.published_url;
+      currentMenu = data.menu;
+      if (data.menu.logo) currentLogo = data.menu.logo;
+
+      renderMenu(currentMenu);
+
+      /* Restore the published URL badge */
+      const pr = document.getElementById('publishResult');
+      const lk = document.getElementById('publishLink');
+      if (pr && lk && currentPublishedUrl) {
+        lk.href = currentPublishedUrl;
+        lk.textContent = currentPublishedUrl;
+        pr.style.display = 'block';
+        const qrInp = document.getElementById('qrUrl');
+        if (qrInp) qrInp.value = currentPublishedUrl;
+      }
+      renderDomainCard();
+      showToast('Menu załadowane z konta', 'ok');
+    } catch {}
   }
 
   function doLogout() {
     localStorage.removeItem('tableo_auth');
     currentToken = null; currentEmail = null; currentName = ''; currentPicture = '';
     trialStart = null; uploadedImages = []; currentMenu = null; currentLogo = null;
+    currentCustomDomain = null; currentPublishedSlug = null; currentPublishedUrl = null;
     document.getElementById('results').innerHTML = '';
     document.getElementById('notes').value = '';
     showLogin();
@@ -856,25 +1058,120 @@
   }
 
   /* ── Trial UI ── */
-  function updateTrialUI() {
-    const badge   = document.getElementById('trialBadge');
-    const banner  = document.getElementById('upgradeBanner');
-    const editorMain = document.getElementById('editorMain');
-    if (!trialStart) return;
+  let trialData = null;
 
+  function updateTrialUI(trial) {
+    const badge      = document.getElementById('trialBadge');
+    const banner     = document.getElementById('upgradeBanner');
+    const editorMain = document.getElementById('editorMain');
+
+    // Use server trial data if available, else fall back to localStorage
+    const t = trial || trialData;
+
+    if (t) {
+      if (t.paid) {
+        const label = t.paid_plan === 'lifetime' ? 'Lifetime ⭐' : 'Aktywny plan';
+        badge.innerHTML = `<span class="trial-badge trial-ok">${label}</span>`;
+        editorMain.style.paddingTop = '80px';
+        banner.style.display = 'none';
+        return;
+      }
+      if (!t.started) {
+        badge.innerHTML = `<span class="trial-badge trial-ok">🎁 7 dni za darmo</span>`;
+        editorMain.style.paddingTop = '80px';
+        return;
+      }
+      if (t.expired) {
+        badge.innerHTML = `<span class="trial-badge trial-end">Trial wygasł</span>`;
+        banner.style.display = 'block';
+        editorMain.style.paddingTop = '20px';
+        return;
+      }
+      const days = t.days_left;
+      if (days > 3) {
+        badge.innerHTML = `<span class="trial-badge trial-ok">🎁 ${days} dni próbnych</span>`;
+      } else {
+        badge.innerHTML = `<span class="trial-badge trial-warn">⏰ ${days} ${days === 1 ? 'dzień' : 'dni'} próbny</span>`;
+      }
+      editorMain.style.paddingTop = '80px';
+      return;
+    }
+
+    // Legacy fallback: localStorage trialStart
+    if (!trialStart) {
+      badge.innerHTML = `<span class="trial-badge trial-ok">🎁 7 dni za darmo</span>`;
+      return;
+    }
     const daysUsed = Math.floor((Date.now() - trialStart) / 86400000);
     const daysLeft = TRIAL_DAYS - daysUsed;
-
     if (daysLeft > 3) {
       badge.innerHTML = `<span class="trial-badge trial-ok">🎁 ${daysLeft} dni próbnych</span>`;
       editorMain.style.paddingTop = '80px';
     } else if (daysLeft > 0) {
-      badge.innerHTML = `<span class="trial-badge trial-warn">⏰ ${daysLeft} ${daysLeft === 1 ? 'dzień' : 'dni'} próbne</span>`;
+      badge.innerHTML = `<span class="trial-badge trial-warn">⏰ ${daysLeft} ${daysLeft === 1 ? 'dzień' : 'dni'} próbny</span>`;
       editorMain.style.paddingTop = '80px';
     } else {
       badge.innerHTML = `<span class="trial-badge trial-end">Trial wygasł</span>`;
       banner.style.display = 'block';
       editorMain.style.paddingTop = '20px';
+    }
+  }
+
+  /* ── Paywall ── */
+  function showPaywall() {
+    const overlay = document.getElementById('paywallOverlay');
+    overlay.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  async function pollForPaidStatus(attempts, delayMs) {
+    if (attempts <= 0) {
+      showToast('Plan aktywowany — odśwież stronę aby zobaczyć status.', 'ok');
+      return;
+    }
+    await new Promise(r => setTimeout(r, delayMs));
+    if (!currentToken) return;
+    try {
+      const res = await fetch('/api/account', { headers: { Authorization: `Bearer ${currentToken}` } });
+      const data = await res.json();
+      if (data.trial?.paid) {
+        trialData = data.trial;
+        updateTrialUI(data.trial);
+        hidePaywall();
+        showToast('Plan aktywny! Możesz teraz korzystać z edytora.', 'ok');
+        return;
+      }
+    } catch {}
+    pollForPaidStatus(attempts - 1, delayMs);
+  }
+
+  function hidePaywall() {
+    const overlay = document.getElementById('paywallOverlay');
+    overlay.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  async function startCheckout(plan) {
+    const btnId = `btn-${plan}`;
+    const btn   = document.getElementById(btnId);
+    if (btn) { btn.style.opacity = '.5'; btn.textContent = 'Przekierowuję…'; }
+
+    try {
+      const res  = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentToken}` },
+        body: JSON.stringify({ plan })
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        showToast(data.error || 'Błąd płatności. Spróbuj ponownie.', 'warn');
+        if (btn) { btn.style.opacity = '1'; btn.textContent = plan === 'monthly' ? 'Wybierz →' : 'Kup teraz →'; }
+      }
+    } catch {
+      showToast('Błąd połączenia.', 'warn');
+      if (btn) { btn.style.opacity = '1'; btn.textContent = plan === 'monthly' ? 'Wybierz →' : 'Kup teraz →'; }
     }
   }
 
@@ -943,6 +1240,7 @@
 
   /* ── Generate ── */
   async function generateMenu() {
+    if (trialData?.expired && !trialData?.paid) { showPaywall(); return; }
     const notes = document.getElementById('notes').value.trim();
     if (uploadedImages.length === 0 && !notes) { showToast('Dodaj zdjęcie menu lub wpisz opis.','warn'); return; }
 
@@ -988,6 +1286,7 @@
       });
       const data = await res.json();
       if (res.status === 401) { doLogout(); return; }
+      if (res.status === 402) { showPaywall(); results.innerHTML = ''; btn.disabled = false; btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1l1.5 3.5L13 6l-2.5 2.5.5 3.5L8 10.5 5 12l.5-3.5L3 6l3.5-.5L8 1z" fill="white" opacity=".9"/></svg>Generuj menu AI`; btn.className = 'btn-primary btn-magic'; return; }
       if (res.status === 500 && data.error && data.error.includes('ANTHROPIC_API_KEY')) {
         document.getElementById('apiKeyNotice').style.display = 'block'; results.innerHTML = '';
         showToast('Brak klucza API. Skonfiguruj ANTHROPIC_API_KEY w Vercel.','warn');
@@ -1071,7 +1370,13 @@
 
     const logoHtml = logo ? `<img class="nav-logo-img" src="${logo}" alt="${name}">` : '';
 
-    return `<!DOCTYPE html><html lang="pl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>${name}</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=${f.url}&display=swap" rel="stylesheet"><style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}:root{--bg:${v.bg};--nav-h:54px;--sage:${v.accent};--gold:${v.price};--gold-light:${v.priceLight};--cream:${v.text};--cream-dim:rgba(${v.tRgb},.5);--cream-muted:rgba(${v.tRgb},.32);--border:rgba(${v.tRgb},.07);}html{background:var(--bg);}body{font-family:${f.body};background:var(--bg);color:var(--cream);-webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden;}body::after{content:'';position:fixed;inset:0;z-index:9999;pointer-events:none;opacity:.02;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23n)'/%3E%3C/svg%3E");}.topnav{position:sticky;top:0;z-index:100;display:grid;grid-template-columns:40px 1fr 40px;align-items:center;height:var(--nav-h);padding:0 10px;background:rgba(${v.bgRgb},.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}.nav-burger{background:none;border:none;cursor:pointer;display:flex;flex-direction:column;gap:4.5px;padding:6px;justify-self:start;}.nav-burger span{display:block;width:18px;height:1.5px;background:var(--cream-dim);border-radius:2px;}.nav-center{display:flex;align-items:center;justify-content:center;overflow:hidden;min-width:0;}.nav-logo-img{max-height:32px;width:auto;max-width:180px;object-fit:contain;}.nav-name{font-family:${f.heading};font-size:${f.navFs};font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.hero{position:relative;padding:38px 20px 30px;text-align:center;overflow:hidden;}.hero-glow{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 90% 70% at 50% 120%,rgba(${v.aRgb},.1) 0%,transparent 60%),radial-gradient(ellipse 50% 40% at 15% 0%,rgba(${v.pRgb},.06) 0%,transparent 50%);}.hero-eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:${f.heading};font-size:7.5px;font-weight:500;letter-spacing:.28em;text-transform:uppercase;color:var(--sage);margin-bottom:12px;opacity:.7;}.hero-eyebrow::before,.hero-eyebrow::after{content:'';width:18px;height:1px;background:currentColor;opacity:.4;}.hero-name{font-family:${f.heading};font-size:clamp(1.25rem,5.5vw,2.1rem);font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--cream);line-height:1.1;position:relative;}.hero-tagline{font-family:${f.dish};font-style:italic;font-size:13.5px;font-weight:300;color:var(--cream-muted);letter-spacing:.02em;line-height:1.7;max-width:260px;margin:10px auto 0;position:relative;}.hero-rule{position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(${v.aRgb},.14),rgba(${v.pRgb},.2),rgba(${v.aRgb},.14),transparent);}.cat-grid{position:sticky;top:var(--nav-h);z-index:99;background:rgba(${v.bgRgb},.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;flex-wrap:nowrap;overflow-x:auto;gap:0;-ms-overflow-style:none;scrollbar-width:none;}.cat-grid::-webkit-scrollbar{display:none;}.cat-link{font-family:${f.heading};font-size:8px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;text-decoration:none;color:var(--cream-muted);padding:12px 14px;flex-shrink:0;border-bottom:2px solid transparent;transition:color 150ms,border-color 150ms;white-space:nowrap;-webkit-tap-highlight-color:transparent;}.cat-link:hover,.cat-link.active{color:var(--gold-light);border-bottom-color:var(--gold);}main{max-width:680px;margin:0 auto;padding:14px 16px 100px;}.cat-section{margin-bottom:32px;}.cat-heading{display:flex;align-items:center;gap:10px;padding:16px 0 11px;}.cat-title{font-family:${f.heading};font-size:${f.catFs};font-weight:600;letter-spacing:${f.catLs};text-transform:uppercase;color:var(--cream);white-space:nowrap;}.cat-line-l{flex:1;height:1px;background:linear-gradient(to right,transparent,rgba(${v.pRgb},.17));}.cat-line-r{flex:1;height:1px;background:linear-gradient(to left,transparent,rgba(${v.pRgb},.17));}.dish{padding:13px 0;border-bottom:1px solid var(--border);opacity:0;animation:fadeUp .4s cubic-bezier(.23,1,.32,1) both;}.dish:last-child{border-bottom:none;}@keyframes fadeUp{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}.dish-img{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:8px;margin-bottom:9px;border:1px solid rgba(232,223,208,.06);box-shadow:0 4px 18px rgba(0,0,0,.4);}.dish-row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;}.dish-name{font-family:${f.dish};font-size:${f.dishFs};font-weight:400;color:var(--cream);line-height:1.2;letter-spacing:.01em;}.dish-price{font-family:${f.heading};font-size:12px;font-weight:600;color:var(--gold);white-space:nowrap;letter-spacing:.04em;flex-shrink:0;}.dish-desc{font-size:11.5px;color:var(--cream-muted);margin-top:5px;line-height:1.65;font-weight:300;}footer{position:fixed;bottom:0;left:0;right:0;padding:12px 20px 16px;text-align:center;background:linear-gradient(to top,var(--bg) 60%,transparent);pointer-events:none;}footer span{font-size:9px;color:rgba(232,223,208,.1);letter-spacing:.06em;}footer a{color:rgba(${v.aRgb},.18);text-decoration:none;pointer-events:all;}</style></head><body><nav class="topnav"><button class="nav-burger" aria-label="Menu"><span></span><span></span><span></span></button><div class="nav-center">${logo ? logoHtml : `<span class="nav-name">${name}</span>`}</div><div></div></nav><header class="hero"><div class="hero-glow"></div><div class="hero-eyebrow">Menu</div><h1 class="hero-name">${name}</h1><div class="hero-rule"></div></header><div class="cat-grid">${catLinks}</div><main>${sections}</main><footer><span>menu cyfrowe · <a href="https://tableo-murex.vercel.app" target="_blank">tableo</a></span></footer><script>function goTo(e,i){e.preventDefault();const el=document.getElementById('s'+i);if(!el)return;const navH=document.querySelector('.topnav').offsetHeight;const gridH=document.querySelector('.cat-grid').offsetHeight;window.scrollTo({top:el.offsetTop-navH-gridH-8,behavior:'smooth'});}function langToast(){const t=document.createElement('div');t.textContent='Wielojęzyczność — wkrótce';Object.assign(t.style,{position:'fixed',bottom:'60px',left:'50%',transform:'translateX(-50%)',background:'rgba(13,21,32,.97)',color:'rgba(232,223,208,.65)',padding:'8px 18px',borderRadius:'100px',fontSize:'11px',fontFamily:"'DM Sans',sans-serif",letterSpacing:'.05em',border:'1px solid rgba(232,223,208,.08)',zIndex:'9998',whiteSpace:'nowrap'});document.body.appendChild(t);setTimeout(()=>t.remove(),2000);}const secs=Array.from(document.querySelectorAll('.cat-section'));const lnks=Array.from(document.querySelectorAll('.cat-link'));const obs=new IntersectionObserver(entries=>{entries.forEach(entry=>{if(entry.isIntersecting){const idx=secs.indexOf(entry.target);if(idx>=0){lnks.forEach((l,j)=>l.classList.toggle('active',j===idx));lnks[idx]?.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});}}});},{rootMargin:'-15% 0px -75% 0px',threshold:0});secs.forEach(s=>obs.observe(s));<\/script></body></html>`;
+    const _LANG_LABELS = { pl:'PL', en:'EN', de:'DE', fr:'FR', it:'IT', es:'ES', ru:'RU' };
+    const _langs = Array.isArray(menu.languages) && menu.languages.length > 1 ? menu.languages : [];
+    const langBtns = _langs.map(l =>
+      `<button class="lang-btn${l === 'pl' ? ' active' : ''}" data-lang="${l}" onclick="langToast()">${_LANG_LABELS[l] || l.toUpperCase()}</button>`
+    ).join('');
+
+    return `<!DOCTYPE html><html lang="pl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>${name}</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=${f.url}&display=swap" rel="stylesheet"><style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}:root{--bg:${v.bg};--nav-h:54px;--sage:${v.accent};--gold:${v.price};--gold-light:${v.priceLight};--cream:${v.text};--cream-dim:rgba(${v.tRgb},.5);--cream-muted:rgba(${v.tRgb},.32);--border:rgba(${v.tRgb},.07);}html{background:var(--bg);}body{font-family:${f.body};background:var(--bg);color:var(--cream);-webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden;}body::after{content:'';position:fixed;inset:0;z-index:9999;pointer-events:none;opacity:.02;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23n)'/%3E%3C/svg%3E");}.topnav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;height:var(--nav-h);padding:0 14px;background:rgba(${v.bgRgb},.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}.nav-left{display:flex;align-items:center;overflow:hidden;}.nav-right{display:flex;align-items:center;gap:4px;flex-shrink:0;}.nav-logo-img{max-height:32px;width:auto;max-width:160px;object-fit:contain;}.nav-name{font-family:${f.heading};font-size:${f.navFs};font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.lang-btn{background:none;border:1px solid rgba(${v.tRgb},.15);color:var(--cream-dim);border-radius:6px;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:4px 8px;cursor:pointer;font-family:${f.heading};transition:background 120ms,color 120ms,border-color 120ms;}.lang-btn.active,.lang-btn:hover{background:rgba(${v.tRgb},.1);color:var(--cream);border-color:rgba(${v.tRgb},.3);}.hero{position:relative;padding:38px 20px 30px;text-align:center;overflow:hidden;}.hero-glow{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 90% 70% at 50% 120%,rgba(${v.aRgb},.1) 0%,transparent 60%),radial-gradient(ellipse 50% 40% at 15% 0%,rgba(${v.pRgb},.06) 0%,transparent 50%);}.hero-eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:${f.heading};font-size:7.5px;font-weight:500;letter-spacing:.28em;text-transform:uppercase;color:var(--sage);margin-bottom:12px;opacity:.7;}.hero-eyebrow::before,.hero-eyebrow::after{content:'';width:18px;height:1px;background:currentColor;opacity:.4;}.hero-name{font-family:${f.heading};font-size:clamp(1.25rem,5.5vw,2.1rem);font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--cream);line-height:1.1;position:relative;}.hero-tagline{font-family:${f.dish};font-style:italic;font-size:13.5px;font-weight:300;color:var(--cream-muted);letter-spacing:.02em;line-height:1.7;max-width:260px;margin:10px auto 0;position:relative;}.hero-rule{position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(${v.aRgb},.14),rgba(${v.pRgb},.2),rgba(${v.aRgb},.14),transparent);}.cat-grid{position:sticky;top:var(--nav-h);z-index:99;background:rgba(${v.bgRgb},.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;flex-wrap:nowrap;overflow-x:auto;gap:0;-ms-overflow-style:none;scrollbar-width:none;}.cat-grid::-webkit-scrollbar{display:none;}.cat-link{font-family:${f.heading};font-size:8px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;text-decoration:none;color:var(--cream-muted);padding:12px 14px;flex-shrink:0;border-bottom:2px solid transparent;transition:color 150ms,border-color 150ms;white-space:nowrap;-webkit-tap-highlight-color:transparent;}.cat-link:hover,.cat-link.active{color:var(--gold-light);border-bottom-color:var(--gold);}main{max-width:680px;margin:0 auto;padding:14px 16px 100px;}.cat-section{margin-bottom:32px;}.cat-heading{display:flex;align-items:center;gap:10px;padding:16px 0 11px;}.cat-title{font-family:${f.heading};font-size:${f.catFs};font-weight:600;letter-spacing:${f.catLs};text-transform:uppercase;color:var(--cream);white-space:nowrap;}.cat-line-l{flex:1;height:1px;background:linear-gradient(to right,transparent,rgba(${v.pRgb},.17));}.cat-line-r{flex:1;height:1px;background:linear-gradient(to left,transparent,rgba(${v.pRgb},.17));}.dish{padding:13px 0;border-bottom:1px solid var(--border);opacity:0;animation:fadeUp .4s cubic-bezier(.23,1,.32,1) both;}.dish:last-child{border-bottom:none;}@keyframes fadeUp{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}.dish-img{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:8px;margin-bottom:9px;border:1px solid rgba(232,223,208,.06);box-shadow:0 4px 18px rgba(0,0,0,.4);}.dish-row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;}.dish-name{font-family:${f.dish};font-size:${f.dishFs};font-weight:400;color:var(--cream);line-height:1.2;letter-spacing:.01em;}.dish-price{font-family:${f.heading};font-size:12px;font-weight:600;color:var(--gold);white-space:nowrap;letter-spacing:.04em;flex-shrink:0;}.dish-desc{font-size:11.5px;color:var(--cream-muted);margin-top:5px;line-height:1.65;font-weight:300;}footer{position:fixed;bottom:0;left:0;right:0;padding:12px 20px 16px;text-align:center;background:linear-gradient(to top,var(--bg) 60%,transparent);pointer-events:none;}footer span{font-size:9px;color:rgba(232,223,208,.1);letter-spacing:.06em;}footer a{color:rgba(${v.aRgb},.18);text-decoration:none;pointer-events:all;}</style></head><body><nav class="topnav"><div class="nav-left">${logo ? logoHtml : `<span class="nav-name">${name}</span>`}</div><div class="nav-right">${langBtns}</div></nav><header class="hero"><div class="hero-glow"></div><div class="hero-eyebrow">Menu</div><h1 class="hero-name">${name}</h1><div class="hero-rule"></div></header><div class="cat-grid">${catLinks}</div><main>${sections}</main><footer><span>menu cyfrowe · <a href="https://tableo-murex.vercel.app" target="_blank">tableo</a></span></footer><script>function goTo(e,i){e.preventDefault();const el=document.getElementById('s'+i);if(!el)return;const navH=document.querySelector('.topnav').offsetHeight;const gridH=document.querySelector('.cat-grid').offsetHeight;window.scrollTo({top:el.offsetTop-navH-gridH-8,behavior:'smooth'});}function langToast(){const t=document.createElement('div');t.textContent='Przełączanie języków działa na opublikowanym menu';Object.assign(t.style,{position:'fixed',bottom:'60px',left:'50%',transform:'translateX(-50%)',background:'rgba(13,21,32,.97)',color:'rgba(232,223,208,.65)',padding:'8px 18px',borderRadius:'100px',fontSize:'11px',fontFamily:"'DM Sans',sans-serif",letterSpacing:'.05em',border:'1px solid rgba(232,223,208,.08)',zIndex:'9998',whiteSpace:'nowrap'});document.body.appendChild(t);setTimeout(()=>t.remove(),2000);}const secs=Array.from(document.querySelectorAll('.cat-section'));const lnks=Array.from(document.querySelectorAll('.cat-link'));const obs=new IntersectionObserver(entries=>{entries.forEach(entry=>{if(entry.isIntersecting){const idx=secs.indexOf(entry.target);if(idx>=0){lnks.forEach((l,j)=>l.classList.toggle('active',j===idx));lnks[idx]?.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});}}});},{rootMargin:'-15% 0px -75% 0px',threshold:0});secs.forEach(s=>obs.observe(s));<\/script></body></html>`;
   }
 
     /* ── Render menu ── */
@@ -1149,6 +1454,9 @@
             <button onclick="openStandsModal()" style="background:var(--gold);color:white;padding:8px 14px;border-radius:100px;font-size:12px;font-weight:600;border:none;cursor:pointer;white-space:nowrap;font-family:'Plus Jakarta Sans',sans-serif;">Zamów →</button>
           </div>
 
+          <!-- Domain card — content rendered by renderDomainCard() -->
+          <div class="card" id="domainCard" style="padding:20px;"></div>
+
         </div>
       </div>`;
 
@@ -1195,11 +1503,14 @@
       });
       const data = await res.json();
       if (data.ok) {
+        currentPublishedSlug = data.slug;
+        currentPublishedUrl  = data.url;
         const pr = document.getElementById('publishResult');
         const lk = document.getElementById('publishLink');
         lk.href = data.url; lk.textContent = data.url;
         pr.style.display = 'block';
         document.getElementById('qrUrl').value = data.url;
+        renderDomainCard();
         showToast('Menu opublikowane! Link skopiuj poniżej.', 'ok');
       } else {
         showToast(data.error || 'Błąd publikacji.', 'warn');
@@ -1506,6 +1817,7 @@
       const data = await res.json();
       typing.remove();
 
+      if (res.status === 402) { typing.remove(); showPaywall(); btn.disabled = false; btn.style.opacity = '1'; input.focus(); return; }
       if (data.ok && data.menu) {
         // Preserve logo + logo-extracted palette
         const prevLogo    = currentMenu.logo;
@@ -1537,6 +1849,80 @@
     btn.disabled = false;
     btn.style.opacity = '1';
     input.focus();
+  }
+
+  /* ── Domain card ── */
+  function renderDomainCard() {
+    const card = document.getElementById('domainCard');
+    if (!card) return;
+
+    const domainVal = currentCustomDomain || '';
+    const isPublished = !!currentPublishedUrl;
+
+    const dnsBlock = currentCustomDomain ? `
+      <div style="margin-top:12px;padding:12px 14px;background:var(--sage-pale);border-radius:10px;border:1px solid rgba(123,170,143,.22);">
+        <div style="font-size:10px;font-weight:700;color:var(--sage);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">Konfiguracja DNS u dostawcy domeny</div>
+        <div style="font-family:monospace;font-size:11.5px;background:white;padding:9px 12px;border-radius:7px;border:1px solid rgba(27,42,74,.09);color:var(--navy);line-height:1.7;">
+          Typ: <strong>CNAME</strong><br>
+          Nazwa: <strong>${currentCustomDomain.split('.').slice(0,-2).join('.') || '@'}</strong><br>
+          Wartość: <strong>cname.vercel-dns.com</strong>
+        </div>
+        <div style="font-size:11px;color:rgba(27,42,74,.38);margin-top:8px;line-height:1.55;">
+          Po ustawieniu DNS wyślij nam email na
+          <a href="mailto:kontakt@tableo.pl" style="color:var(--sage);font-weight:600;">kontakt@tableo.pl</a>
+          — aktywujemy domenę w ciągu 24h.
+        </div>
+      </div>` : `
+      <p style="font-size:11.5px;color:rgba(27,42,74,.35);margin-top:10px;line-height:1.6;">
+        ${isPublished ? 'Wyświetlaj menu pod własną domeną zamiast długiego linku Tableo.' : 'Najpierw opublikuj menu, potem ustaw własną domenę.'}
+      </p>`;
+
+    card.innerHTML = `
+      <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(27,42,74,.35);margin-bottom:14px;">Własna domena</div>
+      <div style="margin-bottom:10px;">
+        <label class="field-label">Adres domeny</label>
+        <input id="customDomainInput" type="text" class="field"
+          placeholder="np. menu.moja-restauracja.pl"
+          value="${domainVal}"
+          style="font-size:13px;"
+          ${!isPublished ? 'disabled title="Najpierw opublikuj menu"' : ''}>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button id="saveDomainBtn" onclick="saveDomain()" class="btn-outline"
+          style="flex:1;padding:10px;font-size:13px;justify-content:center;${!isPublished ? 'opacity:.4;cursor:not-allowed;' : ''}">
+          ${currentCustomDomain ? 'Zmień domenę' : 'Zapisz domenę'}
+        </button>
+        ${currentCustomDomain ? `<button onclick="saveDomain(true)" class="btn-outline" style="padding:10px 14px;font-size:13px;color:rgba(27,42,74,.45);" title="Usuń domenę">✕</button>` : ''}
+      </div>
+      ${dnsBlock}`;
+  }
+
+  async function saveDomain(remove) {
+    if (!currentPublishedUrl) { showToast('Najpierw opublikuj menu.', 'warn'); return; }
+    const input = document.getElementById('customDomainInput');
+    const btn   = document.getElementById('saveDomainBtn');
+    const domain = remove ? '' : (input?.value || '').trim().replace(/^https?:\/\//, '').replace(/\/.*$/, '').toLowerCase();
+
+    if (btn) { btn.disabled = true; btn.textContent = 'Zapisuję…'; }
+    try {
+      const res = await fetch('/api/account', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentToken}` },
+        body: JSON.stringify({ custom_domain: domain || null })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        currentCustomDomain = data.custom_domain;
+        renderDomainCard();
+        showToast(currentCustomDomain ? 'Domena zapisana!' : 'Domena usunięta', 'ok');
+      } else {
+        showToast(data.error || 'Błąd zapisu.', 'warn');
+        if (btn) { btn.disabled = false; btn.textContent = currentCustomDomain ? 'Zmień domenę' : 'Zapisz domenę'; }
+      }
+    } catch {
+      showToast('Błąd połączenia.', 'warn');
+      if (btn) { btn.disabled = false; btn.textContent = currentCustomDomain ? 'Zmień domenę' : 'Zapisz domenę'; }
+    }
   }
 
   /* ── Stands modal ── */

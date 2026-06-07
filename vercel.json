@@ -5,17 +5,20 @@
     { "src": "api/*.js",  "use": "@vercel/node"   }
   ],
   "routes": [
-    { "src": "/api/chat",           "dest": "/api/chat.js"          },
-    { "src": "/api/login",          "dest": "/api/login.js"         },
-    { "src": "/api/register",       "dest": "/api/register.js"      },
-    { "src": "/api/save-menu",      "dest": "/api/save-menu.js"     },
-    { "src": "/menu/(.*)",          "dest": "/api/menu.js"          },
-    { "src": "/api/google-auth",    "dest": "/api/google-auth.js"   },
-    { "src": "/api/generate-menu",  "dest": "/api/generate-menu.js" },
-    { "src": "/api/config",         "dest": "/api/config.js"        },
-    { "src": "/api/activate",       "dest": "/api/activate.js"      },
-    { "src": "/api/translate",      "dest": "/api/translate.js"     },
-    { "src": "/editor",             "dest": "/editor.html"          },
-    { "src": "/(.*)",               "dest": "/index.html"           }
+    { "src": "/api/account",          "dest": "/api/account.js"      },
+    { "src": "/api/stripe/(.*)",      "dest": "/api/stripe.js"       },
+    { "src": "/api/chat",             "dest": "/api/chat.js"         },
+    { "src": "/api/login",            "dest": "/api/login.js"        },
+    { "src": "/api/register",         "dest": "/api/register.js"     },
+    { "src": "/api/save-menu",        "dest": "/api/save-menu.js"    },
+    { "src": "/menu/(.*)",            "dest": "/api/menu.js"         },
+    { "src": "/api/google-auth",      "dest": "/api/google-auth.js"  },
+    { "src": "/api/generate-menu",    "dest": "/api/generate-menu.js"},
+    { "src": "/api/config",           "dest": "/api/config.js"       },
+    { "src": "/api/activate",         "dest": "/api/activate.js"     },
+    { "src": "/api/translate",        "dest": "/api/translate.js"    },
+    { "src": "/editor",               "dest": "/editor.html"         },
+    { "src": "/kontakt",              "dest": "/kontakt.html"        },
+    { "src": "/(.*)",                 "dest": "/index.html"          }
   ]
 }

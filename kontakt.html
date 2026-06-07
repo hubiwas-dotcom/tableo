@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kontakt — Tableo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --navy:#1B2A4A; --navy-deep:#0f1d33; --navy-mid:#243761;
+      --sage:#7BAA8F; --sage-light:#A3C4B0; --sage-pale:#EAF3EE;
+      --gold:#C9924A; --gold-light:#D4A574; --gold-pale:#FBF3E8;
+      --cream:#FDFBF7; --cream-mid:#F5EFE4; --cream-dark:#EDE5D8;
+      --ease-out:cubic-bezier(0.23,1,0.32,1);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--cream);color:var(--navy);-webkit-font-smoothing:antialiased;}
+    h1,h2,h3{font-family:'Playfair Display',serif;}
+    body::after{content:'';position:fixed;inset:0;z-index:9999;pointer-events:none;opacity:.012;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+    .fade-up{animation:fadeUp .55s var(--ease-out) both;}
+    .card{background:white;border-radius:20px;padding:28px;border:1px solid rgba(27,42,74,.08);box-shadow:0 2px 18px rgba(27,42,74,.05);}
+    .field{width:100%;padding:12px 14px;border:1.5px solid rgba(27,42,74,.13);border-radius:12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13.5px;color:var(--navy);background:white;outline:none;transition:border-color 180ms,box-shadow 180ms;resize:none;}
+    .field:focus{border-color:var(--sage);box-shadow:0 0 0 3px rgba(123,170,143,.12);}
+    .field::placeholder{color:rgba(27,42,74,.3);}
+    .field-label{display:block;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(27,42,74,.45);margin-bottom:7px;}
+  </style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav style="position:sticky;top:0;z-index:100;background:rgba(253,251,247,.93);backdrop-filter:blur(20px);border-bottom:1px solid rgba(27,42,74,.07);height:58px;display:flex;align-items:center;padding:0 24px;justify-content:space-between;">
+  <a href="/" style="display:flex;align-items:center;gap:8px;text-decoration:none;">
+    <svg width="26" height="26" viewBox="0 0 40 40" fill="none">
+      <ellipse cx="20" cy="28.5" rx="13.5" ry="3.8" stroke="#C9924A" stroke-width="1.5" fill="none"/>
+      <line x1="20" y1="28.5" x2="20" y2="36" stroke="#C9924A" stroke-width="1.5"/>
+      <line x1="13" y1="36" x2="27" y2="36" stroke="#C9924A" stroke-width="1.5" stroke-linecap="round"/>
+      <rect x="13" y="3.5" width="14" height="23" rx="3" stroke="#1B2A4A" stroke-width="1.5" fill="none"/>
+      <path d="M17 13.5 Q20 9.5 23 13.5" stroke="#7BAA8F" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+      <circle cx="20" cy="13" r="1" fill="#7BAA8F"/>
+      <line x1="16" y1="15" x2="24" y2="15" stroke="#7BAA8F" stroke-width="1.2" stroke-linecap="round"/>
+      <line x1="16" y1="18.5" x2="24" y2="18.5" stroke="#7BAA8F" stroke-width="1" stroke-linecap="round"/>
+    </svg>
+    <span style="font-family:'Playfair Display',serif;font-size:17px;font-weight:500;color:var(--navy);">Tableo</span>
+  </a>
+  <a href="/editor" style="font-size:13px;font-weight:600;color:var(--sage);text-decoration:none;">← Wróć do edytora</a>
+</nav>
+
+<!-- Hero -->
+<div style="padding:64px 24px 48px;text-align:center;background:linear-gradient(180deg,var(--cream) 0%,white 100%);">
+  <div style="display:inline-flex;align-items:center;gap:7px;background:var(--sage-pale);border:1px solid rgba(123,170,143,.28);border-radius:100px;padding:4px 14px;font-size:10px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--sage);margin-bottom:20px;">
+    <span style="width:5px;height:5px;border-radius:50%;background:currentColor;"></span>Pomoc i kontakt
+  </div>
+  <h1 style="font-size:clamp(2rem,5vw,3rem);font-weight:500;color:var(--navy);letter-spacing:-.03em;line-height:1.1;margin-bottom:16px;">Jesteśmy tu, żeby pomóc</h1>
+  <p style="font-size:15px;color:rgba(27,42,74,.45);font-weight:300;max-width:420px;margin:0 auto;line-height:1.7;">Odpiszemy w ciągu 24 godzin roboczych. Pytania o płatności, domenę, generowanie — wszystko nas interesuje.</p>
+</div>
+
+<div style="max-width:900px;margin:0 auto;padding:0 24px 80px;">
+
+  <!-- Contact grid -->
+  <div style="display:grid;grid-template-columns:1fr 1.3fr;gap:20px;margin-bottom:40px;" class="fade-up">
+
+    <!-- Contact info -->
+    <div style="display:flex;flex-direction:column;gap:14px;">
+
+      <div class="card" style="padding:24px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(27,42,74,.35);margin-bottom:16px;">Napisz do nas</div>
+        <a href="mailto:kontakt@tableo.pl" style="display:flex;align-items:center;gap:12px;text-decoration:none;margin-bottom:16px;padding:12px 14px;background:var(--sage-pale);border-radius:12px;border:1px solid rgba(123,170,143,.2);">
+          <div style="width:36px;height:36px;border-radius:50%;background:var(--sage);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4l6 4.5L14 4M2 4h12v9H2V4z" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--navy);">Email</div>
+            <div style="font-size:13px;color:var(--sage);font-weight:600;">kontakt@tableo.pl</div>
+          </div>
+        </a>
+        <div style="font-size:12px;color:rgba(27,42,74,.4);line-height:1.6;">
+          Odpowiadamy <strong>w ciągu 24h</strong> w dni robocze.<br>
+          Pilne sprawy — napisz "PILNE" w temacie.
+        </div>
+      </div>
+
+      <div class="card" style="padding:24px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(27,42,74,.35);margin-bottom:14px;">Godziny wsparcia</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;justify-content:space-between;font-size:13px;">
+            <span style="color:rgba(27,42,74,.55);">Poniedziałek – Piątek</span>
+            <span style="font-weight:600;color:var(--navy);">9:00 – 18:00</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;">
+            <span style="color:rgba(27,42,74,.55);">Sobota</span>
+            <span style="font-weight:600;color:var(--navy);">10:00 – 14:00</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;">
+            <span style="color:rgba(27,42,74,.55);">Niedziela</span>
+            <span style="font-weight:600;color:rgba(27,42,74,.35);">Zamknięte</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Contact form -->
+    <div class="card" style="padding:28px;">
+      <h2 style="font-size:1.2rem;font-weight:500;margin-bottom:6px;">Wyślij wiadomość</h2>
+      <p style="font-size:12.5px;color:rgba(27,42,74,.4);margin-bottom:24px;">Wypełnij formularz, a my odpiszemy na Twój email.</p>
+
+      <div id="formSuccess" style="display:none;background:var(--sage-pale);border:1px solid rgba(123,170,143,.3);border-radius:12px;padding:16px;margin-bottom:20px;text-align:center;">
+        <div style="font-size:20px;margin-bottom:6px;">✅</div>
+        <div style="font-size:13px;font-weight:600;color:var(--navy);">Wiadomość wysłana!</div>
+        <div style="font-size:12px;color:rgba(27,42,74,.5);margin-top:4px;">Odpiszemy w ciągu 24 godzin.</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div>
+          <label class="field-label">Imię i nazwa restauracji</label>
+          <input id="cName" type="text" class="field" placeholder="np. Anna Kowalska — Pizzeria Roma">
+        </div>
+        <div>
+          <label class="field-label">Adres email</label>
+          <input id="cEmail" type="email" class="field" placeholder="twoj@email.pl">
+        </div>
+        <div>
+          <label class="field-label">Temat</label>
+          <select id="cTopic" class="field" style="-webkit-appearance:none;background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%228%22%3E%3Cpath d=%22M1 1l5 5 5-5%22 stroke=%22%231B2A4A%22 stroke-opacity=%22.4%22 stroke-width=%221.5%22 fill=%22none%22 stroke-linecap=%22round%22/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;">
+            <option value="generowanie">Problem z generowaniem menu</option>
+            <option value="platnosci">Płatności i abonament</option>
+            <option value="domena">Własna domena</option>
+            <option value="konto">Problemy z kontem</option>
+            <option value="inne">Inne pytanie</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">Wiadomość</label>
+          <textarea id="cMessage" class="field" rows="4" placeholder="Opisz swój problem lub pytanie..."></textarea>
+        </div>
+
+        <div id="cError" style="display:none;background:#FEF2F2;border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:10px 14px;font-size:12.5px;color:#991B1B;font-weight:500;"></div>
+
+        <button onclick="sendContact()" id="cBtn"
+          style="display:flex;align-items:center;justify-content:center;gap:8px;background:var(--navy);color:white;padding:14px 28px;border-radius:100px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:600;border:none;cursor:pointer;box-shadow:0 4px 24px rgba(27,42,74,.22);transition:transform 200ms,box-shadow 200ms;">
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M2 7.5h11M8.5 3l4.5 4.5-4.5 4.5" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Wyślij wiadomość
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAQ -->
+  <div class="fade-up" style="animation-delay:.1s;">
+    <h2 style="font-size:1.5rem;font-weight:500;color:var(--navy);margin-bottom:20px;text-align:center;">Najczęstsze pytania</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+
+      <div class="card" style="padding:20px 22px;">
+        <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:6px;">Jak działa 7-dniowy trial?</div>
+        <div style="font-size:12.5px;color:rgba(27,42,74,.5);line-height:1.65;">7 dni liczą się od momentu pierwszego wygenerowania menu. Nie potrzebujesz karty kredytowej. Po triale menu będzie niedostępne dopóki nie wybierzesz planu.</div>
+      </div>
+
+      <div class="card" style="padding:20px 22px;">
+        <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:6px;">Czym różni się abonament od zakupu strony?</div>
+        <div style="font-size:12.5px;color:rgba(27,42,74,.5);line-height:1.65;">Abonament 39 zł/mies. daje dostęp do edytora i aktualizacji. Zakup strony za 349 zł to jednorazowa opłata — menu działa na zawsze bez miesięcznych kosztów.</div>
+      </div>
+
+      <div class="card" style="padding:20px 22px;">
+        <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:6px;">Jak ustawić własną domenę?</div>
+        <div style="font-size:12.5px;color:rgba(27,42,74,.5);line-height:1.65;">Po publikacji menu, w panelu bocznym edytora znajdziesz sekcję "Własna domena". Wpisz adres (np. menu.restauracja.pl), skonfiguruj CNAME i napisz do nas — aktywujemy w 24h.</div>
+      </div>
+
+      <div class="card" style="padding:20px 22px;">
+        <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:6px;">Mogę anulować abonament?</div>
+        <div style="font-size:12.5px;color:rgba(27,42,74,.5);line-height:1.65;">Tak, w każdej chwili. Po anulowaniu menu pozostaje aktywne do końca opłaconego okresu. Napisz do nas lub anuluj samodzielnie przez Stripe Customer Portal.</div>
+      </div>
+
+      <div class="card" style="padding:20px 22px;">
+        <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:6px;">Jakie formaty zdjęć akceptuje AI?</div>
+        <div style="font-size:12.5px;color:rgba(27,42,74,.5);line-height:1.65;">JPG, PNG, WEBP — do 10 MB na zdjęcie. Możesz dodać wiele stron menu naraz. Działają odręczne menu i kartki. Im wyraźniejsze zdjęcie, tym lepszy wynik.</div>
+      </div>
+
+      <div class="card" style="padding:20px 22px;">
+        <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:6px;">Czy mogę edytować menu po generacji?</div>
+        <div style="font-size:12.5px;color:rgba(27,42,74,.5);line-height:1.65;">Tak. Po wygenerowaniu możesz edytować menu przez czat AI ("zmień cenę zupy na 18 zł", "dodaj język angielski") lub dodać zdjęcia dań bezpośrednio w edytorze.</div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<footer style="background:var(--navy);padding:28px 24px;text-align:center;">
+  <p style="font-size:12px;color:rgba(255,255,255,.3);">© 2025 Tableo · menu cyfrowe dla restauracji · <a href="mailto:kontakt@tableo.pl" style="color:rgba(123,170,143,.6);text-decoration:none;">kontakt@tableo.pl</a></p>
+</footer>
+
+<script>
+  async function sendContact() {
+    const name    = document.getElementById('cName').value.trim();
+    const email   = document.getElementById('cEmail').value.trim();
+    const topic   = document.getElementById('cTopic').value;
+    const message = document.getElementById('cMessage').value.trim();
+    const errDiv  = document.getElementById('cError');
+    const btn     = document.getElementById('cBtn');
+
+    errDiv.style.display = 'none';
+    if (!name || !email || !message) {
+      errDiv.textContent = 'Wypełnij wszystkie pola.';
+      errDiv.style.display = 'block'; return;
+    }
+
+    btn.disabled = true; btn.textContent = 'Wysyłam…';
+
+    /* Send via mailto fallback (no backend form endpoint yet) */
+    const subject = encodeURIComponent(`[Tableo] ${topic} — ${name}`);
+    const body    = encodeURIComponent(`Imię / Restauracja: ${name}\nEmail: ${email}\nTemat: ${topic}\n\n${message}`);
+    window.location.href = `mailto:kontakt@tableo.pl?subject=${subject}&body=${body}`;
+
+    setTimeout(() => {
+      document.getElementById('formSuccess').style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Wyślij wiadomość';
+    }, 800);
+  }
+
+  /* Card hover */
+  document.querySelectorAll('.card').forEach(c => {
+    c.style.transition = 'transform 180ms ease, box-shadow 180ms ease';
+    c.addEventListener('mouseenter', () => { c.style.transform='translateY(-2px)'; c.style.boxShadow='0 8px 32px rgba(27,42,74,.1)'; });
+    c.addEventListener('mouseleave', () => { c.style.transform=''; c.style.boxShadow=''; });
+  });
+</script>
+</body>
+</html>

@@ -104,6 +104,12 @@ function buildMenuPage(menu, slug) {
     ? `<img class="nav-logo-img" src="${logo}" alt="${name}">`
     : '';
 
+  const LANG_LABELS = { pl:'PL', en:'EN', de:'DE', fr:'FR', it:'IT', es:'ES', ru:'RU' };
+  const langs = Array.isArray(menu.languages) && menu.languages.length > 1 ? menu.languages : [];
+  const langBtns = langs.map(l =>
+    `<button class="lang-btn${l === 'pl' ? ' active' : ''}" data-lang="${l}" onclick="switchLang('${l}')">${LANG_LABELS[l] || l.toUpperCase()}</button>`
+  ).join('');
+
   return `<!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -129,18 +135,21 @@ function buildMenuPage(menu, slug) {
 
     /* ── Nav ── */
     .topnav{position:sticky;top:0;z-index:100;
-      display:grid;grid-template-columns:40px 1fr 40px;align-items:center;
-      height:var(--nav-h);padding:0 10px;
+      display:flex;align-items:center;justify-content:space-between;
+      height:var(--nav-h);padding:0 14px;
       background:rgba(${v.bgRgb},.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
       border-bottom:1px solid var(--border);}
-    .nav-burger{background:none;border:none;cursor:pointer;
-      display:flex;flex-direction:column;gap:4.5px;padding:6px;justify-self:start;}
-    .nav-burger span{display:block;width:18px;height:1.5px;background:var(--cream-dim);border-radius:2px;}
-    .nav-center{display:flex;align-items:center;justify-content:center;overflow:hidden;min-width:0;}
-    .nav-logo-img{max-height:32px;width:auto;max-width:180px;object-fit:contain;}
+    .nav-left{display:flex;align-items:center;overflow:hidden;}
+    .nav-right{display:flex;align-items:center;gap:4px;flex-shrink:0;}
+    .nav-logo-img{max-height:32px;width:auto;max-width:160px;object-fit:contain;}
     .nav-name{font-family:${f.heading};font-size:${f.navFs};font-weight:600;
       letter-spacing:.12em;text-transform:uppercase;color:var(--cream);
       white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .lang-btn{background:none;border:1px solid rgba(${v.tRgb},.15);color:var(--cream-dim);
+      border-radius:6px;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+      padding:4px 8px;cursor:pointer;font-family:${f.heading};
+      transition:background 120ms,color 120ms,border-color 120ms;}
+    .lang-btn.active,.lang-btn:hover{background:rgba(${v.tRgb},.1);color:var(--cream);border-color:rgba(${v.tRgb},.3);}
 
     /* ── Hero ── */
     .hero{position:relative;padding:38px 20px 30px;text-align:center;overflow:hidden;}
@@ -208,11 +217,8 @@ function buildMenuPage(menu, slug) {
 <body>
 
 <nav class="topnav">
-  <button class="nav-burger" aria-label="Menu">
-    <span></span><span></span><span></span>
-  </button>
-  <div class="nav-center">${logo ? logoHtml : `<span class="nav-name">${name}</span>`}</div>
-  <div></div>
+  <div class="nav-left">${logo ? logoHtml : `<span class="nav-name">${name}</span>`}</div>
+  <div class="nav-right">${langBtns}</div>
 </nav>
 
 <header class="hero">
@@ -362,7 +368,17 @@ function buildExpiredPage(restaurantName) {
 const TRIAL_MS = parseInt(process.env.TRIAL_DAYS || '7') * 24 * 60 * 60 * 1000;
 
 module.exports = async function handler(req, res) {
-  const slug = (req.url || '').replace(/^\/menu\//, '').split('?')[0].split('/')[0];
+  /* Custom domain support: if request arrives at a non-Tableo host, look up
+     the slug that was mapped to that domain in api/account.js PATCH. */
+  const host        = (req.headers.host || '').replace(/^www\./, '');
+  const isMainHost  = !host || host.includes('tableo') || host.includes('vercel.app') || host.includes('localhost');
+  let slug;
+  if (isMainHost) {
+    slug = (req.url || '').replace(/^\/menu\//, '').split('?')[0].split('/')[0];
+  } else {
+    const domainData = await kvGet(`domain:${host}`);
+    slug = domainData?.slug || '';
+  }
   if (!slug) { res.status(400).send('<h1>Brak slug menu.</h1>'); return; }
 
   const data = await kvGet(`menu:${slug}`);
@@ -372,8 +388,13 @@ module.exports = async function handler(req, res) {
   }
 
   /* ── Trial / subscription check ── */
-  if (data.published_at && Date.now() - data.published_at > TRIAL_MS) {
-    const paid = data.owner ? await kvGet(`paid:${data.owner}`) : null;
+  const owner        = data.owner;
+  const adminEmails  = (process.env.ADMIN_EMAILS || 'hubiwas@gmail.com').split(',').map(e => e.trim().toLowerCase());
+  const ownerIsAdmin = adminEmails.includes((owner || '').toLowerCase());
+  const ownerAccount = owner ? await kvGet(`account:${owner}`) : null;
+  const trialAnchor  = ownerAccount?.first_generated_at || data.published_at;
+  if (!ownerIsAdmin && trialAnchor && Date.now() - trialAnchor > TRIAL_MS) {
+    const paid       = owner ? await kvGet(`paid:${owner}`) : null;
     const paidActive = paid?.active && (!paid.expires_at || Date.now() < paid.expires_at);
     if (!paidActive) {
       res.setHeader('Content-Type', 'text/html; charset=utf-8');

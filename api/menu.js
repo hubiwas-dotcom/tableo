@@ -221,13 +221,6 @@ function buildMenuPage(menu, slug) {
   <div class="nav-right">${langBtns}</div>
 </nav>
 
-<header class="hero">
-  <div class="hero-glow"></div>
-  <div class="hero-eyebrow">Menu</div>
-  <h1 class="hero-name">${name}</h1>
-  <div class="hero-rule"></div>
-</header>
-
 <div class="cat-grid">${catLinks}</div>
 <main>${sections}</main>
 
@@ -303,13 +296,11 @@ function buildMenuPage(menu, slug) {
 
     document.querySelector('main').innerHTML = sections;
 
-    /* Update nav name + hero + cat links */
+    /* Update nav name + cat links */
     if (menu.restaurant_name) {
-      document.querySelector('.nav-name').textContent = menu.restaurant_name;
-      document.querySelector('.hero-name').textContent = menu.restaurant_name;
+      var nn = document.querySelector('.nav-name');
+      if (nn) nn.textContent = menu.restaurant_name;
     }
-    var ht = document.querySelector('.hero-tagline');
-    if (ht && menu.tagline) ht.textContent = menu.tagline;
     document.querySelectorAll('.cat-link').forEach(function(l, i) {
       if (menu.categories[i]) l.textContent = menu.categories[i].name;
     });

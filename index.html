@@ -718,7 +718,7 @@
         <div style="margin-bottom:24px;">
           <div style="font-size:10.5px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(27,42,74,0.4);margin-bottom:10px;font-family:'Plus Jakarta Sans',sans-serif;">Abonament miesięczny</div>
           <div style="display:flex;align-items:baseline;gap:4px;">
-            <span style="font-family:'Playfair Display',serif;font-size:3.4rem;font-weight:600;color:var(--navy);">49</span>
+            <span style="font-family:'Playfair Display',serif;font-size:3.4rem;font-weight:600;color:var(--navy);">39</span>
             <span style="color:rgba(27,42,74,0.4);font-size:14px;font-family:'Plus Jakarta Sans',sans-serif;">zł / mies</span>
           </div>
           <p style="font-size:13px;color:rgba(27,42,74,0.5);margin-top:8px;line-height:1.55;font-family:'Plus Jakarta Sans',sans-serif;">Pełny dostęp do edytora AI. Anuluj kiedy chcesz.</p>
@@ -740,7 +740,7 @@
         <div style="margin-bottom:24px;margin-top:16px;">
           <div style="font-size:10.5px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;font-family:'Plus Jakarta Sans',sans-serif;">Wykup strony — raz na zawsze</div>
           <div style="display:flex;align-items:baseline;gap:4px;">
-            <span style="font-family:'Playfair Display',serif;font-size:3.4rem;font-weight:600;color:var(--navy);">500</span>
+            <span style="font-family:'Playfair Display',serif;font-size:3.4rem;font-weight:600;color:var(--navy);">349</span>
             <span style="color:rgba(27,42,74,0.4);font-size:14px;font-family:'Plus Jakarta Sans',sans-serif;">zł jednorazowo</span>
           </div>
           <p style="font-size:13px;color:rgba(27,42,74,0.5);margin-top:8px;line-height:1.55;font-family:'Plus Jakarta Sans',sans-serif;">Płacisz raz — korzystasz zawsze. Żadnych subskrypcji.</p>
@@ -967,7 +967,7 @@ Link do menu: <strong>menu.twoja-restauracja.pl</strong> 🎉`;
   function getDemoReply(text, hasImage) {
     const t = text.toLowerCase();
     if (hasImage) return { delay: 2800, text: menuExample };
-    if (t.includes('cen') || t.includes('kosztuj') || t.includes('ile')) return { delay: 1200, text: 'Ceny abonamentów zaczynają się od <strong>49 zł / miesiąc</strong> (plan Starter). Pierwsza generacja menu jest całkowicie <strong>bezpłatna</strong> — bez karty kredytowej. 🎁' };
+    if (t.includes('cen') || t.includes('kosztuj') || t.includes('ile')) return { delay: 1200, text: 'Abonament to <strong>39 zł / miesiąc</strong>, albo jednorazowy wykup strony za <strong>349 zł</strong> — płacisz raz, działa na zawsze. Pierwsze menu generujesz <strong>za darmo</strong> w 7-dniowym trialu. 🎁' };
     if (t.includes('zmień') || t.includes('zmien') || t.includes('edytuj') || t.includes('cen') || t.includes('zł')) return { delay: 1400, text: 'Gotowe! ✅ Zaktualizowałem cenę. Zmiana jest widoczna natychmiast dla wszystkich odwiedzających Twoje menu. Możesz też edytować dowolną pozycję w panelu admina.' };
     if (t.includes('dodaj') || t.includes('nową') || t.includes('nowa') || t.includes('pozycj')) return { delay: 1600, text: 'Dodałem nową pozycję do menu! ✅ Aby trwale zapisać zmiany, przejdź do panelu admina → Dodaj pozycję. Możesz tam też dodać zdjęcie dania i opis alergenów.' };
     if (t.includes('usuń') || t.includes('usun') || t.includes('usuwa')) return { delay: 1200, text: 'Pozycja usunięta ✅. Zmiana widoczna natychmiast. Jeśli chcesz tylko tymczasowo ukryć danie (np. sezonowe), użyj przełącznika dostępności w panelu admina zamiast usuwania.' };

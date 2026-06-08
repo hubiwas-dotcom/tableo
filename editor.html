@@ -664,7 +664,7 @@
         <div class="plan-card" onclick="startCheckout('monthly')">
           <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(27,42,74,.4);margin-bottom:8px;">Abonament</div>
           <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:4px;">
-            <span style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:600;color:var(--navy);">39</span>
+            <span style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:600;color:var(--navy);">29,99</span>
             <span style="font-size:13px;color:rgba(27,42,74,.5);">zł/mies.</span>
           </div>
           <p style="font-size:11.5px;color:rgba(27,42,74,.45);line-height:1.5;margin-bottom:14px;">Pełny dostęp do edytora, wielojęzyczność, aktualizacje. Anuluj kiedy chcesz.</p>
@@ -676,7 +676,7 @@
         <div class="plan-card featured" onclick="startCheckout('lifetime')">
           <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;">Jednorazowo ⭐</div>
           <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:4px;">
-            <span style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:600;color:var(--navy);">349</span>
+            <span style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:600;color:var(--navy);">199,99</span>
             <span style="font-size:13px;color:rgba(27,42,74,.5);">zł</span>
           </div>
           <p style="font-size:11.5px;color:rgba(27,42,74,.45);line-height:1.5;margin-bottom:14px;">Menu aktywne na zawsze. Bez miesięcznych opłat. Wszystkie funkcje.</p>
@@ -1187,17 +1187,14 @@
     input.addEventListener('change', () => { handleFiles(input.files); input.value = ''; });
   }
 
-  function handleFiles(files) {
+  async function handleFiles(files) {
     for (const file of files) {
       if (!file.type.startsWith('image/')) continue;
-      if (file.size > 10 * 1024 * 1024) { showToast(`Plik "${file.name}" przekracza 10 MB.`, 'warn'); continue; }
-      const reader = new FileReader();
-      reader.onload = e => {
-        const url = e.target.result, comma = url.indexOf(',');
-        uploadedImages.push({ data: url.substring(comma+1), type: file.type, url, name: file.name });
-        renderThumbs();
-      };
-      reader.readAsDataURL(file);
+      if (file.size > 20 * 1024 * 1024) { showToast(`Plik "${file.name}" przekracza 20 MB.`, 'warn'); continue; }
+      const url = await compressImage(file, 1600, 1600, 0.82);
+      const comma = url.indexOf(',');
+      uploadedImages.push({ data: url.substring(comma+1), type: 'image/jpeg', url, name: file.name });
+      renderThumbs();
     }
   }
 

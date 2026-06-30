@@ -1,4 +1,18 @@
 const https = require('https');
+const crypto = require('crypto');
+
+function verifyToken(token) {
+  if (!token) return null;
+  try {
+    const secret = process.env.TOKEN_SECRET || 'tableo-secret-key-change-me';
+    const [payload, sig] = token.split('.');
+    const expected = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+    if (sig !== expected) return null;
+    const data = JSON.parse(Buffer.from(payload, 'base64').toString());
+    if (Date.now() - data.iat > 30 * 24 * 60 * 60 * 1000) return null;
+    return data;
+  } catch { return null; }
+}
 
 async function kvGet(key) {
   const url   = process.env.KV_REST_API_URL   || process.env.UPSTASH_REDIS_REST_URL;
@@ -63,16 +77,77 @@ function callClaude(apiKey, prompt) {
   });
 }
 
+/* Build slim (text-only) menu and translate it via Claude. Returns translated slim menu. */
+async function translateSlim(apiKey, sourceMenu, lang) {
+  const slim = {
+    restaurant_name: sourceMenu.restaurant_name,
+    tagline:         sourceMenu.tagline,
+    categories: (sourceMenu.categories || []).map(cat => ({
+      name:  cat.name,
+      items: (cat.items || []).map(item => ({
+        name:        item.name,
+        description: item.description,
+        price:       item.price,
+      }))
+    }))
+  };
+
+  const prompt = `Translate this Polish restaurant menu JSON to ${LANG_NAMES[lang]}.
+Rules:
+- Translate: restaurant_name, tagline, category names, dish names, dish descriptions
+- Keep prices EXACTLY as-is (do not translate "zł" or any currency)
+- Keep JSON structure identical
+- Return ONLY valid JSON, no markdown, no comments
+
+${JSON.stringify(slim, null, 2)}`;
+
+  const translated = await callClaude(apiKey, prompt);
+
+  /* Always keep original prices */
+  (translated.categories || []).forEach((cat, ci) => {
+    (cat.items || []).forEach((item, ii) => {
+      const orig = sourceMenu.categories?.[ci]?.items?.[ii];
+      item.price = orig?.price || item.price;
+    });
+  });
+
+  return translated;
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') { res.status(200).end(); return; }
-  if (req.method !== 'GET')    { res.status(405).end(); return; }
+
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) { res.status(500).json({ error: 'Brak klucza API.' }); return; }
+
+  /* ── POST: translate an in-editor (unpublished) menu, requires auth ── */
+  if (req.method === 'POST') {
+    const token = (req.headers.authorization || '').replace('Bearer ', '');
+    if (!verifyToken(token)) { res.status(401).json({ error: 'Sesja wygasła.' }); return; }
+
+    const { menu, lang } = req.body || {};
+    if (!menu || !Object.keys(LANG_NAMES).includes(lang)) {
+      res.status(400).json({ error: 'Wymagane: menu, lang.' });
+      return;
+    }
+    try {
+      const translated = await translateSlim(apiKey, menu, lang);
+      res.json({ ok: true, menu: translated });
+    } catch (e) {
+      res.status(500).json({ error: 'Błąd tłumaczenia: ' + e.message });
+    }
+    return;
+  }
+
+  /* ── GET: translate a published menu by slug, cached in KV ── */
+  if (req.method !== 'GET') { res.status(405).end(); return; }
 
   const { slug, lang } = req.query || {};
-
   if (!slug || !Object.keys(LANG_NAMES).includes(lang)) {
-    res.status(400).json({ error: 'Wymagane: slug, lang (en|de)' });
+    res.status(400).json({ error: 'Wymagane: slug, lang.' });
     return;
   }
 
@@ -92,44 +167,14 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    res.status(500).json({ error: 'Brak klucza API.' });
-    return;
-  }
-
-  /* Build slim menu for translation (no images) */
-  const slim = {
-    restaurant_name: original.menu.restaurant_name,
-    tagline:         original.menu.tagline,
-    categories: (original.menu.categories || []).map(cat => ({
-      name:  cat.name,
-      items: (cat.items || []).map(item => ({
-        name:        item.name,
-        description: item.description,
-        price:       item.price,
-      }))
-    }))
-  };
-
-  const prompt = `Translate this Polish restaurant menu JSON to ${LANG_NAMES[lang]}.
-Rules:
-- Translate: restaurant_name, tagline, category names, dish names, dish descriptions
-- Keep prices EXACTLY as-is (do not translate "zł" or any currency)
-- Keep JSON structure identical
-- Return ONLY valid JSON, no markdown, no comments
-
-${JSON.stringify(slim, null, 2)}`;
-
   try {
-    const translated = await callClaude(apiKey, prompt);
+    const translated = await translateSlim(apiKey, original.menu, lang);
 
-    /* Merge images and prices back from original */
+    /* Merge images back from original */
     (translated.categories || []).forEach((cat, ci) => {
       (cat.items || []).forEach((item, ii) => {
         const orig = original.menu.categories?.[ci]?.items?.[ii];
         if (orig?.image) item.image = orig.image;
-        item.price = orig?.price || item.price; /* always keep original price */
       });
     });
     if (original.menu.logo) translated.logo = original.menu.logo;
@@ -156,3 +201,5 @@ ${JSON.stringify(slim, null, 2)}`;
     res.status(500).json({ error: 'Błąd tłumaczenia: ' + e.message });
   }
 };
+
+module.exports.config = { api: { bodyParser: { sizeLimit: '4mb' } } };

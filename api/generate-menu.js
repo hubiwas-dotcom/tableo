@@ -124,11 +124,20 @@ Cocktail bar: bg:#0c0810, accent:#9060B0, price:#D090C0, text:#E8E0F0, mode:dark
 </categories>
 </step>
 
+<language_rules>
+KRYTYCZNE: Całe menu generuj WYŁĄCZNIE w JĘZYKU POLSKIM — jeden język, nigdy więcej.
+- Jeśli papierowe menu na zdjęciu jest wielojęzyczne (np. polski + angielski + niemiecki), weź TYLKO wersję polską. Zignoruj pozostałe języki.
+- Jeśli na zdjęciu nie ma polskiej wersji, przetłumacz treść na polski.
+- ŻADNE pole (name, description, tagline, category name) nie może zawierać dwóch języków naraz. Nigdy nie pisz np. "Pierogi / Dumplings" ani "Żurek (sour soup)".
+- Tłumaczenie na inne języki robi osobny system (przyciski flag) — Ty zwracasz czysty, jednojęzyczny polski JSON.
+</language_rules>
+
 <quality_rules>
 - Styl opisów spójny w całym menu (albo formalny, albo casual — nie mix)
 - Nigdy: "domowy", "świeży", "najlepszy", "pyszny" bez konkretnego kontekstu
 - Nie pomijaj żadnego dania ze zdjęcia
 - Zachowaj polskie znaki diakrytyczne w nazwach
+- Jeden język (polski) w całym menu — patrz language_rules
 </quality_rules>
 
 <font_style_guide>

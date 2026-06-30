@@ -49,6 +49,25 @@
     .trial-warn {background:rgba(201,146,74,.12);color:var(--gold);}
     .trial-end  {background:rgba(239,68,68,.1);color:#DC2626;}
 
+    /* ── Reset generator button ── */
+    .reset-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;
+      width:30px;height:30px;border-radius:50%;background:#fff;border:1.5px solid rgba(214,69,69,.35);
+      color:#D64545;cursor:pointer;flex-shrink:0;transition:background 150ms ease,border-color 150ms ease,color 150ms ease;}
+    .reset-btn:hover{background:#D64545;border-color:#D64545;color:#fff;}
+    .reset-btn:focus-visible{outline:2px solid #D64545;outline-offset:2px;}
+    .reset-btn svg{transition:transform 300ms cubic-bezier(.34,1.56,.64,1);}
+    .reset-btn:hover svg{transform:rotate(-180deg);}
+    .reset-tip{position:absolute;top:calc(100% + 9px);right:0;width:208px;text-align:left;
+      background:#3A1414;color:#FAD4D4;font-size:11px;line-height:1.45;font-weight:500;
+      padding:9px 12px;border-radius:9px;z-index:300;pointer-events:none;
+      opacity:0;visibility:hidden;transform:translateY(-4px);
+      transition:opacity 140ms ease,transform 140ms ease,visibility 140ms;
+      box-shadow:0 10px 30px rgba(58,20,20,.28);}
+    .reset-tip strong{display:block;color:#fff;font-weight:700;margin-bottom:2px;letter-spacing:.01em;}
+    .reset-tip::before{content:'';position:absolute;bottom:100%;right:12px;
+      border:5px solid transparent;border-bottom-color:#3A1414;}
+    .reset-btn:hover .reset-tip,.reset-btn:focus-visible .reset-tip{opacity:1;visibility:visible;transform:translateY(0);}
+
     /* ── Fields ── */
     .field{width:100%;padding:11px 14px;border:1.5px solid rgba(27,42,74,.13);border-radius:12px;
       font-family:'Plus Jakarta Sans',sans-serif;font-size:13.5px;color:var(--navy);
@@ -374,6 +393,10 @@
         onmouseover="this.style.background='rgba(27,42,74,.05)';this.style.color='var(--navy)'"
         onmouseout="this.style.background='none';this.style.color='rgba(27,42,74,.55)'">
         Wyloguj
+      </button>
+      <button class="reset-btn" onclick="resetGenerator()" aria-label="Zacznij od nowa">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M20 11A8 8 0 1 0 18 16M20 5v6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="reset-tip"><strong>Zacznij od nowa</strong>Usunie wszystkie zdjęcia, logo, opis i wygenerowane menu. Tej operacji nie cofniesz.</span>
       </button>
     </div>
   </div>
@@ -1084,6 +1107,37 @@
     showLogin();
     loadGoogleSignIn();
     setupDropzone();
+  }
+
+  /* ── Reset generator (start over) ── */
+  function resetGenerator() {
+    const hasContent = uploadedImages.length || currentMenu || currentLogo
+      || (document.getElementById('notes')?.value.trim());
+    if (hasContent && !confirm('Zacząć od nowa? Wszystkie zdjęcia, logo, opis i wygenerowane menu zostaną usunięte. Tej operacji nie można cofnąć.')) return;
+
+    /* state */
+    uploadedImages = [];
+    currentMenu = null;
+    currentLogo = null;
+    currentLogoColors = null;
+    currentPublishedSlug = null;
+    currentPublishedUrl = null;
+    selectedLanguages = [];
+    _previewLang  = 'pl';
+    _previewCache = {};
+
+    /* DOM */
+    const results = document.getElementById('results');
+    if (results) { results.innerHTML = ''; results.style.display = 'none'; }
+    const notes = document.getElementById('notes');         if (notes) notes.value = '';
+    const style = document.getElementById('menuStyle');     if (style) style.value = 'klasyczny';
+    const fileInput = document.getElementById('fileInput'); if (fileInput) fileInput.value = '';
+    resetDropzone();
+    renderLogoPreview();
+    renderGenLangPicker();
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    showToast('Generator wyczyszczony — możesz zacząć od nowa.', 'ok');
   }
 
   /* ── Trial UI ── */

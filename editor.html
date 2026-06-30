@@ -508,6 +508,11 @@
               <option value="premium">Premium — luksusowy fine dining</option>
             </select>
           </div>
+          <div style="margin-bottom:24px;">
+            <label class="field-label">Języki menu</label>
+            <p style="font-size:11.5px;color:rgba(27,42,74,.4);margin:-2px 0 10px;line-height:1.5;">Goście przełączą język flagą na pasku menu — nie pisz tego w opisie.</p>
+            <div id="genLangPicker" style="display:flex;flex-wrap:wrap;gap:7px;"></div>
+          </div>
           <button id="generateBtn" class="btn-primary btn-magic" onclick="generateMenu()">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path d="M8 1l1.5 3.5L13 6l-2.5 2.5.5 3.5L8 10.5 5 12l.5-3.5L3 6l3.5-.5L8 1z" fill="white" opacity=".9"/>
@@ -536,7 +541,7 @@
               <div class="howto-ic">
                 <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M3 5.5A2 2 0 0 1 5 3.5h10a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H8l-4 3.5v-3.5H5a2 2 0 0 1-2-2v-6z" stroke="var(--navy)" stroke-width="1.3" stroke-linejoin="round"/></svg>
               </div>
-              <p style="font-size:12px;color:rgba(27,42,74,.62);line-height:1.6;padding-top:3px;">Edytuj przez czat: „dodaj język angielski", „zmień cenę…"</p>
+              <p style="font-size:12px;color:rgba(27,42,74,.62);line-height:1.6;padding-top:3px;">Wybierz języki menu, edytuj resztę przez czat: „zmień cenę…", „dodaj danie…"</p>
             </div>
             <div style="display:flex;gap:12px;align-items:flex-start;">
               <div class="howto-ic">
@@ -739,8 +744,54 @@
   let currentCustomDomain = null, currentPublishedSlug = null, currentPublishedUrl = null;
   const TRIAL_DAYS = 7;
 
+  /* ── Language picker ── */
+  let selectedLanguages = [];
+  const LANG_OPTIONS = [
+    { code:'en', label:'EN', name:'Angielski' },
+    { code:'de', label:'DE', name:'Niemiecki' },
+    { code:'fr', label:'FR', name:'Francuski' },
+    { code:'it', label:'IT', name:'Włoski' },
+    { code:'es', label:'ES', name:'Hiszpański' },
+    { code:'ru', label:'RU', name:'Rosyjski' },
+  ];
+  function _langPillStyle(active) {
+    return `padding:7px 13px;border-radius:100px;font-size:12px;font-weight:700;letter-spacing:.03em;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .15s;${active ? 'background:var(--navy);color:white;border:1px solid var(--navy);' : 'background:white;color:rgba(27,42,74,.55);border:1px solid rgba(27,42,74,.15);'}`;
+  }
+  function renderGenLangPicker() {
+    const el = document.getElementById('genLangPicker');
+    if (!el) return;
+    el.innerHTML = LANG_OPTIONS.map(l =>
+      `<button type="button" onclick="toggleGenLang('${l.code}')" title="${l.name}" style="${_langPillStyle(selectedLanguages.includes(l.code))}">${l.label}</button>`
+    ).join('');
+  }
+  function toggleGenLang(code) {
+    const i = selectedLanguages.indexOf(code);
+    if (i >= 0) selectedLanguages.splice(i, 1); else selectedLanguages.push(code);
+    renderGenLangPicker();
+  }
+  function buildMenuLangPickerHtml() {
+    if (!currentMenu) return '';
+    const active = Array.isArray(currentMenu.languages) ? currentMenu.languages : ['pl'];
+    const plPill = `<span style="${_langPillStyle(true)}cursor:default;">PL</span>`;
+    const others = LANG_OPTIONS.map(l =>
+      `<button type="button" onclick="toggleMenuLang('${l.code}')" title="${l.name}" style="${_langPillStyle(active.includes(l.code))}">${l.label}</button>`
+    ).join('');
+    return plPill + others;
+  }
+  function toggleMenuLang(code) {
+    if (!currentMenu) return;
+    if (!Array.isArray(currentMenu.languages)) currentMenu.languages = ['pl'];
+    const i = currentMenu.languages.indexOf(code);
+    if (i >= 0) currentMenu.languages.splice(i, 1); else currentMenu.languages.push(code);
+    const el = document.getElementById('menuLangPicker');
+    if (el) el.innerHTML = buildMenuLangPickerHtml();
+    updateMenuPreview();
+  }
+
   /* ── Init ── */
   document.addEventListener('DOMContentLoaded', () => {
+    renderGenLangPicker();
+
     /* Handle Stripe return */
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('payment') === 'success') {
@@ -1333,6 +1384,7 @@
         currentMenu = data.menu;
         if (currentLogo) currentMenu.logo = currentLogo;
         if (currentLogoColors) currentMenu.palette = { ...currentMenu.palette, ...currentLogoColors };
+        currentMenu.languages = ['pl', ...selectedLanguages];
         renderMenu(currentMenu);
       } else {
         stopGenProgress(false);
@@ -1467,6 +1519,10 @@
                 <div style="font-size:10.5px;color:rgba(27,42,74,.4);font-weight:600;letter-spacing:.06em;text-transform:uppercase;">kategorii</div>
               </div>
             </div>
+            <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(27,42,74,.07);">
+              <div style="font-size:10.5px;color:rgba(27,42,74,.4);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;">Języki menu</div>
+              <div id="menuLangPicker" style="display:flex;flex-wrap:wrap;gap:7px;"></div>
+            </div>
           </div>
 
           <button class="btn-primary btn-magic" onclick="publishMenu()" id="publishBtn">
@@ -1501,6 +1557,8 @@
 
         </div>
       </div>`;
+
+    document.getElementById('menuLangPicker').innerHTML = buildMenuLangPickerHtml();
 
     /* Load menu into iframe via Blob URL */
     const html  = buildMenuHtml(menu);

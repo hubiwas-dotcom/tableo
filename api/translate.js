@@ -45,7 +45,7 @@ function callClaude(apiKey, prompt) {
   return new Promise((resolve, reject) => {
     const body = JSON.stringify({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 4096,
+      max_tokens: 8192,
       messages: [{ role: 'user', content: prompt }]
     });
     const req = https.request({
@@ -64,14 +64,16 @@ function callClaude(apiKey, prompt) {
       res.on('end', () => {
         try {
           const parsed = JSON.parse(data);
+          if (parsed.error) { reject(new Error(parsed.error.message || 'API error')); return; }
           const text = parsed.content?.[0]?.text || '';
           const match = text.match(/\{[\s\S]*\}/);
-          if (!match) { reject(new Error('No JSON in response')); return; }
+          if (!match) { reject(new Error('Brak JSON w odpowiedzi (możliwe ucięcie).')); return; }
           resolve(JSON.parse(match[0].replace(/,\s*([}\]])/g, '$1')));
         } catch (e) { reject(e); }
       });
     });
     req.on('error', reject);
+    req.setTimeout(55000, () => { req.destroy(new Error('Przekroczono czas tłumaczenia.')); });
     req.write(body);
     req.end();
   });

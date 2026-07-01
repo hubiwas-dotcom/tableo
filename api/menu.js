@@ -241,29 +241,41 @@ function buildMenuPage(menu, slug) {
   }
 
   /* ── Language switch ── */
-  async function switchLang(lang) {
-    if (lang === _lang) return;
+  var _langBusy = false;
+  function _setActiveLang(lang) {
     document.querySelectorAll('.lang-btn').forEach(function(b) {
       b.classList.toggle('active', b.dataset.lang === lang);
     });
-    _lang = lang;
+  }
+
+  async function switchLang(lang) {
+    if (_langBusy || lang === _lang) return;
 
     if (lang === 'pl') { location.reload(); return; }
 
-    if (_cache[lang]) { _applyMenu(_cache[lang]); return; }
+    if (_cache[lang]) { _lang = lang; _setActiveLang(lang); _applyMenu(_cache[lang]); return; }
 
+    _langBusy = true;
+    _setActiveLang(lang);
     var main = document.querySelector('main');
     main.style.transition = 'opacity 200ms';
     main.style.opacity = '0.3';
 
+    var ctrl  = new AbortController();
+    var timer = setTimeout(function() { ctrl.abort(); }, 60000);
     try {
-      var r = await fetch('/api/translate?slug=' + _SLUG + '&lang=' + lang);
+      var r = await fetch('/api/translate?slug=' + _SLUG + '&lang=' + lang, { signal: ctrl.signal });
       var d = await r.json();
-      if (d.ok && d.menu) { _cache[lang] = d.menu; _applyMenu(d.menu); }
-      else { _showToast('Nie udało się załadować tłumaczenia'); }
-    } catch(e) { _showToast('Błąd połączenia'); }
-
-    main.style.opacity = '1';
+      if (d.ok && d.menu) { _cache[lang] = d.menu; _lang = lang; _applyMenu(d.menu); }
+      else { _setActiveLang(_lang); _showToast('Nie udało się załadować tłumaczenia'); }
+    } catch(e) {
+      _setActiveLang(_lang);
+      _showToast(e.name === 'AbortError' ? 'Tłumaczenie trwało zbyt długo — spróbuj ponownie' : 'Błąd połączenia');
+    } finally {
+      clearTimeout(timer);
+      _langBusy = false;
+      main.style.opacity = '1';
+    }
   }
 
   function _applyMenu(menu) {

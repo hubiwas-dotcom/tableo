@@ -1828,15 +1828,26 @@
     _renderPreview(currentMenu, 'pl');
   }
 
+  let _previewBusy = false;
+  const _LANG_NAMES = { en:'angielski', de:'niemiecki', fr:'francuski', it:'włoski', es:'hiszpański', ru:'rosyjski' };
+
+  function _setPreviewDim(on) {
+    try {
+      const m = document.getElementById('menuPreviewFrame').contentDocument.querySelector('main');
+      if (m) m.style.opacity = on ? '.35' : '1';
+    } catch {}
+  }
+
   /* Tłumaczy podgląd na żądanie po kliknięciu flagi (działa na niepublikowanym menu) */
   async function previewTranslate(lang) {
-    if (!currentMenu || lang === _previewLang) return;
+    if (!currentMenu || _previewBusy || lang === _previewLang) return;
 
     if (lang === 'pl') { _previewLang = 'pl'; _renderPreview(currentMenu, 'pl'); return; }
     if (_previewCache[lang]) { _previewLang = lang; _renderPreview(_previewCache[lang], lang); return; }
 
-    const frame = document.getElementById('menuPreviewFrame');
-    try { frame.contentDocument.querySelector('main').style.opacity = '.35'; } catch {}
+    _previewBusy = true;
+    _setPreviewDim(true);
+    showToast('Tłumaczę na ' + (_LANG_NAMES[lang] || lang.toUpperCase()) + '…', 'ok');
 
     /* lekki payload bez zdjęć/logo (base64) */
     const slim = {
@@ -1848,11 +1859,14 @@
       }))
     };
 
+    const ctrl  = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 60000);
     try {
       const res = await fetch('/api/translate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentToken}` },
-        body: JSON.stringify({ menu: slim, lang })
+        body: JSON.stringify({ menu: slim, lang }),
+        signal: ctrl.signal
       });
       if (res.status === 401) { doLogout(); return; }
       const d = await res.json();
@@ -1879,11 +1893,15 @@
         _renderPreview(merged, lang);
       } else {
         showToast(d.error || 'Nie udało się przetłumaczyć podglądu.', 'warn');
-        try { frame.contentDocument.querySelector('main').style.opacity = '1'; } catch {}
       }
     } catch (e) {
-      showToast('Błąd tłumaczenia podglądu.', 'warn');
-      try { frame.contentDocument.querySelector('main').style.opacity = '1'; } catch {}
+      showToast(e.name === 'AbortError'
+        ? 'Tłumaczenie trwało zbyt długo — spróbuj ponownie.'
+        : 'Błąd tłumaczenia podglądu.', 'warn');
+    } finally {
+      clearTimeout(timer);
+      _previewBusy = false;
+      _setPreviewDim(false);
     }
   }
 

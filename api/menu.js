@@ -105,7 +105,12 @@ function buildMenuPage(menu, slug) {
     : '';
 
   const LANG_LABELS = { pl:'PL', en:'EN', de:'DE', fr:'FR', it:'IT', es:'ES', ru:'RU' };
-  const langs = Array.isArray(menu.languages) && menu.languages.length > 1 ? menu.languages : [];
+  const translations = menu.translations || {};
+  /* Pokaż flagę tylko dla PL + języków, które mają gotowe tłumaczenie (albo starych menu z menu.languages) */
+  const hasBaked = Object.keys(translations).length > 0;
+  const langs = hasBaked
+    ? ['pl', ...Object.keys(translations)]
+    : (Array.isArray(menu.languages) && menu.languages.length > 1 ? menu.languages : []);
   const langBtns = langs.map(l =>
     `<button class="lang-btn${l === 'pl' ? ' active' : ''}" data-lang="${l}" onclick="switchLang('${l}')">${LANG_LABELS[l] || l.toUpperCase()}</button>`
   ).join('');
@@ -229,7 +234,7 @@ function buildMenuPage(menu, slug) {
 <script>
   var _SLUG = '${slug}';
   var _lang = 'pl';
-  var _cache = {};
+  var _cache = ${JSON.stringify(translations).replace(/</g, '\\u003c')};
 
   function goTo(e, i) {
     e.preventDefault();

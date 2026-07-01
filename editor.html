@@ -1917,19 +1917,29 @@
     });
     if (allDishes.length === 0) return;
 
+    const withPhotos = allDishes.filter(d => d.item.image).length;
+
     const section = document.createElement('div');
     section.id = 'dishPhotoSection';
     section.style.cssText = 'margin-top:20px;';
     section.innerHTML = `
       <div class="card fade-up" style="padding:0;overflow:hidden;">
-        <div style="padding:18px 24px;border-bottom:1px solid rgba(27,42,74,.07);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
-          <div>
-            <div style="font-size:13px;font-weight:700;color:var(--navy);">Zdjęcia dań</div>
-            <div style="font-size:12px;color:rgba(27,42,74,.4);margin-top:2px;">Przypisz zdjęcia do wybranych pozycji — pojawią się na menu</div>
+        <button type="button" onclick="toggleDishPhotos()" style="width:100%;text-align:left;background:none;border:none;cursor:pointer;font-family:inherit;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+          <div style="display:flex;align-items:center;gap:12px;min-width:0;">
+            <div style="width:34px;height:34px;border-radius:9px;background:var(--sage-pale);border:1px solid rgba(123,170,143,.22);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg width="17" height="17" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="4.5" width="15" height="11" rx="2.2" stroke="var(--sage)" stroke-width="1.4"/><circle cx="7" cy="9" r="1.6" stroke="var(--sage)" stroke-width="1.3"/><path d="M4 15l4-3.5 3 2.2 3-2.5 3 2.3" stroke="var(--sage)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div style="min-width:0;">
+              <div style="font-size:13px;font-weight:700;color:var(--navy);">Zdjęcia dań</div>
+              <div style="font-size:12px;color:rgba(27,42,74,.4);margin-top:2px;">Przypisz zdjęcia do pozycji — pojawią się na menu</div>
+            </div>
           </div>
-          <span style="font-size:11px;color:rgba(27,42,74,.3);font-weight:500;">${allDishes.filter(d=>d.item.image).length} / ${allDishes.length} z&nbsp;zdjęciem</span>
-        </div>
-        <div style="padding:8px 12px;">
+          <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;">
+            <span id="dishPhotoCount" style="font-size:11px;color:rgba(27,42,74,.35);font-weight:600;white-space:nowrap;">${withPhotos} / ${allDishes.length} ze&nbsp;zdjęciem</span>
+            <svg id="dishPhotoChevron" width="16" height="16" viewBox="0 0 16 16" fill="none" style="transition:transform .25s ease;flex-shrink:0;"><path d="M4 6l4 4 4-4" stroke="rgba(27,42,74,.45)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </button>
+        <div id="dishPhotoBody" style="display:none;border-top:1px solid rgba(27,42,74,.07);padding:8px 12px;">
           ${allDishes.map(({ item, ci, ii }) => `
             <div style="display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:10px;transition:background 150ms ease;"
               onmouseover="this.style.background='rgba(27,42,74,.03)'" onmouseout="this.style.background='transparent'">
@@ -1987,11 +1997,20 @@
     updateDishPhotoCount();
   }
 
+  function toggleDishPhotos() {
+    const body = document.getElementById('dishPhotoBody');
+    const chev = document.getElementById('dishPhotoChevron');
+    if (!body) return;
+    const open = body.style.display !== 'none';
+    body.style.display = open ? 'none' : 'block';
+    if (chev) chev.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
+  }
+
   function updateDishPhotoCount() {
-    const el = document.querySelector('#dishPhotoSection .card > div:first-child span');
+    const el = document.getElementById('dishPhotoCount');
     if (!el || !currentMenu) return;
     const all = (currentMenu.categories||[]).flatMap(c => c.items||[]);
-    el.textContent = `${all.filter(i=>i.image).length} / ${all.length} z zdjęciem`;
+    el.innerHTML = `${all.filter(i=>i.image).length} / ${all.length} ze zdjęciem`;
   }
   /* ── Menu chat editor ── */
   function renderChatSection() {

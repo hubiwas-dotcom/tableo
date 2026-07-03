@@ -379,7 +379,7 @@ module.exports = async function handler(req, res) {
   /* Custom domain support: if request arrives at a non-Qreat host, look up
      the slug that was mapped to that domain in api/account.js PATCH. */
   const host        = (req.headers.host || '').replace(/^www\./, '');
-  const isMainHost  = !host || host.includes('tableo') || host.includes('vercel.app') || host.includes('localhost');
+  const isMainHost  = !host || host.includes('qreat') || host.includes('tableo') || host.includes('vercel.app') || host.includes('localhost');
   let slug;
   if (isMainHost) {
     slug = (req.url || '').replace(/^\/menu\//, '').split('?')[0].split('/')[0];

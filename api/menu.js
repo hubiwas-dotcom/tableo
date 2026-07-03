@@ -94,9 +94,13 @@ function buildMenuPage(menu, slug) {
            + `</article>`;
     }).join('');
 
+    const catImg = c.image
+      ? `<img class="cat-img" src="${c.image}" alt="${c.name}" loading="lazy">`
+      : '';
     return `<section class="cat-section" id="s${i}">`
          + `<div class="cat-heading"><span class="cat-line-l"></span>`
          + `<span class="cat-title">${c.name}</span><span class="cat-line-r"></span></div>`
+         + catImg
          + `<div class="dishes">${dishes}</div></section>`;
   }).join('');
 
@@ -205,11 +209,14 @@ function buildMenuPage(menu, slug) {
     .dish-img{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:8px;
       margin-bottom:9px;border:1px solid rgba(232,223,208,.06);
       box-shadow:0 4px 18px rgba(0,0,0,.4);}
+    .cat-img{width:100%;aspect-ratio:16/6;object-fit:cover;border-radius:10px;
+      margin:2px 0 14px;border:1px solid rgba(232,223,208,.08);
+      box-shadow:0 6px 22px rgba(0,0,0,.45);}
     .dish-row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;}
     .dish-name{font-family:${f.dish};font-size:${f.dishFs};font-weight:400;
       color:var(--cream);line-height:1.2;letter-spacing:.01em;}
-    .dish-price{font-family:${f.heading};font-size:12px;font-weight:600;
-      color:var(--gold);white-space:nowrap;letter-spacing:.04em;flex-shrink:0;}
+    .dish-price{font-family:${f.heading};font-size:14px;font-weight:700;
+      color:var(--gold-light);white-space:nowrap;letter-spacing:.04em;flex-shrink:0;}
     .dish-desc{font-size:11.5px;color:var(--cream-muted);margin-top:5px;line-height:1.65;font-weight:300;}
 
     /* ── Footer ── */
@@ -286,7 +293,10 @@ function buildMenuPage(menu, slug) {
   function _applyMenu(menu) {
     /* Save existing images from DOM before rebuilding */
     var imgs = {};
+    var catImgs = {};
     document.querySelectorAll('.cat-section').forEach(function(sec, ci) {
+      var cimg = sec.querySelector('.cat-img');
+      if (cimg) catImgs[ci] = cimg.src;
       sec.querySelectorAll('.dish').forEach(function(dish, ii) {
         var img = dish.querySelector('.dish-img');
         if (img) imgs[ci + '-' + ii] = img.src;
@@ -305,9 +315,12 @@ function buildMenuPage(menu, slug) {
              + '<span class="dish-price">' + (item.price || '') + '</span></div>'
              + desc + '</article>';
       }).join('');
+      var catImgSrc = c.image || catImgs[i] || '';
+      var catImg = catImgSrc ? '<img class="cat-img" src="' + catImgSrc + '" loading="lazy">' : '';
       return '<section class="cat-section" id="s' + i + '">'
            + '<div class="cat-heading"><span class="cat-line-l"></span>'
            + '<span class="cat-title">' + c.name + '</span><span class="cat-line-r"></span></div>'
+           + catImg
            + '<div class="dishes">' + dishes + '</div></section>';
     }).join('');
 

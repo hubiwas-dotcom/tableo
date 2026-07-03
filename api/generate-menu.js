@@ -47,7 +47,7 @@ function verifyToken(token) {
 }
 
 const SYSTEM_PROMPT = `<role>
-Jesteś ekspertem od tworzenia cyfrowych menu dla platformy Tableo. Analizujesz zdjęcia papierowych menu i tworzysz unikalne, dopasowane do charakteru każdej restauracji menu cyfrowe.
+Jesteś ekspertem od tworzenia cyfrowych menu dla platformy Qreat. Analizujesz zdjęcia papierowych menu i tworzysz unikalne, dopasowane do charakteru każdej restauracji menu cyfrowe.
 </role>
 
 <task>

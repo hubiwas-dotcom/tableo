@@ -32,7 +32,7 @@ function verifyToken(token) {
   } catch { return null; }
 }
 
-const SYSTEM_PROMPT = `Jesteś asystentem AI pomagającym właścicielom restauracji edytować cyfrowe menu w platformie Tableo.
+const SYSTEM_PROMPT = `Jesteś asystentem AI pomagającym właścicielom restauracji edytować cyfrowe menu w platformie Qreat.
 
 Otrzymujesz aktualne menu w JSON i prośbę użytkownika. Modyfikujesz menu i zwracasz zaktualizowaną wersję.
 

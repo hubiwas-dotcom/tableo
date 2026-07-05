@@ -43,9 +43,10 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const { email, password } = req.body || {};
+  const { email, password, privacy_accepted } = req.body || {};
   if (!email || !password) { res.status(400).json({ error: 'Podaj email i hasło.' }); return; }
   if (password.length < 6)  { res.status(400).json({ error: 'Hasło musi mieć minimum 6 znaków.' }); return; }
+  if (!privacy_accepted)    { res.status(400).json({ error: 'Zaakceptuj politykę prywatności.' }); return; }
 
   const key = `user:${email.toLowerCase().trim()}`;
 
@@ -60,7 +61,7 @@ module.exports = async function handler(req, res) {
 
   /* Store user */
   try {
-    await kvSet(key, { email, hash, salt, trial_start: ts, created_at: ts, provider: 'email', last_login: ts, login_count: 1 });
+    await kvSet(key, { email, hash, salt, trial_start: ts, created_at: ts, provider: 'email', last_login: ts, login_count: 1, privacy_accepted: true, privacy_accepted_at: ts });
   } catch {
     res.status(500).json({ error: 'Błąd zapisu. Spróbuj ponownie.' }); return;
   }

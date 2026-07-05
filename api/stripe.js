@@ -55,7 +55,7 @@ function stripePost(path, params) {
       path,
       method: 'POST',
       headers: {
-        'Authorization':  `Bearer ${process.env.STRIPE_SECRET_KEY}`,
+        'Authorization':  `Bearer ${(process.env.STRIPE_SECRET_KEY || '').trim()}`,
         'Content-Type':   'application/x-www-form-urlencoded',
         'Content-Length': Buffer.byteLength(body),
       }

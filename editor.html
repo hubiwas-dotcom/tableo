@@ -2072,7 +2072,7 @@
     document.getElementById('adminSummary').textContent = 'Ładowanie…';
     document.getElementById('adminTableWrap').innerHTML = '';
     try {
-      const res = await fetch('/api/admin', { headers: { 'Authorization': `Bearer ${currentToken}` } });
+      const res = await fetch('/api/account?admin=1', { headers: { 'Authorization': `Bearer ${currentToken}` } });
       if (res.status === 403) { document.getElementById('adminSummary').textContent = 'Brak uprawnień.'; return; }
       if (res.status === 401) { document.getElementById('adminSummary').textContent = 'Sesja wygasła — zaloguj się ponownie.'; return; }
       const data = await res.json();

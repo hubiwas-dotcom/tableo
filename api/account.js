@@ -28,6 +28,22 @@ async function kvSet(key, value) {
   return res.ok;
 }
 
+/* Upstash SCAN — wszystkie klucze pasujące do wzorca */
+async function kvScan(pattern) {
+  const { url, token } = kvCreds();
+  if (!url || !token) return [];
+  const keys = [];
+  let cursor = '0';
+  do {
+    const res  = await fetch(`${url}/scan/${cursor}/match/${encodeURIComponent(pattern)}/count/200`, { headers: { Authorization: `Bearer ${token}` } });
+    const data = await res.json();
+    if (!data.result) break;
+    cursor = data.result[0];
+    (data.result[1] || []).forEach(k => keys.push(k));
+  } while (cursor !== '0');
+  return keys;
+}
+
 function isAdmin(email) {
   const admins = (process.env.ADMIN_EMAILS || 'hubiwas@gmail.com').split(',').map(e => e.trim().toLowerCase());
   return admins.includes((email || '').toLowerCase());
@@ -57,6 +73,44 @@ module.exports = async function handler(req, res) {
   if (!user) { res.status(401).json({ error: 'Sesja wygasła.' }); return; }
 
   const accountKey = `account:${user.email}`;
+
+  /* ── Admin panel (tylko właściciel): GET /api/account?admin=1 ── */
+  if (req.method === 'GET' && req.query && req.query.admin === '1') {
+    if ((user.email || '').toLowerCase().trim() !== 'hubiwas@gmail.com') {
+      res.status(403).json({ error: 'Brak uprawnień.' }); return;
+    }
+    const TRIAL_MS = parseInt(process.env.TRIAL_DAYS || '7') * 24 * 60 * 60 * 1000;
+    const userKeys = await kvScan('user:*');
+    const rows = await Promise.all(userKeys.map(async (key) => {
+      const email = key.replace(/^user:/, '');
+      const [u, acc, paid] = await Promise.all([
+        kvGet(key), kvGet(`account:${email}`), kvGet(`paid:${email}`),
+      ]);
+      const firstGen   = acc?.first_generated_at || null;
+      const isPaidRow  = isAdmin(email) || !!(paid?.active && (!paid.expires_at || Date.now() < paid.expires_at));
+      const trialExpired = !isPaidRow && firstGen ? (Date.now() - firstGen > TRIAL_MS) : false;
+      const daysLeft   = firstGen ? Math.max(0, Math.ceil((firstGen + TRIAL_MS - Date.now()) / 86400000)) : null;
+      return {
+        email,
+        provider:          u?.provider || 'email',
+        is_admin:          isAdmin(email),
+        last_login:        u?.last_login || null,
+        login_count:       u?.login_count || 0,
+        generation_count:  acc?.generation_count || 0,
+        last_generated_at: acc?.last_generated_at || firstGen || null,
+        error_count:       acc?.error_count || 0,
+        last_error:        acc?.last_error || null,
+        last_error_at:     acc?.last_error_at || null,
+        paid:              isPaidRow,
+        paid_plan:         isPaidRow ? (paid?.plan || (isAdmin(email) ? 'admin' : null)) : null,
+        trial_days_left:   isPaidRow ? null : daysLeft,
+        trial_expired:     trialExpired,
+      };
+    }));
+    rows.sort((a, b) => (b.last_login || 0) - (a.last_login || 0));
+    res.json({ ok: true, count: rows.length, generated_at: Date.now(), users: rows });
+    return;
+  }
 
   /* ── GET: return account metadata + current menu + trial status ── */
   if (req.method === 'GET') {

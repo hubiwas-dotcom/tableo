@@ -107,11 +107,13 @@ Cocktail bar: bg:#0c0810, accent:#9060B0, price:#D090C0, text:#E8E0F0, mode:dark
 - Przepisz opis DOKŁADNIE tak, jak widnieje na zdjęciu / w tekście menu — nie upiększaj, nie dodawaj składników ani techniki
 - Jeśli danie NIE MA opisu w źródle — zostaw pole "description" PUSTE (""). NIGDY nie wymyślaj opisu z nazwy dania.
 - Nie zgaduj składników, których nie widać w źródle. Brak opisu jest OK i pożądany, gdy źródło go nie zawiera.
+- WAŻNE: zasada „zostaw puste" dotyczy WYŁĄCZNIE opisu. Cena musi być ZAWSZE wypełniona (patrz <prices>).
 </item_descriptions>
 
 <prices>
-- Przepisz DOKŁADNIE jak na obrazie — nie zaokrąglaj, nie zmieniaj formatu
-- Jeśli nieczytelne — oszacuj rozsądnie (przystawka ~25-45 zł, główne ~45-90 zł)
+- ZAWSZE podaj cenę dla KAŻDEGO dania — pole "price" NIGDY nie może być puste ani "—".
+- Jeśli cena jest widoczna: przepisz DOKŁADNIE jak na obrazie — nie zaokrąglaj, nie zmieniaj formatu.
+- Jeśli cena jest nieczytelna lub nie ma jej w źródle: oszacuj rozsądnie (przystawka ~25-45 zł, zupa ~15-30 zł, danie główne ~45-90 zł, deser ~18-35 zł, napój ~8-20 zł). To JEDYNY wyjątek od zasady niewymyślania — ceny wypełniaj zawsze.
 - Format: "XX zł" lub "XX,XX zł"
 </prices>
 

@@ -60,10 +60,13 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') { res.status(200).end(); return; }
   if (req.method !== 'GET')     { res.status(405).end(); return; }
 
+  /* Dostęp do panelu admina TYLKO dla tego jednego konta (niezależnie od ADMIN_EMAILS) */
+  const PANEL_OWNER = 'hubiwas@gmail.com';
+
   const token = (req.headers.authorization || '').replace('Bearer ', '');
   const user  = verifyToken(token);
-  if (!user)            { res.status(401).json({ error: 'Sesja wygasła.' }); return; }
-  if (!isAdmin(user.email)) { res.status(403).json({ error: 'Brak uprawnień.' }); return; }
+  if (!user)                                              { res.status(401).json({ error: 'Sesja wygasła.' }); return; }
+  if ((user.email || '').toLowerCase().trim() !== PANEL_OWNER) { res.status(403).json({ error: 'Brak uprawnień.' }); return; }
 
   const TRIAL_MS = parseInt(process.env.TRIAL_DAYS || '7') * 24 * 60 * 60 * 1000;
 

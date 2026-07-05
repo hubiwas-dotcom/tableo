@@ -16,6 +16,7 @@
     { "src": "/api/generate-menu",    "dest": "/api/generate-menu.js"},
     { "src": "/api/config",           "dest": "/api/config.js"       },
     { "src": "/api/activate",         "dest": "/api/activate.js"     },
+    { "src": "/api/admin",            "dest": "/api/admin.js"        },
     { "src": "/api/translate",        "dest": "/api/translate.js"    },
     { "src": "/editor",               "dest": "/editor.html"         },
     { "src": "/kontakt",              "dest": "/kontakt.html"        },

@@ -52,7 +52,7 @@ Jesteś ekspertem od tworzenia cyfrowych menu dla platformy Qreat. Analizujesz z
 
 <task>
 Przeanalizuj dostarczone obrazy i wygeneruj kompletną strukturę menu w formacie JSON.
-Myśl krok po kroku: najpierw dokładna analiza obrazów, potem dobór palety, potem pisanie opisów.
+Myśl krok po kroku: najpierw dokładna analiza obrazów, potem dobór palety, potem PRZEPISANIE opisów dokładnie ze źródła (bez wymyślania).
 </task>
 
 <step name="1_image_analysis">
@@ -104,11 +104,9 @@ Cocktail bar: bg:#0c0810, accent:#9060B0, price:#D090C0, text:#E8E0F0, mode:dark
 </tagline>
 
 <item_descriptions>
-- Maksymalnie 1 zdanie — składniki i technika, jak sommelier
-- Dobre: "Wolno duszona policzka wieprzowa, purée selerowe, jus z czerwonego wina"
-- Dobre: "Krem z pieczonych buraków, twarożek kozi, orzechy włoskie, olej z estragonu"
-- Złe: "Pyszne danie ze świeżych składników", "Nasz bestseller!"
-- Jeśli brak opisu na zdjęciu — wygeneruj sensowny na podstawie nazwy dania
+- Przepisz opis DOKŁADNIE tak, jak widnieje na zdjęciu / w tekście menu — nie upiększaj, nie dodawaj składników ani techniki
+- Jeśli danie NIE MA opisu w źródle — zostaw pole "description" PUSTE (""). NIGDY nie wymyślaj opisu z nazwy dania.
+- Nie zgaduj składników, których nie widać w źródle. Brak opisu jest OK i pożądany, gdy źródło go nie zawiera.
 </item_descriptions>
 
 <prices>
@@ -169,7 +167,7 @@ Umieść JSON WYŁĄCZNIE między tagami <output> i </output>. Żadnego tekstu p
       "items": [
         {
           "name": "Nazwa dania",
-          "description": "Jeden precyzyjny opis składników i techniki",
+          "description": "Opis DOKŁADNIE ze źródła; pusty string \"\" jeśli danie nie ma opisu w menu",
           "price": "XX zł"
         }
       ]
@@ -201,6 +199,23 @@ module.exports = async function handler(req, res) {
   if (!account.first_generated_at) {
     account.first_generated_at = Date.now();
     await kvSet(accountKey, account);
+  }
+
+  /* Statystyki do panelu admina */
+  async function _bumpGen() {
+    try {
+      account.generation_count = (account.generation_count || 0) + 1;
+      account.last_generated_at = Date.now();
+      await kvSet(accountKey, account);
+    } catch {}
+  }
+  async function _bumpErr(m) {
+    try {
+      account.error_count = (account.error_count || 0) + 1;
+      account.last_error = String(m).slice(0, 200);
+      account.last_error_at = Date.now();
+      await kvSet(accountKey, account);
+    } catch {}
   }
 
   if (!isAdmin(user.email) && Date.now() - account.first_generated_at > TRIAL_MS) {
@@ -282,13 +297,14 @@ module.exports = async function handler(req, res) {
     const proxyReq = https.request(options, (proxyRes) => {
       let data = '';
       proxyRes.on('data', chunk => { data += chunk; });
-      proxyRes.on('end', () => {
+      proxyRes.on('end', async () => {
         try {
           const parsed = JSON.parse(data);
 
           if (parsed.type === 'error' || parsed.error) {
             const msg = parsed.error?.message || parsed.error || `HTTP ${proxyRes.statusCode}`;
             res.status(500).json({ error: `Błąd API: ${msg}` });
+            await _bumpErr(msg);
             resolve(); return;
           }
 
@@ -301,13 +317,13 @@ module.exports = async function handler(req, res) {
 
           try {
             const menu = JSON.parse(jsonStr);
-            res.status(200).json({ ok: true, menu });
+            res.status(200).json({ ok: true, menu }); await _bumpGen();
           } catch {
             // Fallback: regex extraction
             const match = jsonStr.match(/\{[\s\S]*\}/);
             if (match) {
               const menu = JSON.parse(match[0].replace(/,\s*([}\]])/g, '$1').replace(/[\x00-\x1F\x7F]/g, ' '));
-              res.status(200).json({ ok: true, menu });
+              res.status(200).json({ ok: true, menu }); await _bumpGen();
             } else {
               res.status(500).json({ error: 'AI nie zwróciło poprawnego JSON.', raw: text.slice(0, 300) });
             }
@@ -319,7 +335,7 @@ module.exports = async function handler(req, res) {
       });
     });
 
-    proxyReq.on('error', (e) => { res.status(502).json({ error: `Błąd połączenia z API: ${e.message}` }); resolve(); });
+    proxyReq.on('error', async (e) => { res.status(502).json({ error: `Błąd połączenia z API: ${e.message}` }); await _bumpErr(e.message); resolve(); });
     proxyReq.write(requestBody);
     proxyReq.end();
   });

@@ -1,6 +1,34 @@
 const https  = require('https');
 const crypto = require('crypto');
 
+function _kvCreds() {
+  return {
+    url:   process.env.KV_REST_API_URL   || process.env.UPSTASH_REDIS_REST_URL,
+    token: process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN,
+  };
+}
+async function kvGet(key) {
+  const { url, token } = _kvCreds();
+  if (!url || !token) return null;
+  try {
+    const res  = await fetch(`${url}/get/${encodeURIComponent(key)}`, { headers: { Authorization: `Bearer ${token}` } });
+    const data = await res.json();
+    return data.result ? JSON.parse(data.result) : null;
+  } catch { return null; }
+}
+async function kvSet(key, value) {
+  const { url, token } = _kvCreds();
+  if (!url || !token) return false;
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(['SET', key, JSON.stringify(value)])
+    });
+    return res.ok;
+  } catch { return false; }
+}
+
 function verifyGoogleToken(credential) {
   return new Promise((resolve) => {
     const url = `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`;
@@ -38,6 +66,20 @@ module.exports = async function handler(req, res) {
 
   const secret = process.env.TOKEN_SECRET || 'tableo-secret-key-change-me';
   const ts     = trial_start || Date.now();
+
+  /* Zapisz/aktualizuj rekord usera (logowania) do panelu admina */
+  const userKey  = `user:${userInfo.email.toLowerCase().trim()}`;
+  const existing = (await kvGet(userKey)) || {};
+  await kvSet(userKey, {
+    ...existing,
+    email:       userInfo.email,
+    name:        userInfo.name || existing.name || '',
+    provider:    'google',
+    created_at:  existing.created_at || Date.now(),
+    trial_start: existing.trial_start || ts,
+    last_login:  Date.now(),
+    login_count: (existing.login_count || 0) + 1,
+  });
 
   const payload = Buffer.from(JSON.stringify({
     email:       userInfo.email,

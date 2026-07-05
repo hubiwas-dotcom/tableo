@@ -60,7 +60,7 @@ module.exports = async function handler(req, res) {
 
   /* Store user */
   try {
-    await kvSet(key, { email, hash, salt, trial_start: ts, created_at: ts });
+    await kvSet(key, { email, hash, salt, trial_start: ts, created_at: ts, provider: 'email', last_login: ts, login_count: 1 });
   } catch {
     res.status(500).json({ error: 'Błąd zapisu. Spróbuj ponownie.' }); return;
   }

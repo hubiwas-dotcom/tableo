@@ -388,6 +388,12 @@
       <div id="trialBadge"></div>
       <img id="userAvatar" src="" alt="" style="width:28px;height:28px;border-radius:50%;display:none;border:2px solid rgba(27,42,74,.1);">
       <span id="userEmailDisplay" class="top-bar-email" style="font-size:12px;color:rgba(27,42,74,.4);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+      <button id="adminBtn" onclick="showAdminPanel()"
+        style="display:none;font-size:12px;color:var(--gold);background:rgba(201,146,74,.08);border:1px solid rgba(201,146,74,.32);padding:6px 13px;border-radius:8px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;transition:all 150ms ease;"
+        onmouseover="this.style.background='rgba(201,146,74,.16)'"
+        onmouseout="this.style.background='rgba(201,146,74,.08)'">
+        Admin
+      </button>
       <button onclick="doLogout()"
         style="font-size:12px;color:rgba(27,42,74,.55);background:none;border:1px solid rgba(27,42,74,.14);padding:6px 13px;border-radius:8px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-weight:500;transition:all 150ms ease;"
         onmouseover="this.style.background='rgba(27,42,74,.05)';this.style.color='var(--navy)'"
@@ -695,6 +701,23 @@
         Pytania? <a href="/kontakt" target="_blank" style="color:var(--sage);font-weight:600;">Skontaktuj się z nami</a>
       </p>
     </div>
+  </div>
+</div>
+
+<!-- ══ PANEL ADMINA ══ -->
+<div id="adminOverlay" onclick="if(event.target===this)hideAdminPanel()" style="position:fixed;inset:0;z-index:8500;background:rgba(10,20,40,.85);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);display:none;align-items:flex-start;justify-content:center;padding:24px;overflow:auto;">
+  <div style="background:white;border-radius:20px;max-width:1100px;width:100%;margin:auto;box-shadow:0 40px 100px rgba(0,0,0,.4);overflow:hidden;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 24px;border-bottom:1px solid rgba(27,42,74,.08);">
+      <div style="min-width:0;">
+        <div style="font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:600;color:var(--navy);">Panel admina</div>
+        <div id="adminSummary" style="font-size:12px;color:rgba(27,42,74,.45);margin-top:2px;">Ładowanie…</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-shrink:0;">
+        <button onclick="showAdminPanel()" style="font-size:12px;font-weight:600;color:var(--sage);background:rgba(123,170,143,.1);border:1px solid rgba(123,170,143,.3);padding:8px 14px;border-radius:8px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">Odśwież</button>
+        <button onclick="hideAdminPanel()" style="font-size:12px;font-weight:600;color:rgba(27,42,74,.6);background:none;border:1px solid rgba(27,42,74,.14);padding:8px 14px;border-radius:8px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">Zamknij</button>
+      </div>
+    </div>
+    <div id="adminTableWrap" style="overflow:auto;max-height:72vh;"></div>
   </div>
 </div>
 
@@ -1053,6 +1076,11 @@
     }
     updateTrialUI();
     loadUserAccount();
+
+    /* Pokaż przycisk Admin tylko dla adminów (endpoint i tak weryfikuje uprawnienia) */
+    const ADMIN_EMAILS = ['hubiwas@gmail.com'];
+    const adminBtn = document.getElementById('adminBtn');
+    if (adminBtn) adminBtn.style.display = ADMIN_EMAILS.includes((currentEmail || '').toLowerCase()) ? 'inline-flex' : 'none';
   }
 
   /* ── Load saved menu on login ── */
@@ -1686,6 +1714,8 @@
         lk.href = data.url; lk.textContent = data.url;
         pr.style.display = 'block';
         document.getElementById('qrUrl').value = data.url;
+        /* Odśwież kod QR, jeśli był już wygenerowany — inaczej zostałby stary */
+        if (document.getElementById('qrGrid').children.length > 0) generateQRCodes();
         renderDomainCard();
         showToast('Menu opublikowane! Link skopiuj poniżej.', 'ok');
       } else {
@@ -2026,6 +2056,76 @@
     document.getElementById(`dish-photo-${ci}-${ii}`).innerHTML = dishUploadBtnHtml(ci, ii);
     updateMenuPreview();
     updateDishPhotoCount();
+  }
+
+  /* ── Panel admina ── */
+  function hideAdminPanel() { document.getElementById('adminOverlay').style.display = 'none'; }
+
+  function _adminDate(ts) {
+    if (!ts) return '—';
+    return new Date(ts).toLocaleString('pl-PL', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
+  }
+
+  async function showAdminPanel() {
+    const ov = document.getElementById('adminOverlay');
+    ov.style.display = 'flex';
+    document.getElementById('adminSummary').textContent = 'Ładowanie…';
+    document.getElementById('adminTableWrap').innerHTML = '';
+    try {
+      const res = await fetch('/api/admin', { headers: { 'Authorization': `Bearer ${currentToken}` } });
+      if (res.status === 403) { document.getElementById('adminSummary').textContent = 'Brak uprawnień.'; return; }
+      if (res.status === 401) { document.getElementById('adminSummary').textContent = 'Sesja wygasła — zaloguj się ponownie.'; return; }
+      const data = await res.json();
+      if (!data.ok) { document.getElementById('adminSummary').textContent = data.error || 'Błąd.'; return; }
+      renderAdminUsers(data);
+    } catch {
+      document.getElementById('adminSummary').textContent = 'Błąd połączenia.';
+    }
+  }
+
+  function renderAdminUsers(data) {
+    document.getElementById('adminSummary').textContent =
+      `${data.count} użytkowników · odświeżono ${_adminDate(data.generated_at)}`;
+
+    const esc = s => String(s || '').replace(/[<>&"]/g, c => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;' }[c]));
+
+    const rows = (data.users || []).map(u => {
+      let status;
+      if (u.paid)              status = `<span style="color:#2e7d5b;font-weight:600;">Opłacony${u.paid_plan ? ' · ' + esc(u.paid_plan) : ''}</span>`;
+      else if (u.trial_expired) status = `<span style="color:#c0392b;font-weight:600;">Trial wygasł</span>`;
+      else if (u.trial_days_left != null) status = `<span style="color:var(--navy);">Trial: ${u.trial_days_left} dni</span>`;
+      else                     status = `<span style="color:rgba(27,42,74,.35);">nie generował</span>`;
+
+      const problem = u.error_count > 0
+        ? `<span title="${esc(u.last_error)} (${_adminDate(u.last_error_at)})" style="color:#c0392b;font-weight:600;cursor:help;">${u.error_count} ⚠</span>`
+        : `<span style="color:rgba(27,42,74,.28);">—</span>`;
+
+      return `<tr style="border-top:1px solid rgba(27,42,74,.06);">
+        <td style="padding:9px 12px;font-weight:600;color:var(--navy);white-space:nowrap;">${esc(u.email)}${u.is_admin ? ' 👑' : ''}</td>
+        <td style="padding:9px 12px;color:rgba(27,42,74,.55);">${esc(u.provider)}</td>
+        <td style="padding:9px 12px;white-space:nowrap;color:rgba(27,42,74,.7);">${_adminDate(u.last_login)}</td>
+        <td style="padding:9px 12px;text-align:center;color:rgba(27,42,74,.7);">${u.login_count}</td>
+        <td style="padding:9px 12px;text-align:center;color:rgba(27,42,74,.7);">${u.generation_count}</td>
+        <td style="padding:9px 12px;white-space:nowrap;">${status}</td>
+        <td style="padding:9px 12px;text-align:center;">${problem}</td>
+      </tr>`;
+    }).join('');
+
+    document.getElementById('adminTableWrap').innerHTML = `
+      <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+        <thead>
+          <tr style="background:rgba(27,42,74,.03);color:rgba(27,42,74,.5);font-size:11px;text-transform:uppercase;letter-spacing:.04em;text-align:left;position:sticky;top:0;">
+            <th style="padding:11px 12px;">Email</th>
+            <th style="padding:11px 12px;">Logowanie</th>
+            <th style="padding:11px 12px;">Ostatni login</th>
+            <th style="padding:11px 12px;text-align:center;">Logowań</th>
+            <th style="padding:11px 12px;text-align:center;">Generacji</th>
+            <th style="padding:11px 12px;">Status / trial</th>
+            <th style="padding:11px 12px;text-align:center;">Problem</th>
+          </tr>
+        </thead>
+        <tbody>${rows || '<tr><td colspan="7" style="padding:20px;text-align:center;color:rgba(27,42,74,.4);">Brak użytkowników.</td></tr>'}</tbody>
+      </table>`;
   }
 
   /* ── Category photos ── */

@@ -2269,8 +2269,11 @@
         const prevPalette = currentLogoColors
           ? { ...data.menu.palette, ...currentLogoColors }
           : data.menu.palette;
-        // Preserve per-item images
+        // Preserve per-category and per-item images
         (currentMenu.categories || []).forEach((cat, ci) => {
+          if (cat.image && data.menu.categories?.[ci]) {
+            data.menu.categories[ci].image = cat.image;
+          }
           (cat.items || []).forEach((item, ii) => {
             if (item.image && data.menu.categories?.[ci]?.items?.[ii]) {
               data.menu.categories[ci].items[ii].image = item.image;

@@ -108,12 +108,13 @@ module.exports = async function handler(req, res) {
   // Strip logo/image data before sending to Claude (saves tokens)
   const menuForAI = JSON.parse(JSON.stringify(menu));
   delete menuForAI.logo;
-  (menuForAI.categories || []).forEach(cat =>
-    (cat.items || []).forEach(item => delete item.image)
-  );
+  (menuForAI.categories || []).forEach(cat => {
+    delete cat.image;
+    (cat.items || []).forEach(item => delete item.image);
+  });
 
   const requestBody = JSON.stringify({
-    model: 'claude-sonnet-4-6',
+    model: 'claude-opus-4-8',
     max_tokens: 8192,
     system: SYSTEM_PROMPT,
     messages: [{

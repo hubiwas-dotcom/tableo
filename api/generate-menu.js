@@ -58,7 +58,8 @@ Myśl krok po kroku: najpierw dokładna analiza obrazów, potem dobór palety, p
 <step name="1_image_analysis">
 Zanim cokolwiek zapiszesz, przeskanuj każdy obraz w całości:
 - Odczytaj KAŻDĄ nazwę dania — sprawdź polskie znaki (ą, ę, ó, ś, ź, ż, ć, ń)
-- Odczytaj KAŻDĄ cenę dokładnie jak napisano (np. "28" vs "28,50" vs "28 zł")
+- Odczytaj KAŻDY opis dania SŁOWO W SŁOWO — jeśli pod/obok nazwy jest jakikolwiek tekst (składniki, dodatki, sposób podania), to jest opis do przepisania
+- Odczytaj KAŻDĄ cenę dokładnie jak napisano (np. "28" vs "28,50" vs "28 zł") — każde danie ma cenę
 - Zidentyfikuj WSZYSTKIE kategorie i ich kolejność
 - Odczytaj nazwę restauracji z nagłówka, szyldu lub logo
 - Jeśli jest wiele stron — przeskanuj je wszystkie, nie pomijaj żadnej pozycji
@@ -104,10 +105,10 @@ Cocktail bar: bg:#0c0810, accent:#9060B0, price:#D090C0, text:#E8E0F0, mode:dark
 </tagline>
 
 <item_descriptions>
-- Przepisz opis DOKŁADNIE tak, jak widnieje na zdjęciu / w tekście menu — nie upiększaj, nie dodawaj składników ani techniki
-- Jeśli danie NIE MA opisu w źródle — zostaw pole "description" PUSTE (""). NIGDY nie wymyślaj opisu z nazwy dania.
-- Nie zgaduj składników, których nie widać w źródle. Brak opisu jest OK i pożądany, gdy źródło go nie zawiera.
-- WAŻNE: zasada „zostaw puste" dotyczy WYŁĄCZNIE opisu. Cena musi być ZAWSZE wypełniona (patrz <prices>).
+- DOMYŚLNIE: PRZEPISZ opis każdego dania dokładnie ze źródła. Jeśli pod/obok nazwy dania jest jakikolwiek tekst (składniki, dodatki, sposób podania) — MUSI trafić do pola "description", słowo w słowo. To najważniejsza zasada.
+- Przepisuj wiernie: te same słowa i składniki co w źródle. Nie skracaj, nie upiększaj, nie zmieniaj stylu, nie dodawaj nic od siebie.
+- Pole "description" zostaw puste ("") TYLKO wtedy, gdy danie naprawdę nie ma żadnego opisu w źródle (jest sama nazwa i cena). Tylko w tym przypadku NIE wymyślaj opisu z nazwy.
+- Uwaga: zasada pustego pola dotyczy WYŁĄCZNIE opisu. Cena musi być ZAWSZE wypełniona (patrz <prices>).
 </item_descriptions>
 
 <prices>
@@ -133,10 +134,9 @@ KRYTYCZNE: Całe menu generuj WYŁĄCZNIE w JĘZYKU POLSKIM — jeden język, ni
 </language_rules>
 
 <quality_rules>
-- Styl opisów spójny w całym menu (albo formalny, albo casual — nie mix)
-- Nigdy: "domowy", "świeży", "najlepszy", "pyszny" bez konkretnego kontekstu
-- Nie pomijaj żadnego dania ze zdjęcia
-- Zachowaj polskie znaki diakrytyczne w nazwach
+- Nie pomijaj żadnego dania, opisu ani ceny, które są w źródle — przepisz komplet
+- NIE „ujednolicaj" ani nie przerabiaj opisów — każdy opis ma brzmieć tak jak w źródle, nawet jeśli style dań się różnią
+- Zachowaj polskie znaki diakrytyczne w nazwach i opisach
 - Jeden język (polski) w całym menu — patrz language_rules
 </quality_rules>
 
@@ -276,7 +276,7 @@ module.exports = async function handler(req, res) {
     model: 'claude-opus-4-8',
     max_tokens: 32000,
     thinking: { type: 'adaptive' },
-    output_config: { effort: 'medium' },
+    output_config: { effort: 'high' },
     system: SYSTEM_PROMPT,
     messages: [
       { role: 'user', content }

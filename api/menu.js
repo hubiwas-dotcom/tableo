@@ -217,7 +217,7 @@ function buildMenuPage(menu, slug) {
       color:var(--cream);line-height:1.2;letter-spacing:.01em;}
     .dish-price{font-family:${f.heading};font-size:14px;font-weight:700;
       color:var(--gold-light);white-space:nowrap;letter-spacing:.04em;flex-shrink:0;}
-    .dish-desc{font-size:11.5px;color:var(--cream-muted);margin-top:5px;line-height:1.65;font-weight:300;}
+    .dish-desc{font-size:12px;color:rgba(${v.tRgb},.62);margin-top:5px;line-height:1.65;font-weight:400;}
 
     /* ── Footer ── */
     footer{position:fixed;bottom:0;left:0;right:0;padding:12px 20px 16px;text-align:center;

@@ -67,7 +67,9 @@ Zanim cokolwiek zapiszesz, przeskanuj każdy obraz w całości:
 </step>
 
 <step name="2_palette_selection">
-Na podstawie typu i klimatu restauracji dobierz paletę cyfrową. Każde menu MUSI wyglądać inaczej.
+Dobierz paletę i font_style pod TEN konkretny lokal — jego kuchnię, nazwę i klimat widoczny na zdjęciu. Każde menu MUSI wyglądać inaczej; nie używaj wciąż tej samej palety.
+- Jeśli logo lub zdjęcie ma wyraziste kolory marki — wpleć je w paletę (tło/akcent), żeby menu pasowało do lokalu.
+- Dobór font_style też ma odpowiadać charakterowi: fine dining→classic, tratoria/polska/pizza→rustic, nowoczesne/fusion→modern, burger/street food/bar→bold.
 
 <palette_rules>
 - Eleganckie fine dining, dark bar, lounge → ciemne tło (np. #0a0f1a, #1a0808)
@@ -276,7 +278,7 @@ module.exports = async function handler(req, res) {
     model: 'claude-opus-4-8',
     max_tokens: 32000,
     thinking: { type: 'adaptive' },
-    output_config: { effort: 'high' },
+    output_config: { effort: 'medium' },
     system: SYSTEM_PROMPT,
     messages: [
       { role: 'user', content }

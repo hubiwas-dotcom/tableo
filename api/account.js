@@ -157,24 +157,11 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  /* ── PATCH: reset lub zapis własnej domeny ── */
+  /* ── PATCH: zapis własnej domeny ──
+     UWAGA: slug/URL/QR są STAŁE per konto — nie ma tu (ani nigdzie) kasowania sluga.
+     Slug powstaje raz w save-menu.js i jest odtąd tylko nadpisywany pod tym samym adresem. */
   if (req.method === 'PATCH') {
     const account = (await kvGet(accountKey)) || {};
-
-    /* Reset „od nowa": usuwa opublikowane menu, link/slug, QR i domenę.
-       ZACHOWUJE first_generated_at (trial) i status opłaty — reset nie zeruje okresu próbnego. */
-    if (req.body && req.body.reset === true) {
-      if (account.slug)          await kvSet(`menu:${account.slug}`, null);
-      if (account.custom_domain) await kvSet(`domain:${account.custom_domain}`, null);
-      account.slug = null;
-      account.published_url = null;
-      account.published_at = null;
-      account.custom_domain = null;
-      await kvSet(accountKey, account);
-      res.json({ ok: true, reset: true });
-      return;
-    }
-
     const { custom_domain } = req.body || {};
     const oldDomain = account.custom_domain || null;
     const newDomain = (custom_domain || '').trim()

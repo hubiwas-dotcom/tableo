@@ -599,6 +599,10 @@
         <div style="font-size:12px;color:rgba(27,42,74,.4);margin-top:3px;">Wygeneruj kod QR — goście skanują telefonem i od razu widzą menu</div>
       </div>
       <div style="padding:20px 24px;">
+        <div style="display:flex;gap:9px;align-items:flex-start;background:var(--sage-pale);border:1px solid rgba(123,170,143,.25);border-radius:12px;padding:11px 14px;margin-bottom:16px;">
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none" style="flex-shrink:0;margin-top:1px;"><path d="M6 10l3 3 5-6" stroke="var(--sage)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="10" r="8" stroke="var(--sage)" stroke-width="1.3"/></svg>
+          <span style="font-size:12px;color:rgba(27,42,74,.7);line-height:1.55;">Ten adres i kod QR są przypisane do Twojego konta <strong>na stałe</strong>. Możesz drukować stojaki — kod <strong>nigdy się nie zmieni</strong>, a po każdej edycji menu goście po zeskanowaniu widzą najnowszą wersję.</span>
+        </div>
         <div style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:flex-end;margin-bottom:4px;" class="qr-controls">
           <div>
             <label class="field-label">URL Twojego menu</label>
@@ -1159,60 +1163,34 @@
     setupDropzone();
   }
 
-  /* ── Reset generator (start over) — czyści WSZYSTKO: menu, zdjęcia, logo, link i kod QR ── */
-  async function resetGenerator() {
-    const hasContent = uploadedImages.length || currentMenu || currentLogo
-      || currentPublishedUrl || (document.getElementById('notes')?.value.trim());
+  /* ── Reset generatora (menu od nowa) — czyści TYLKO treść menu.
+     Stały link i kod QR konta pozostają BEZ ZMIAN (przypisane do konta na zawsze). ── */
+  function resetGenerator() {
+    const hasContent = uploadedImages.length || currentMenu
+      || (document.getElementById('notes')?.value.trim());
     if (hasContent && !confirm(
-      '⚠️ ZACZĄĆ CAŁKOWICIE OD NOWA?\n\n' +
-      'Usunie to bezpowrotnie:\n' +
-      '• wygenerowane menu\n' +
-      '• wszystkie wgrane zdjęcia i logo\n' +
-      '• opis\n' +
-      '• opublikowany link do menu ORAZ kod QR\n\n' +
-      'Dotychczasowy link i kod QR przestaną działać. Tej operacji NIE MOŻNA cofnąć.'
+      '⚠️ Wyczyścić obecne menu i budować od nowa?\n\n' +
+      'Usunie to: wgrane zdjęcia menu, wygenerowane pozycje i opis.\n\n' +
+      'Twój stały link i kod QR NIE zmienią się — po ponownej publikacji ' +
+      'zaktualizują się pod tym samym adresem, więc wydrukowane stojaki dalej działają.'
     )) return;
 
-    /* Serwer: skasuj opublikowane menu + slug/link + domenę (nowe menu dostanie nowy link z nazwy lokalu).
-       Trial i status opłaty pozostają bez zmian. */
-    if (currentToken && currentPublishedUrl) {
-      try {
-        await fetch('/api/account', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentToken}` },
-          body: JSON.stringify({ reset: true })
-        });
-      } catch {}
-    }
-
-    /* state */
+    /* Czyść tylko treść menu — NIE ruszamy sluga/URL/QR (są stałe per konto). */
     uploadedImages = [];
     currentMenu = null;
-    currentLogo = null;
-    currentLogoColors = null;
-    currentPublishedSlug = null;
-    currentPublishedUrl = null;
-    currentCustomDomain = null;
     selectedLanguages = [];
     _previewLang  = 'pl';
 
-    /* DOM */
     const results = document.getElementById('results');
     if (results) { results.innerHTML = ''; results.style.display = 'none'; }
     const notes = document.getElementById('notes');         if (notes) notes.value = '';
     const style = document.getElementById('menuStyle');     if (style) style.value = 'klasyczny';
     const fileInput = document.getElementById('fileInput'); if (fileInput) fileInput.value = '';
-    /* Kod QR + opublikowany link */
-    const qrUrl  = document.getElementById('qrUrl');          if (qrUrl)  qrUrl.value = '';
-    const qrGrid = document.getElementById('qrGrid');         if (qrGrid) qrGrid.innerHTML = '';
-    const pr     = document.getElementById('publishResult');  if (pr)     pr.style.display = 'none';
     resetDropzone();
-    renderLogoPreview();
     renderGenLangPicker();
-    if (typeof renderDomainCard === 'function') { try { renderDomainCard(); } catch {} }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    showToast('Wszystko wyczyszczone — możesz zrobić menu od nowa.', 'ok');
+    showToast('Menu wyczyszczone — link i kod QR zostają te same.', 'ok');
   }
 
   /* ── Trial UI ── */

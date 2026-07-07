@@ -9,6 +9,24 @@
   } catch { return null; }
 }
 
+/* Liczniki wejść (anonimowe, bez IP/cookies) — INCR + EXPIRE przez Upstash REST */
+async function kvIncr(key) {
+  const url   = process.env.KV_REST_API_URL   || process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return 0;
+  try {
+    const res  = await fetch(`${url}/incr/${encodeURIComponent(key)}`, { headers: { Authorization: `Bearer ${token}` } });
+    const data = await res.json();
+    return typeof data.result === 'number' ? data.result : 0;
+  } catch { return 0; }
+}
+async function kvExpire(key, seconds) {
+  const url   = process.env.KV_REST_API_URL   || process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return;
+  try { await fetch(`${url}/expire/${encodeURIComponent(key)}/${seconds}`, { headers: { Authorization: `Bearer ${token}` } }); } catch {}
+}
+
 function fontConfig(style) {
   const fonts = {
     classic: {
@@ -388,6 +406,9 @@ function buildExpiredPage(restaurantName) {
 
 const TRIAL_MS = parseInt(process.env.TRIAL_DAYS || '7') * 24 * 60 * 60 * 1000;
 
+/* Wstrzykiwane na publiczną stronę menu przed </body>: beacon liczący anonimowe wejścia + baner cookies (informacyjny, PL) */
+const PUBLIC_EXTRAS = `<div id="qr-cookie" style="display:none;position:fixed;left:12px;right:12px;bottom:10px;z-index:10000;max-width:520px;margin:0 auto;background:rgba(13,21,32,.97);color:rgba(232,223,208,.85);border:1px solid rgba(232,223,208,.14);border-radius:12px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:11.5px;line-height:1.5;gap:10px;align-items:center;box-shadow:0 8px 30px rgba(0,0,0,.45);"><span style="flex:1;">Zbieramy wyłącznie anonimowe statystyki odwiedzin — bez plików cookie śledzących i bez zapisywania adresu IP. <a href="/polityka-prywatnosci" style="color:#C9924A;text-decoration:underline;">Polityka prywatności</a></span><button onclick="try{localStorage.setItem('qr_cookie_ok','1')}catch(e){}document.getElementById('qr-cookie').style.display='none'" style="flex-shrink:0;background:#C9924A;color:#0d1520;border:none;border-radius:8px;padding:7px 15px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">OK</button></div><script>try{fetch(location.pathname+'?beacon=1',{cache:'no-store'}).catch(function(){});}catch(e){}try{if(!localStorage.getItem('qr_cookie_ok'))document.getElementById('qr-cookie').style.display='flex';}catch(e){document.getElementById('qr-cookie').style.display='flex';}<\/script>`;
+
 module.exports = async function handler(req, res) {
   /* Custom domain support: if request arrives at a non-Qreat host, look up
      the slug that was mapped to that domain in api/account.js PATCH. */
@@ -401,6 +422,20 @@ module.exports = async function handler(req, res) {
     slug = domainData?.slug || '';
   }
   if (!slug) { res.status(400).send('<h1>Brak slug menu.</h1>'); return; }
+
+  /* Anonimowy licznik wejść gości — wywoływany beaconem z opublikowanej strony (?beacon=1).
+     Nie zapisujemy IP ani cookies; tylko zbiorcze liczniki (łącznie + dziennie, dzienne wygasają po 90 dniach). */
+  if ((req.url || '').includes('beacon=1')) {
+    try {
+      const day = new Date().toISOString().slice(0, 10);
+      await kvIncr(`views:${slug}`);
+      const n = await kvIncr(`views:${slug}:${day}`);
+      if (n === 1) await kvExpire(`views:${slug}:${day}`, 90 * 24 * 60 * 60);
+    } catch {}
+    res.setHeader('Cache-Control', 'no-store');
+    res.status(204).end();
+    return;
+  }
 
   const data = await kvGet(`menu:${slug}`);
   if (!data || !data.menu) {
@@ -427,5 +462,5 @@ module.exports = async function handler(req, res) {
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
-  res.send(buildMenuPage(data.menu, slug));
+  res.send(buildMenuPage(data.menu, slug).replace('</body>', PUBLIC_EXTRAS + '</body>'));
 };

@@ -80,28 +80,48 @@ module.exports = async function handler(req, res) {
       res.status(403).json({ error: 'Brak uprawnień.' }); return;
     }
     const TRIAL_MS = parseInt(process.env.TRIAL_DAYS || '7') * 24 * 60 * 60 * 1000;
-    /* Zbierz adresy z OBU źródeł: user: (logowania) i account: (wygenerowane menu).
-       Ktoś kto wygenerował menu ma account:, ale niekoniecznie user: (zapamiętane logowanie). */
+    const now = Date.now();
+    const days7 = Array.from({ length: 7 }, (_, i) => new Date(now - i * 86400000).toISOString().slice(0, 10));
+
+    /* Zbierz adresy z OBU źródeł: user: (logowania) i account: (wygenerowane menu). */
     const [userKeys, acctKeys] = await Promise.all([kvScan('user:*'), kvScan('account:*')]);
     const emails = new Set();
     userKeys.forEach(k => emails.add(k.replace(/^user:/, '')));
     acctKeys.forEach(k => emails.add(k.replace(/^account:/, '')));
+
     const rows = await Promise.all([...emails].map(async (email) => {
       const [u, acc, paid] = await Promise.all([
         kvGet(`user:${email}`), kvGet(`account:${email}`), kvGet(`paid:${email}`),
       ]);
       const firstGen   = acc?.first_generated_at || null;
-      const isPaidRow  = isAdmin(email) || !!(paid?.active && (!paid.expires_at || Date.now() < paid.expires_at));
-      const trialExpired = !isPaidRow && firstGen ? (Date.now() - firstGen > TRIAL_MS) : false;
-      const daysLeft   = firstGen ? Math.max(0, Math.ceil((firstGen + TRIAL_MS - Date.now()) / 86400000)) : null;
+      const isPaidRow  = isAdmin(email) || !!(paid?.active && (!paid.expires_at || now < paid.expires_at));
+      const trialExpired = !isPaidRow && firstGen ? (now - firstGen > TRIAL_MS) : false;
+      const daysLeft   = firstGen ? Math.max(0, Math.ceil((firstGen + TRIAL_MS - now) / 86400000)) : null;
+
+      /* Anonimowe wejścia gości z licznika beacon (views:{slug} + dzienne) */
+      let viewsTotal = 0, views7 = 0;
+      const slug = acc?.slug || null;
+      if (slug) {
+        const [tot, ...daily] = await Promise.all([
+          kvGet(`views:${slug}`),
+          ...days7.map(d => kvGet(`views:${slug}:${d}`)),
+        ]);
+        viewsTotal = Number(tot) || 0;
+        views7 = daily.reduce((s, v) => s + (Number(v) || 0), 0);
+      }
+
       return {
-        email,
+        email, slug,
         provider:          u?.provider || 'email',
         is_admin:          isAdmin(email),
+        registered_at:     u?.created_at || null,
         last_login:        u?.last_login || null,
         login_count:       u?.login_count || 0,
         generation_count:  acc?.generation_count || 0,
         last_generated_at: acc?.last_generated_at || firstGen || null,
+        qr_downloads:      acc?.qr_downloads || 0,
+        views_total:       viewsTotal,
+        views_7d:          views7,
         error_count:       acc?.error_count || 0,
         last_error:        acc?.last_error || null,
         last_error_at:     acc?.last_error_at || null,
@@ -112,7 +132,29 @@ module.exports = async function handler(req, res) {
       };
     }));
     rows.sort((a, b) => (b.last_login || 0) - (a.last_login || 0) || (b.last_generated_at || 0) - (a.last_generated_at || 0));
-    res.json({ ok: true, count: rows.length, user_keys: userKeys.length, account_keys: acctKeys.length, generated_at: Date.now(), users: rows });
+
+    /* Statystyki globalne */
+    const active7d = rows.filter(r =>
+      (r.last_login && now - r.last_login < 7 * 86400000) ||
+      (r.last_generated_at && now - r.last_generated_at < 7 * 86400000)
+    ).length;
+    const globals = {
+      accounts:          rows.length,
+      active_7d:         active7d,
+      total_views:       rows.reduce((s, r) => s + r.views_total, 0),
+      total_generations: rows.reduce((s, r) => s + r.generation_count, 0),
+    };
+
+    /* Alerty */
+    const alerts = {
+      trial_ending:  rows.filter(r => !r.paid && r.trial_days_left != null && r.trial_days_left <= 2 && !r.trial_expired)
+                         .map(r => ({ email: r.email, days_left: r.trial_days_left })),
+      trial_expired: rows.filter(r => r.trial_expired).map(r => ({ email: r.email })),
+      with_errors:   rows.filter(r => r.error_count > 0).map(r => ({ email: r.email, error_count: r.error_count, last_error: r.last_error })),
+      heavy_usage:   rows.filter(r => r.generation_count >= 15).map(r => ({ email: r.email, generation_count: r.generation_count })),
+    };
+
+    res.json({ ok: true, count: rows.length, user_keys: userKeys.length, account_keys: acctKeys.length, generated_at: now, globals, alerts, users: rows });
     return;
   }
 
@@ -162,6 +204,16 @@ module.exports = async function handler(req, res) {
      Slug powstaje raz w save-menu.js i jest odtąd tylko nadpisywany pod tym samym adresem. */
   if (req.method === 'PATCH') {
     const account = (await kvGet(accountKey)) || {};
+
+    /* Zdarzenie: pobranie kodu QR — licznik do panelu admina */
+    if (req.body && req.body.event === 'qr_downloaded') {
+      account.qr_downloads = (account.qr_downloads || 0) + 1;
+      account.last_qr_download_at = Date.now();
+      await kvSet(accountKey, account);
+      res.json({ ok: true });
+      return;
+    }
+
     const { custom_domain } = req.body || {};
     const oldDomain = account.custom_domain || null;
     const newDomain = (custom_domain || '').trim()

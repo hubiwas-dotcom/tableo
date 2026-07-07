@@ -339,7 +339,7 @@
           </div>
           <label style="display:flex;align-items:flex-start;gap:9px;margin-bottom:16px;cursor:pointer;font-size:12px;color:rgba(27,42,74,.62);line-height:1.5;">
             <input id="regPrivacy" type="checkbox" style="margin-top:2px;width:16px;height:16px;flex-shrink:0;accent-color:var(--sage);cursor:pointer;">
-            <span>Akceptuję <a href="/polityka-prywatnosci" target="_blank" style="color:var(--sage);font-weight:600;">politykę prywatności</a> i wyrażam zgodę na przetwarzanie moich danych.</span>
+            <span>Akceptuję <a href="/regulamin" target="_blank" style="color:var(--sage);font-weight:600;">regulamin</a> i <a href="/polityka-prywatnosci" target="_blank" style="color:var(--sage);font-weight:600;">politykę prywatności</a> oraz wyrażam zgodę na przetwarzanie moich danych.</span>
           </label>
           <button id="registerBtn" class="btn-primary" style="background:var(--navy);box-shadow:0 4px 18px rgba(27,42,74,.2);" onclick="doRegister()">
             <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 1v13M1 7.5h13" stroke="white" stroke-width="1.7" stroke-linecap="round"/></svg>
@@ -360,7 +360,8 @@
           </p>
           <p style="font-size:11px;color:rgba(27,42,74,.35);margin-top:10px;line-height:1.5;">
             Logując się lub rejestrując akceptujesz
-            <a href="/polityka-prywatnosci" target="_blank" style="color:var(--sage);font-weight:600;text-decoration:none;">politykę prywatności</a>.
+            <a href="/regulamin" target="_blank" style="color:var(--sage);font-weight:600;text-decoration:none;">regulamin</a>
+            i <a href="/polityka-prywatnosci" target="_blank" style="color:var(--sage);font-weight:600;text-decoration:none;">politykę prywatności</a>.
           </p>
         </div>
 
@@ -962,7 +963,7 @@
       errDiv.style.display = 'block'; return;
     }
     if (!document.getElementById('regPrivacy').checked) {
-      errDiv.textContent = 'Zaakceptuj politykę prywatności, aby założyć konto.';
+      errDiv.textContent = 'Zaakceptuj regulamin i politykę prywatności, aby założyć konto.';
       errDiv.style.display = 'block'; return;
     }
 
@@ -972,7 +973,7 @@
     try {
       const res  = await fetch('/api/register', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password: pwd, privacy_accepted: true })
+        body: JSON.stringify({ email, password: pwd, privacy_accepted: true, terms_accepted: true })
       });
       const data = await res.json();
       if (data.ok) {
@@ -2104,6 +2105,29 @@
 
     const esc = s => String(s || '').replace(/[<>&"]/g, c => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;' }[c]));
 
+    /* ── Statystyki globalne ── */
+    const g = data.globals || {};
+    const tile = (n, label) => `<div style="background:rgba(27,42,74,.03);border:1px solid rgba(27,42,74,.07);border-radius:12px;padding:14px 16px;">
+      <div style="font-family:'Playfair Display',serif;font-size:1.7rem;font-weight:600;color:var(--navy);line-height:1;">${n ?? 0}</div>
+      <div style="font-size:11px;color:rgba(27,42,74,.5);margin-top:5px;text-transform:uppercase;letter-spacing:.04em;">${label}</div>
+    </div>`;
+    const globalsHtml = `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:16px 20px;">
+      ${tile(g.accounts, 'Konta')}${tile(g.active_7d, 'Aktywne (7 dni)')}${tile(g.total_views, 'Wejścia gości')}${tile(g.total_generations, 'Generacje')}
+    </div>`;
+
+    /* ── Alerty ── */
+    const a = data.alerts || {};
+    const chip = (txt, color) => `<span style="display:inline-block;background:${color}1a;color:${color};border:1px solid ${color}44;border-radius:100px;padding:3px 10px;font-size:11px;font-weight:600;margin:3px 4px 0 0;">${esc(txt)}</span>`;
+    const alertGroups = [];
+    if (a.trial_expired?.length)  alertGroups.push(`<div style="margin-bottom:8px;"><b style="font-size:12px;color:#c0392b;">Trial wygasł (${a.trial_expired.length}):</b><br>${a.trial_expired.map(x => chip(x.email, '#c0392b')).join('')}</div>`);
+    if (a.trial_ending?.length)   alertGroups.push(`<div style="margin-bottom:8px;"><b style="font-size:12px;color:#C9924A;">Trial kończy się ≤2 dni (${a.trial_ending.length}):</b><br>${a.trial_ending.map(x => chip(`${x.email} · ${x.days_left}d`, '#C9924A')).join('')}</div>`);
+    if (a.with_errors?.length)    alertGroups.push(`<div style="margin-bottom:8px;"><b style="font-size:12px;color:#c0392b;">Błędy generacji (${a.with_errors.length}):</b><br>${a.with_errors.map(x => chip(`${x.email} · ${x.error_count}×`, '#c0392b')).join('')}</div>`);
+    if (a.heavy_usage?.length)    alertGroups.push(`<div style="margin-bottom:8px;"><b style="font-size:12px;color:#8a6d3b;">Dużo generacji ≥15 (${a.heavy_usage.length}):</b><br>${a.heavy_usage.map(x => chip(`${x.email} · ${x.generation_count}`, '#8a6d3b')).join('')}</div>`);
+    const alertsHtml = alertGroups.length
+      ? `<div style="padding:4px 20px 16px;"><div style="background:#fff8f0;border:1px solid rgba(201,146,74,.3);border-radius:12px;padding:14px 16px;"><div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:8px;">⚠️ Alerty</div>${alertGroups.join('')}</div></div>`
+      : `<div style="padding:4px 20px 16px;"><div style="font-size:12px;color:rgba(27,42,74,.4);">✅ Brak alertów.</div></div>`;
+
+    /* ── Tabela kont ── */
     const rows = (data.users || []).map(u => {
       let status;
       if (u.paid)              status = `<span style="color:#2e7d5b;font-weight:600;">Opłacony${u.paid_plan ? ' · ' + esc(u.paid_plan) : ''}</span>`;
@@ -2121,26 +2145,31 @@
         <td style="padding:9px 12px;white-space:nowrap;color:rgba(27,42,74,.7);">${_adminDate(u.last_login)}</td>
         <td style="padding:9px 12px;text-align:center;color:rgba(27,42,74,.7);">${u.login_count}</td>
         <td style="padding:9px 12px;text-align:center;color:rgba(27,42,74,.7);">${u.generation_count}</td>
+        <td style="padding:9px 12px;text-align:center;color:rgba(27,42,74,.7);white-space:nowrap;">${u.views_7d} / ${u.views_total}</td>
+        <td style="padding:9px 12px;text-align:center;color:rgba(27,42,74,.7);">${u.qr_downloads}</td>
         <td style="padding:9px 12px;white-space:nowrap;">${status}</td>
         <td style="padding:9px 12px;text-align:center;">${problem}</td>
       </tr>`;
     }).join('');
 
-    document.getElementById('adminTableWrap').innerHTML = `
-      <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+    const tableHtml = `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;">
         <thead>
-          <tr style="background:rgba(27,42,74,.03);color:rgba(27,42,74,.5);font-size:11px;text-transform:uppercase;letter-spacing:.04em;text-align:left;position:sticky;top:0;">
+          <tr style="background:rgba(27,42,74,.03);color:rgba(27,42,74,.5);font-size:11px;text-transform:uppercase;letter-spacing:.04em;text-align:left;">
             <th style="padding:11px 12px;">Email</th>
             <th style="padding:11px 12px;">Logowanie</th>
             <th style="padding:11px 12px;">Ostatni login</th>
             <th style="padding:11px 12px;text-align:center;">Logowań</th>
             <th style="padding:11px 12px;text-align:center;">Generacji</th>
+            <th style="padding:11px 12px;text-align:center;">Wejścia 7d/total</th>
+            <th style="padding:11px 12px;text-align:center;">QR</th>
             <th style="padding:11px 12px;">Status / trial</th>
             <th style="padding:11px 12px;text-align:center;">Problem</th>
           </tr>
         </thead>
-        <tbody>${rows || '<tr><td colspan="7" style="padding:20px;text-align:center;color:rgba(27,42,74,.4);">Brak użytkowników.</td></tr>'}</tbody>
-      </table>`;
+        <tbody>${rows || '<tr><td colspan="9" style="padding:20px;text-align:center;color:rgba(27,42,74,.4);">Brak użytkowników.</td></tr>'}</tbody>
+      </table></div>`;
+
+    document.getElementById('adminTableWrap').innerHTML = globalsHtml + alertsHtml + tableHtml;
   }
 
   /* ── Category photos ── */
@@ -2418,6 +2447,17 @@
 
     if (!url) { showToast('Wpisz URL menu.', 'warn'); return; }
     if (typeof QRCode === 'undefined') { showToast('Biblioteka QR jeszcze się ładuje, spróbuj za chwilę.', 'warn'); return; }
+
+    /* Zdarzenie do panelu admina: użycie/pobranie kodu QR (fire-and-forget) */
+    if (currentToken) {
+      try {
+        fetch('/api/account', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentToken}` },
+          body: JSON.stringify({ event: 'qr_downloaded' })
+        }).catch(() => {});
+      } catch {}
+    }
 
     grid.style.cssText = 'display:flex;justify-content:center;margin-top:24px;';
     grid.innerHTML = '';

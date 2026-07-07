@@ -20,6 +20,7 @@
     { "src": "/editor",               "dest": "/editor.html"         },
     { "src": "/kontakt",              "dest": "/kontakt.html"        },
     { "src": "/polityka-prywatnosci", "dest": "/polityka-prywatnosci.html" },
+    { "src": "/regulamin",            "dest": "/regulamin.html"            },
     { "src": "/(.*)",                 "dest": "/index.html"          }
   ]
 }

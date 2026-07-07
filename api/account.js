@@ -35,7 +35,7 @@ async function kvScan(pattern) {
   const keys = [];
   let cursor = '0';
   do {
-    const res  = await fetch(`${url}/scan/${cursor}/match/${encodeURIComponent(pattern)}/count/200`, { headers: { Authorization: `Bearer ${token}` } });
+    const res  = await fetch(`${url}/scan/${cursor}?match=${encodeURIComponent(pattern)}&count=200`, { headers: { Authorization: `Bearer ${token}` } });
     const data = await res.json();
     if (!data.result) break;
     cursor = data.result[0];
@@ -80,11 +80,15 @@ module.exports = async function handler(req, res) {
       res.status(403).json({ error: 'Brak uprawnień.' }); return;
     }
     const TRIAL_MS = parseInt(process.env.TRIAL_DAYS || '7') * 24 * 60 * 60 * 1000;
-    const userKeys = await kvScan('user:*');
-    const rows = await Promise.all(userKeys.map(async (key) => {
-      const email = key.replace(/^user:/, '');
+    /* Zbierz adresy z OBU źródeł: user: (logowania) i account: (wygenerowane menu).
+       Ktoś kto wygenerował menu ma account:, ale niekoniecznie user: (zapamiętane logowanie). */
+    const [userKeys, acctKeys] = await Promise.all([kvScan('user:*'), kvScan('account:*')]);
+    const emails = new Set();
+    userKeys.forEach(k => emails.add(k.replace(/^user:/, '')));
+    acctKeys.forEach(k => emails.add(k.replace(/^account:/, '')));
+    const rows = await Promise.all([...emails].map(async (email) => {
       const [u, acc, paid] = await Promise.all([
-        kvGet(key), kvGet(`account:${email}`), kvGet(`paid:${email}`),
+        kvGet(`user:${email}`), kvGet(`account:${email}`), kvGet(`paid:${email}`),
       ]);
       const firstGen   = acc?.first_generated_at || null;
       const isPaidRow  = isAdmin(email) || !!(paid?.active && (!paid.expires_at || Date.now() < paid.expires_at));
@@ -107,8 +111,8 @@ module.exports = async function handler(req, res) {
         trial_expired:     trialExpired,
       };
     }));
-    rows.sort((a, b) => (b.last_login || 0) - (a.last_login || 0));
-    res.json({ ok: true, count: rows.length, generated_at: Date.now(), users: rows });
+    rows.sort((a, b) => (b.last_login || 0) - (a.last_login || 0) || (b.last_generated_at || 0) - (a.last_generated_at || 0));
+    res.json({ ok: true, count: rows.length, user_keys: userKeys.length, account_keys: acctKeys.length, generated_at: Date.now(), users: rows });
     return;
   }
 

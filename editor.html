@@ -2096,8 +2096,11 @@
   }
 
   function renderAdminUsers(data) {
+    const diag = data.count === 0
+      ? ` · (klucze user:${data.user_keys ?? '?'}, account:${data.account_keys ?? '?'})`
+      : '';
     document.getElementById('adminSummary').textContent =
-      `${data.count} użytkowników · odświeżono ${_adminDate(data.generated_at)}`;
+      `${data.count} użytkowników · odświeżono ${_adminDate(data.generated_at)}${diag}`;
 
     const esc = s => String(s || '').replace(/[<>&"]/g, c => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;' }[c]));
 

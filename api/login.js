@@ -54,9 +54,10 @@ module.exports = async function handler(req, res) {
     user.login_count = (user.login_count || 0) + 1;
     if (!user.provider) user.provider = 'email';
     await kvSet(userKey, user);
-    const payload = Buffer.from(JSON.stringify({ email: user.email, trial_start: ts, iat: Date.now() })).toString('base64');
+    const normEmail = String(user.email || email).toLowerCase().trim();
+    const payload = Buffer.from(JSON.stringify({ email: normEmail, trial_start: ts, iat: Date.now() })).toString('base64');
     const sig     = crypto.createHmac('sha256', secret).update(payload).digest('hex');
-    res.json({ ok: true, token: `${payload}.${sig}`, email: user.email, trial_start: ts });
+    res.json({ ok: true, token: `${payload}.${sig}`, email: normEmail, trial_start: ts });
     return;
   }
 
@@ -75,7 +76,8 @@ module.exports = async function handler(req, res) {
     last_login: ts,
     login_count: (existing.login_count || 0) + 1,
   });
-  const payload = Buffer.from(JSON.stringify({ email, iat: ts })).toString('base64');
+  const normEmail = email.toLowerCase().trim();
+  const payload = Buffer.from(JSON.stringify({ email: normEmail, iat: ts })).toString('base64');
   const sig     = crypto.createHmac('sha256', secret).update(payload).digest('hex');
-  res.json({ ok: true, token: `${payload}.${sig}`, email, trial_start: ts });
+  res.json({ ok: true, token: `${payload}.${sig}`, email: normEmail, trial_start: ts });
 };

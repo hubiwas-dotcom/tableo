@@ -42,6 +42,7 @@ function verifyToken(token) {
     if (sig !== expected) return null;
     const data = JSON.parse(Buffer.from(payload, 'base64').toString());
     if (Date.now() - data.iat > 30 * 24 * 60 * 60 * 1000) return null;
+    if (data.email) data.email = String(data.email).toLowerCase().trim();
     return data;
   } catch { return null; }
 }

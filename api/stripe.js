@@ -40,6 +40,7 @@ function verifyToken(token) {
     if (sig !== expected) return null;
     const data = JSON.parse(Buffer.from(payload, 'base64').toString());
     if (Date.now() - data.iat > 30 * 24 * 60 * 60 * 1000) return null;
+    if (data.email) data.email = String(data.email).toLowerCase().trim();
     return data;
   } catch { return null; }
 }
@@ -172,7 +173,7 @@ const handler = async function(req, res) {
     switch (event.type) {
       case 'checkout.session.completed': {
         const s     = event.data.object;
-        const email = s.metadata?.email || s.customer_email;
+        const email = String(s.metadata?.email || s.customer_email || '').toLowerCase().trim();
         const plan  = s.metadata?.plan;
         if (!email) break;
         await kvSet(`paid:${email}`, {
@@ -186,7 +187,7 @@ const handler = async function(req, res) {
       }
       case 'invoice.payment_succeeded': {
         const inv   = event.data.object;
-        const email = inv.customer_email;
+        const email = String(inv.customer_email || '').toLowerCase().trim();
         if (!email) break;
         const ex = (await kvGet(`paid:${email}`)) || {};
         if (ex.plan === 'monthly') { ex.active = true; ex.expires_at = Date.now() + MONTH_MS; await kvSet(`paid:${email}`, ex); }
@@ -194,7 +195,7 @@ const handler = async function(req, res) {
       }
       case 'customer.subscription.deleted': {
         const sub   = event.data.object;
-        const email = sub.metadata?.email;
+        const email = String(sub.metadata?.email || '').toLowerCase().trim();
         if (!email) break;
         const ex = (await kvGet(`paid:${email}`)) || {};
         ex.active = false;

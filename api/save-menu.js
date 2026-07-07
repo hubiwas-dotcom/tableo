@@ -35,7 +35,9 @@ function verifyToken(token) {
     const [payload, sig] = token.split('.');
     const expected = crypto.createHmac('sha256', secret).update(payload).digest('hex');
     if (sig !== expected) return null;
-    return JSON.parse(Buffer.from(payload, 'base64').toString());
+    const data = JSON.parse(Buffer.from(payload, 'base64').toString());
+    if (data.email) data.email = String(data.email).toLowerCase().trim();
+    return data;
   } catch { return null; }
 }
 
@@ -54,7 +56,11 @@ module.exports = async function handler(req, res) {
   if (!menu) { res.status(400).json({ error: 'Brak danych menu.' }); return; }
 
   const accountKey = `account:${user.email}`;
-  const account    = (await kvGet(accountKey)) || {};
+  /* Podwójny odczyt: chwilowy błąd KV nie może skutkować nowym slugiem —
+     slug jest stały per konto na zawsze. */
+  let account = await kvGet(accountKey);
+  if (!account) account = await kvGet(accountKey);
+  account = account || {};
 
   /* Reuse existing slug so the URL stays stable across republishes */
   let slug = account.slug;
@@ -65,8 +71,12 @@ module.exports = async function handler(req, res) {
     slug = `${base}-${crypto.randomBytes(3).toString('hex')}`;
   }
 
-  const host         = (req.headers.host || 'tableo-murex.vercel.app').replace(/^www\./, '');
-  const published_url = `https://${host}/menu/${slug}`;
+  /* URL jest stały: raz opublikowany adres nigdy się nie zmienia,
+     niezależnie od tego, z jakiej domeny otwarto edytor. */
+  const host          = (req.headers.host || 'qreat.pl').replace(/^www\./, '');
+  const published_url = (account.slug === slug && account.published_url)
+    ? account.published_url
+    : `https://${host}/menu/${slug}`;
   const published_at  = Date.now();
 
   /* Save menu */

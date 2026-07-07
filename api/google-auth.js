@@ -66,13 +66,14 @@ module.exports = async function handler(req, res) {
 
   const secret = process.env.TOKEN_SECRET || 'tableo-secret-key-change-me';
   const ts     = trial_start || Date.now();
+  const normEmail = String(userInfo.email || '').toLowerCase().trim();
 
   /* Zapisz/aktualizuj rekord usera (logowania) do panelu admina */
-  const userKey  = `user:${userInfo.email.toLowerCase().trim()}`;
+  const userKey  = `user:${normEmail}`;
   const existing = (await kvGet(userKey)) || {};
   await kvSet(userKey, {
     ...existing,
-    email:       userInfo.email,
+    email:       normEmail,
     name:        userInfo.name || existing.name || '',
     provider:    'google',
     created_at:  existing.created_at || Date.now(),
@@ -82,7 +83,7 @@ module.exports = async function handler(req, res) {
   });
 
   const payload = Buffer.from(JSON.stringify({
-    email:       userInfo.email,
+    email:       normEmail,
     name:        userInfo.name  || '',
     picture:     userInfo.picture || '',
     google_sub:  userInfo.sub,
@@ -96,7 +97,7 @@ module.exports = async function handler(req, res) {
   res.json({
     ok:          true,
     token,
-    email:       userInfo.email,
+    email:       normEmail,
     name:        userInfo.name    || '',
     picture:     userInfo.picture || '',
     trial_start: ts

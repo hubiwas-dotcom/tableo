@@ -28,6 +28,19 @@ async function kvSet(key, value) {
   return res.ok;
 }
 
+async function kvDel(key) {
+  const { url, token } = kvCreds();
+  if (!url || !token) return false;
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(['DEL', key])
+    });
+    return res.ok;
+  } catch { return false; }
+}
+
 /* Upstash SCAN — wszystkie klucze pasujące do wzorca */
 async function kvScan(pattern) {
   const { url, token } = kvCreds();
@@ -58,6 +71,7 @@ function verifyToken(token) {
     if (sig !== expected) return null;
     const data = JSON.parse(Buffer.from(payload, 'base64').toString());
     if (Date.now() - data.iat > 30 * 24 * 60 * 60 * 1000) return null;
+    if (data.email) data.email = String(data.email).toLowerCase().trim();
     return data;
   } catch { return null; }
 }
@@ -161,7 +175,33 @@ module.exports = async function handler(req, res) {
   /* ── GET: return account metadata + current menu + trial status ── */
   if (req.method === 'GET') {
     const TRIAL_MS = 7 * 24 * 60 * 60 * 1000;
-    const account  = (await kvGet(accountKey)) || null;
+    let account  = (await kvGet(accountKey)) || null;
+
+    /* Migracja: starsze tokeny miały email z oryginalną wielkością liter,
+       więc konto (i stały slug) mogło trafić pod klucz typu account:Jan@x.pl.
+       Jeśli konto pod kluczem małymi literami nie ma sluga, znajdź stary
+       wariant, przenieś dane i usuń duplikat — slug wraca do właściciela. */
+    if (!account?.slug) {
+      try {
+        const keys = await kvScan('account:*');
+        const legacyKey = keys.find(k => k !== accountKey && k.toLowerCase() === accountKey);
+        if (legacyKey) {
+          const legacy = await kvGet(legacyKey);
+          if (legacy) {
+            const merged = { ...legacy, ...(account || {}) };
+            if (legacy.slug)          merged.slug          = legacy.slug;
+            if (legacy.published_url) merged.published_url = legacy.published_url;
+            if (legacy.first_generated_at && account?.first_generated_at) {
+              merged.first_generated_at = Math.min(legacy.first_generated_at, account.first_generated_at);
+            }
+            await kvSet(accountKey, merged);
+            await kvDel(legacyKey);
+            account = merged;
+          }
+        }
+      } catch {}
+    }
+
     const paid     = await kvGet(`paid:${user.email}`);
     const isPaid   = isAdmin(user.email) || !!(paid?.active && (!paid.expires_at || Date.now() < paid.expires_at));
 

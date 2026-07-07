@@ -48,7 +48,8 @@ module.exports = async function handler(req, res) {
   if (password.length < 6)  { res.status(400).json({ error: 'Hasło musi mieć minimum 6 znaków.' }); return; }
   if (!privacy_accepted)    { res.status(400).json({ error: 'Zaakceptuj politykę prywatności.' }); return; }
 
-  const key = `user:${email.toLowerCase().trim()}`;
+  const normEmail = email.toLowerCase().trim();
+  const key = `user:${normEmail}`;
 
   /* Check duplicates */
   const existing = await kvGet(key);
@@ -61,15 +62,15 @@ module.exports = async function handler(req, res) {
 
   /* Store user */
   try {
-    await kvSet(key, { email, hash, salt, trial_start: ts, created_at: ts, provider: 'email', last_login: ts, login_count: 1, privacy_accepted: true, privacy_accepted_at: ts, terms_accepted: !!terms_accepted, terms_accepted_at: terms_accepted ? ts : null });
+    await kvSet(key, { email: normEmail, hash, salt, trial_start: ts, created_at: ts, provider: 'email', last_login: ts, login_count: 1, privacy_accepted: true, privacy_accepted_at: ts, terms_accepted: !!terms_accepted, terms_accepted_at: terms_accepted ? ts : null });
   } catch {
     res.status(500).json({ error: 'Błąd zapisu. Spróbuj ponownie.' }); return;
   }
 
   /* Issue JWT */
   const secret  = process.env.TOKEN_SECRET || 'tableo-secret-key-change-me';
-  const payload = Buffer.from(JSON.stringify({ email, trial_start: ts, iat: ts })).toString('base64');
+  const payload = Buffer.from(JSON.stringify({ email: normEmail, trial_start: ts, iat: ts })).toString('base64');
   const sig     = crypto.createHmac('sha256', secret).update(payload).digest('hex');
 
-  res.json({ ok: true, token: `${payload}.${sig}`, email, trial_start: ts });
+  res.json({ ok: true, token: `${payload}.${sig}`, email: normEmail, trial_start: ts });
 };

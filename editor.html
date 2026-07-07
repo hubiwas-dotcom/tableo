@@ -2294,32 +2294,24 @@
       const data = await res.json();
       typing.remove();
 
-      if (res.status === 402) { typing.remove(); showPaywall(); btn.disabled = false; btn.style.opacity = '1'; input.focus(); return; }
-      if (data.ok && data.menu) {
-        // Preserve logo + logo-extracted palette
-        const prevLogo    = currentMenu.logo;
-        const prevPalette = currentLogoColors
-          ? { ...data.menu.palette, ...currentLogoColors }
-          : data.menu.palette;
-        // Preserve per-category and per-item images
-        (currentMenu.categories || []).forEach((cat, ci) => {
-          if (cat.image && data.menu.categories?.[ci]) {
-            data.menu.categories[ci].image = cat.image;
-          }
-          (cat.items || []).forEach((item, ii) => {
-            if (item.image && data.menu.categories?.[ci]?.items?.[ii]) {
-              data.menu.categories[ci].items[ii].image = item.image;
-            }
-          });
-        });
-        currentMenu = data.menu;
-        if (prevLogo) currentMenu.logo = prevLogo;
-        currentMenu.palette = prevPalette;
-        updateMenuPreview();
-        renderDishPhotoEditor();
-        _chatMsg('ai', data.reply || 'Gotowe!');
-      } else {
+      if (res.status === 402) { showPaywall(); btn.disabled = false; btn.style.opacity = '1'; input.focus(); return; }
+      if (!data.ok) {
         _chatMsg('ai', data.error || 'Wystąpił błąd. Spróbuj ponownie.');
+      } else {
+        const ops = Array.isArray(data.operations) ? data.operations : [];
+        if (ops.length === 0) {
+          // Pytanie doprecyzowujące lub brak zmian — NIE onboarding
+          _chatMsg('ai', data.reply || 'Doprecyzuj proszę, co dokładnie zmienić.');
+        } else {
+          const r = applyChatOperations(ops);
+          if (r.ok) {
+            updateMenuPreview();
+            renderDishPhotoEditor();
+            _chatMsg('ai', data.reply || 'Gotowe.');
+          } else {
+            _chatMsg('ai', r.msg || 'Anulowano.');
+          }
+        }
       }
     } catch {
       typing.remove();
@@ -2329,6 +2321,103 @@
     btn.disabled = false;
     btn.style.opacity = '1';
     input.focus();
+  }
+
+  /* ── Zastosuj operacje czatu do currentMenu (deterministycznie, tylko zmienione pola) ── */
+  function applyChatOperations(ops) {
+    if (!currentMenu) return { ok: false, msg: 'Brak menu do edycji.' };
+    currentMenu.categories = currentMenu.categories || [];
+    currentMenu.palette = currentMenu.palette || {};
+    const norm = s => (s == null ? '' : String(s)).trim().toLowerCase();
+    const findCat  = name => currentMenu.categories.find(c => norm(c.name) === norm(name));
+    const findItem = name => {
+      for (const c of currentMenu.categories) {
+        const it = (c.items || []).find(i => norm(i.name) === norm(name));
+        if (it) return it;
+      }
+      return null;
+    };
+
+    /* Guard: usuwanie więcej niż 1 elementu wymaga potwierdzenia */
+    let toRemove = 0; const removeDesc = [];
+    ops.forEach(op => {
+      if (op.type === 'remove_item') { toRemove += 1; removeDesc.push(`„${op.item}"`); }
+      else if (op.type === 'remove_category') {
+        const c = findCat(op.name); const n = c ? (c.items || []).length : 0;
+        toRemove += Math.max(1, n);
+        removeDesc.push(`kategoria „${op.name}"${n ? ` (${n} pozycji)` : ''}`);
+      }
+    });
+    if (toRemove > 1 && !confirm(`Na pewno usunąć: ${removeDesc.join(', ')}? Tej operacji nie można cofnąć.`)) {
+      return { ok: false, msg: 'Anulowano — nic nie zmieniłem.' };
+    }
+
+    const styleMap = { background_color: 'bg', text_color: 'text', accent_color: 'accent', price_color: 'price' };
+    const fonts = ['classic', 'modern', 'rustic', 'bold'];
+
+    for (const op of ops) {
+      try {
+        switch (op.type) {
+          case 'update_style': {
+            if (op.field === 'font') {
+              const f = norm(op.value);
+              if (fonts.includes(f)) currentMenu.font_style = f;
+            } else if (styleMap[op.field]) {
+              currentMenu.palette[styleMap[op.field]] = op.value;
+              currentLogoColors = null; // wybór użytkownika ma pierwszeństwo nad kolorami z logo
+            }
+            break;
+          }
+          case 'update_item': {
+            const it = findItem(op.item);
+            if (it && ['name', 'price', 'description'].includes(op.field)) it[op.field] = op.value;
+            break;
+          }
+          case 'add_item': {
+            let c = findCat(op.category);
+            if (!c) { c = { name: op.category || 'Inne', items: [] }; currentMenu.categories.push(c); }
+            c.items = c.items || [];
+            c.items.push({ name: op.name || 'Nowa pozycja', price: op.price || '', description: op.description || '', emoji: op.emoji || '' });
+            break;
+          }
+          case 'remove_item': {
+            for (const c of currentMenu.categories) {
+              const i = (c.items || []).findIndex(x => norm(x.name) === norm(op.item));
+              if (i >= 0) { c.items.splice(i, 1); break; }
+            }
+            break;
+          }
+          case 'rename_category': {
+            const c = findCat(op.from || op.category);
+            if (c) c.name = op.to || op.name;
+            break;
+          }
+          case 'add_category': {
+            if (op.name && !findCat(op.name)) currentMenu.categories.push({ name: op.name, items: [] });
+            break;
+          }
+          case 'remove_category': {
+            currentMenu.categories = currentMenu.categories.filter(c => norm(c.name) !== norm(op.name));
+            break;
+          }
+          case 'reorder_items': {
+            const c = findCat(op.category);
+            if (c && Array.isArray(op.order)) {
+              const rest = (c.items || []).filter(i => !op.order.some(n => norm(n) === norm(i.name)));
+              const ordered = op.order.map(n => (c.items || []).find(i => norm(i.name) === norm(n))).filter(Boolean);
+              c.items = [...ordered, ...rest];
+            }
+            break;
+          }
+          case 'add_language': {
+            currentMenu.languages = currentMenu.languages || ['pl'];
+            if (op.code && !currentMenu.languages.includes(op.code)) currentMenu.languages.push(op.code);
+            break;
+          }
+        }
+      } catch (e) { /* pojedyncza operacja nie może wywalić całości */ }
+    }
+    return { ok: true };
   }
 
   /* ── Domain card ── */

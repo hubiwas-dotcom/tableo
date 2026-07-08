@@ -28,6 +28,19 @@ async function kvSet(key, value) {
   return res.ok;
 }
 
+async function kvDel(key) {
+  const { url, token } = kvCreds();
+  if (!url || !token) return false;
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(['DEL', key])
+    });
+    return res.ok;
+  } catch { return false; }
+}
+
 function verifyToken(token) {
   if (!token) return null;
   try {
@@ -81,6 +94,9 @@ module.exports = async function handler(req, res) {
 
   /* Save menu */
   await kvSet(`menu:${slug}`, { menu, owner: user.email, published_at });
+
+  /* Treść mogła się zmienić — unieważnij cache tłumaczeń tego menu */
+  await Promise.all(['en','de','fr','it','es','ru'].map(l => kvDel(`menu:${slug}:${l}`)));
 
   /* Update account record */
   account.slug          = slug;

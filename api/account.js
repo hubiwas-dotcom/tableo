@@ -357,6 +357,50 @@ module.exports = async function handler(req, res) {
       return;
     }
 
+    /* ── Reset adresu (świadoma decyzja właściciela konta) ──
+       Tworzy NOWY slug/URL/QR, a WSZYSTKIE dotychczasowe adresy zostają
+       w bazie jako przekierowania 301 → wydrukowane kody QR działają dalej.
+       To (obok admin_action=set_slug) jedyne miejsce nadpisujące slug:{email}. */
+    if (req.body && req.body.action === 'reset_address') {
+      const slugKey = `slug:${user.email}`;
+      let rec = await kvGet(slugKey);
+      if (!rec) rec = await kvGet(slugKey);
+      const oldSlug = rec?.slug || account.slug || null;
+      if (!oldSlug) { res.status(400).json({ error: 'Brak opublikowanego menu — nie ma czego resetować.' }); return; }
+
+      const oldMenu = await kvGet(`menu:${oldSlug}`);
+      if (!oldMenu?.menu) { res.status(400).json({ error: 'Nie znaleziono menu do przeniesienia.' }); return; }
+
+      const base = (oldMenu.menu.restaurant_name || 'menu')
+        .toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').slice(0, 36);
+      const newSlug = `${base}-${crypto.randomBytes(3).toString('hex')}`;
+      const host    = (req.headers.host || 'qreat.pl').replace(/^www\./, '');
+      const newUrl  = `https://${host}/menu/${newSlug}`;
+
+      /* przenieś treść pod nowy adres */
+      await kvSet(`menu:${newSlug}`, { menu: oldMenu.menu, owner: user.email, published_at: Date.now() });
+
+      /* wszystkie dotychczasowe adresy (także z wcześniejszych resetów) → 301 na najnowszy */
+      const previous = [...new Set([...(rec?.previous || []), oldSlug])].filter(s => s && s !== newSlug);
+      await Promise.all(previous.map(s => kvSet(`menu:${s}`, { redirect: newSlug, owner: user.email, moved_at: Date.now() })));
+
+      await kvSet(slugKey, { slug: newSlug, url: newUrl, created_at: Date.now(), previous });
+
+      account.slug          = newSlug;
+      account.published_url = newUrl;
+      account.published_at  = Date.now();
+      await kvSet(accountKey, account);
+
+      if (account.custom_domain) {
+        await kvSet(`domain:${account.custom_domain}`, { slug: newSlug, email: user.email });
+      }
+      await Promise.all(['en','de','fr','it','es','ru'].map(l => kvDel(`menu:${oldSlug}:${l}`)));
+
+      res.json({ ok: true, slug: newSlug, url: newUrl, redirected_from: previous });
+      return;
+    }
+
     const { custom_domain } = req.body || {};
     const oldDomain = account.custom_domain || null;
     const newDomain = (custom_domain || '').trim()

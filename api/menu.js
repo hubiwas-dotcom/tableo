@@ -459,6 +459,17 @@ module.exports = async function handler(req, res) {
   }
 
   const data = await kvGet(`menu:${slug}`);
+
+  /* Adres zresetowany przez właściciela — stary link przekierowuje na nowy,
+     więc wydrukowane kody QR nigdy nie przestają działać */
+  if (data && data.redirect && !data.menu) {
+    res.statusCode = 301;
+    res.setHeader('Location', `/menu/${data.redirect}`);
+    res.setHeader('Cache-Control', 'public, s-maxage=300');
+    res.end();
+    return;
+  }
+
   if (!data || !data.menu) {
     res.status(404).send(`<!DOCTYPE html><html lang="pl"><head><meta charset="UTF-8"><title>Nie znaleziono</title><style>body{font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#0d1520;color:#E8DFD0;text-align:center;}h1{font-family:'Cinzel',serif;font-size:2.5rem;margin-bottom:12px;color:#C9924A;}p{color:rgba(232,223,208,.35);font-size:14px;}</style></head><body><div><h1>404</h1><p>Menu nie zostało znalezione lub zostało usunięte.</p></div></body></html>`);
     return;

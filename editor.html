@@ -615,6 +615,10 @@
           </button>
         </div>
         <div id="qrGrid"></div>
+        <div style="margin-top:14px;padding-top:12px;border-top:1px dashed rgba(27,42,74,.1);display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <button onclick="resetAddress()" style="background:none;border:1px solid rgba(192,57,43,.35);color:#c0392b;border-radius:9px;padding:7px 13px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:background 150ms;" onmouseover="this.style.background='rgba(192,57,43,.07)'" onmouseout="this.style.background='none'">🔄 Zresetuj adres i kod QR</button>
+          <span style="font-size:11px;color:rgba(27,42,74,.4);line-height:1.5;flex:1;min-width:180px;">Dostaniesz nowy link i QR, a <strong>stary adres będzie przekierowywał na nowy</strong> — wydrukowane stojaki nie przestaną działać.</span>
+        </div>
       </div>
     </div>
 
@@ -2532,7 +2536,43 @@
         </button>
         ${currentCustomDomain ? `<button onclick="saveDomain(true)" class="btn-outline" style="padding:10px 14px;font-size:13px;color:rgba(27,42,74,.45);" title="Usuń domenę">✕</button>` : ''}
       </div>
-      ${dnsBlock}`;
+      ${dnsBlock}
+      ${isPublished ? `<button onclick="resetAddress()" style="margin-top:12px;width:100%;background:none;border:1px solid rgba(192,57,43,.3);color:#c0392b;border-radius:9px;padding:8px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">🔄 Zresetuj adres i kod QR</button>` : ''}`;
+  }
+
+  /* ── Reset adresu: nowy slug + QR; stary adres zostaje jako przekierowanie 301 ── */
+  async function resetAddress() {
+    if (!currentToken) return;
+    if (!currentPublishedUrl) { showToast('Najpierw opublikuj menu.', 'warn'); return; }
+    if (!confirm(
+      '⚠️ Zresetować adres menu i kod QR?\n\n' +
+      '• Powstanie NOWY link i NOWY kod QR.\n' +
+      '• Stary adres NIE zniknie — będzie automatycznie przekierowywał na nowy, ' +
+      'więc wydrukowane stojaki i kody QR dalej działają.\n' +
+      '• Jeśli chcesz używać nowego kodu, pobierz go i wydrukuj ponownie.\n\n' +
+      'Kontynuować?'
+    )) return;
+    try {
+      const res = await fetch('/api/account', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentToken}` },
+        body: JSON.stringify({ action: 'reset_address' })
+      });
+      const data = await res.json();
+      if (!data.ok) { showToast(data.error || 'Nie udało się zresetować adresu.', 'warn'); return; }
+      currentPublishedSlug = data.slug;
+      currentPublishedUrl  = data.url;
+      const lk = document.getElementById('publishLink');
+      if (lk) { lk.href = data.url; lk.textContent = data.url; }
+      const pr = document.getElementById('publishResult');
+      if (pr) pr.style.display = 'block';
+      const qrInp = document.getElementById('qrUrl');
+      if (qrInp) qrInp.value = data.url;
+      const grid = document.getElementById('qrGrid');
+      if (grid && grid.children.length > 0) generateQRCodes();
+      renderDomainCard();
+      showToast('Nowy adres aktywny! Stary link przekierowuje na nowy.', 'ok');
+    } catch { showToast('Błąd połączenia.', 'warn'); }
   }
 
   async function saveDomain(remove) {

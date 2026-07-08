@@ -32,9 +32,10 @@ module.exports = async function handler(req, res) {
 
   /* GET /api/activate?email=x&secret=y — check status */
   if (req.method === 'GET') {
-    const { email, secret } = req.query || {};
+    const { email: rawEmail, secret } = req.query || {};
     if (secret !== adminSecret) { res.status(403).json({ error: 'Brak uprawnień.' }); return; }
-    if (!email) { res.status(400).json({ error: 'Brak email.' }); return; }
+    if (!rawEmail) { res.status(400).json({ error: 'Brak email.' }); return; }
+    const email = String(rawEmail).toLowerCase().trim();
     const paid = await kvGet(`paid:${email}`);
     res.json({ email, paid: !!paid?.active, data: paid });
     return;
@@ -42,7 +43,8 @@ module.exports = async function handler(req, res) {
 
   if (req.method !== 'POST') { res.status(405).end(); return; }
 
-  const { email, secret, action } = req.body || {};
+  const { email: rawEmail, secret, action } = req.body || {};
+  const email = rawEmail ? String(rawEmail).toLowerCase().trim() : '';
 
   if (secret !== adminSecret) {
     res.status(403).json({ error: 'Brak uprawnień.' });

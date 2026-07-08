@@ -33,6 +33,20 @@ async function kvSet(key, value) {
   } catch { return false; }
 }
 
+/* Bezpieczny zapis konta: ŚWIEŻY odczyt tuż przed zapisem + merge łatki.
+   Nigdy nie zapisuje obiektu odczytanego minuty wcześniej (generowanie trwa
+   60–120 s — w tym czasie inna funkcja mogła zapisać slug/domenę/liczniki).
+   Gdy odczyt padnie dwa razy, zapis jest POMIJANY — utrata licznika statystyk
+   jest akceptowalna, skasowanie sluga konta nie. */
+async function mergeAccount(accountKey, patch) {
+  let fresh = await kvGet(accountKey);
+  if (!fresh) fresh = await kvGet(accountKey);
+  if (!fresh && !patch.first_generated_at) return null; /* nie nadpisuj w ciemno */
+  const merged = { ...(fresh || {}), ...patch };
+  await kvSet(accountKey, merged);
+  return merged;
+}
+
 function verifyToken(token) {
   if (!token) return null;
   try {
@@ -199,27 +213,34 @@ module.exports = async function handler(req, res) {
 
   /* ── Trial enforcement ── */
   const accountKey = `account:${user.email}`;
-  const account    = (await kvGet(accountKey)) || {};
+  let account = await kvGet(accountKey);
+  if (!account) account = await kvGet(accountKey);
+  account = account || {};
 
   if (!account.first_generated_at) {
     account.first_generated_at = Date.now();
-    await kvSet(accountKey, account);
+    await mergeAccount(accountKey, { first_generated_at: account.first_generated_at });
   }
 
-  /* Statystyki do panelu admina */
+  /* Statystyki do panelu admina — merge na świeżym odczycie, nigdy nadpisanie
+     całego konta obiektem sprzed generowania (to kasowało slug) */
   async function _bumpGen() {
     try {
-      account.generation_count = (account.generation_count || 0) + 1;
-      account.last_generated_at = Date.now();
-      await kvSet(accountKey, account);
+      const fresh = await kvGet(accountKey);
+      await mergeAccount(accountKey, {
+        generation_count:  ((fresh && fresh.generation_count) || 0) + 1,
+        last_generated_at: Date.now(),
+      });
     } catch {}
   }
   async function _bumpErr(m) {
     try {
-      account.error_count = (account.error_count || 0) + 1;
-      account.last_error = String(m).slice(0, 200);
-      account.last_error_at = Date.now();
-      await kvSet(accountKey, account);
+      const fresh = await kvGet(accountKey);
+      await mergeAccount(accountKey, {
+        error_count:   ((fresh && fresh.error_count) || 0) + 1,
+        last_error:    String(m).slice(0, 200),
+        last_error_at: Date.now(),
+      });
     } catch {}
   }
 

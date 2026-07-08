@@ -2169,7 +2169,57 @@
         <tbody>${rows || '<tr><td colspan="9" style="padding:20px;text-align:center;color:rgba(27,42,74,.4);">Brak użytkowników.</td></tr>'}</tbody>
       </table></div>`;
 
-    document.getElementById('adminTableWrap').innerHTML = globalsHtml + alertsHtml + tableHtml;
+    /* ── Audyt stałych linków (na żądanie — skanuje wszystkie menu) ── */
+    const auditHtml = `<div style="padding:0 20px 16px;">
+      <button onclick="runLinkAudit()" id="linkAuditBtn" style="background:rgba(27,42,74,.05);border:1px solid rgba(27,42,74,.14);border-radius:10px;padding:8px 14px;font-size:12px;font-weight:600;color:var(--navy);cursor:pointer;">🔗 Audyt stałych linków (sprawdź duplikaty slugów)</button>
+      <div id="linkAuditResult" style="margin-top:10px;"></div>
+    </div>`;
+
+    document.getElementById('adminTableWrap').innerHTML = globalsHtml + alertsHtml + auditHtml + tableHtml;
+  }
+
+  /* ── Audyt linków: wykrywa konta z >1 opublikowanym menu (ślad po bugu
+     zmieniających się slugów) i pozwala przywrócić wydrukowany link ── */
+  async function runLinkAudit() {
+    const btn = document.getElementById('linkAuditBtn');
+    const box = document.getElementById('linkAuditResult');
+    btn.disabled = true; btn.textContent = 'Skanuję wszystkie menu…';
+    const esc = s => String(s || '').replace(/[<>&"]/g, c => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;' }[c]));
+    try {
+      const res  = await fetch('/api/account?admin=1&audit=1', { headers: { 'Authorization': `Bearer ${currentToken}` } });
+      const data = await res.json();
+      if (!data.ok) { box.innerHTML = `<span style="color:#c0392b;font-size:12px;">${esc(data.error || 'Błąd audytu.')}</span>`; return; }
+      const rows = (data.audit || []).map(r => {
+        const menus = r.menus.map(m => {
+          const isActive = m.slug === r.active_slug;
+          const fixBtn = (!isActive && r.email.includes('@'))
+            ? ` <button onclick="adminSetSlug('${esc(r.email)}','${esc(m.slug)}')" style="background:#C9924A;color:white;border:none;border-radius:6px;padding:3px 9px;font-size:10.5px;font-weight:700;cursor:pointer;margin-left:6px;">Ustaw jako stały link</button>`
+            : (isActive ? ' <b style="color:#2e7d5b;font-size:10.5px;">✓ AKTYWNY</b>' : '');
+          return `<div style="padding:3px 0;font-size:12px;color:rgba(27,42,74,.75);">
+            <a href="/menu/${esc(m.slug)}" target="_blank" style="color:var(--navy);">/menu/${esc(m.slug)}</a>
+            ${m.restaurant ? ' · ' + esc(m.restaurant) : ''} · ${_adminDate(m.published_at)}${fixBtn}</div>`;
+        }).join('');
+        return `<div style="border:1px solid ${r.duplicates ? 'rgba(192,57,43,.35)' : 'rgba(27,42,74,.08)'};background:${r.duplicates ? '#fdf3f2' : 'rgba(27,42,74,.02)'};border-radius:10px;padding:10px 14px;margin-bottom:8px;">
+          <div style="font-size:12px;font-weight:700;color:var(--navy);">${esc(r.email)}${r.duplicates ? ' <span style="color:#c0392b;">⚠ ' + r.menus.length + ' menu — możliwy zgubiony link</span>' : ''}</div>
+          ${menus}</div>`;
+      }).join('');
+      box.innerHTML = rows || '<span style="font-size:12px;color:rgba(27,42,74,.4);">Brak opublikowanych menu.</span>';
+    } catch { box.innerHTML = '<span style="color:#c0392b;font-size:12px;">Błąd połączenia.</span>'; }
+    btn.disabled = false; btn.textContent = '🔗 Audyt stałych linków (sprawdź duplikaty slugów)';
+  }
+
+  async function adminSetSlug(email, slug) {
+    if (!confirm(`Przywrócić /menu/${slug} jako STAŁY link konta ${email}?\n\nOd tej pory publikacje tego konta będą aktualizować właśnie ten adres (np. wydrukowany na stojakach).`)) return;
+    try {
+      const res = await fetch('/api/account', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentToken}` },
+        body: JSON.stringify({ admin_action: 'set_slug', target_email: email, slug })
+      });
+      const data = await res.json();
+      if (data.ok) { showToast(`Przywrócono stały link: ${data.url}`, 'ok'); runLinkAudit(); }
+      else showToast(data.error || 'Nie udało się przywrócić linku.', 'warn');
+    } catch { showToast('Błąd połączenia.', 'warn'); }
   }
 
   /* ── Category photos ── */

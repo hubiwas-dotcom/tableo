@@ -41,6 +41,21 @@ async function kvDel(key) {
   } catch { return false; }
 }
 
+/* SET NX — zapis tylko gdy klucz nie istnieje (insert-only, atomowo) */
+async function kvSetNX(key, value) {
+  const { url, token } = kvCreds();
+  if (!url || !token) return false;
+  try {
+    const res  = await fetch(url, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(['SET', key, JSON.stringify(value), 'NX'])
+    });
+    const data = await res.json();
+    return data.result === 'OK';
+  } catch { return false; }
+}
+
 /* Upstash SCAN — wszystkie klucze pasujące do wzorca */
 async function kvScan(pattern) {
   const { url, token } = kvCreds();
@@ -96,6 +111,39 @@ module.exports = async function handler(req, res) {
     const TRIAL_MS = parseInt(process.env.TRIAL_DAYS || '7') * 24 * 60 * 60 * 1000;
     const now = Date.now();
     const days7 = Array.from({ length: 7 }, (_, i) => new Date(now - i * 86400000).toISOString().slice(0, 10));
+
+    /* ── Audyt stałych linków: GET /api/account?admin=1&audit=1 ──
+       Wypisuje wszystkie opublikowane menu per konto. Jeśli konto ma >1 slug,
+       to ślad po dawnym bugu — aktywny link mógł się różnić od wydrukowanego.
+       Naprawa: PATCH { admin_action:'set_slug', target_email, slug }. */
+    if (req.query.audit === '1') {
+      const menuKeys = (await kvScan('menu:*')).filter(k => k.split(':').length === 2);
+      const byOwner = {};
+      for (const k of menuKeys) {
+        const m = await kvGet(k);
+        if (!m) continue;
+        const owner = (m.owner || '').toLowerCase().trim() || '(bez właściciela)';
+        (byOwner[owner] = byOwner[owner] || []).push({
+          slug: k.slice(5),
+          published_at: m.published_at || null,
+          restaurant: m.menu?.restaurant_name || null,
+        });
+      }
+      const audit = await Promise.all(Object.entries(byOwner).map(async ([email, menus]) => {
+        const [rec, acc] = await Promise.all([kvGet(`slug:${email}`), kvGet(`account:${email}`)]);
+        menus.sort((a, b) => (a.published_at || 0) - (b.published_at || 0));
+        return {
+          email,
+          active_slug: rec?.slug || acc?.slug || null,
+          active_url:  rec?.url  || acc?.published_url || null,
+          menus,
+          duplicates: menus.length > 1,
+        };
+      }));
+      audit.sort((a, b) => Number(b.duplicates) - Number(a.duplicates));
+      res.json({ ok: true, audit });
+      return;
+    }
 
     /* Zbierz adresy z OBU źródeł: user: (logowania) i account: (wygenerowane menu). */
     const [userKeys, acctKeys] = await Promise.all([kvScan('user:*'), kvScan('account:*')]);
@@ -202,6 +250,27 @@ module.exports = async function handler(req, res) {
       } catch {}
     }
 
+    /* ── Stały link: rekord slug:{email} jest źródłem prawdy ──
+       - istnieje → konto ZAWSZE pokazuje ten slug/URL (auto-naprawa,
+         gdyby rekord konta został kiedykolwiek uszkodzony/nadpisany)
+       - nie istnieje, a konto ma slug → utwórz go raz (insert-only) */
+    try {
+      const slugKey = `slug:${user.email}`;
+      let rec = await kvGet(slugKey);
+      if (!rec && account?.slug) {
+        await kvSetNX(slugKey, {
+          slug:       account.slug,
+          url:        account.published_url || `https://qreat.pl/menu/${account.slug}`,
+          created_at: account.published_at || Date.now(),
+        });
+        rec = await kvGet(slugKey);
+      }
+      if (rec && (account?.slug !== rec.slug || account?.published_url !== rec.url)) {
+        account = { ...(account || {}), slug: rec.slug, published_url: rec.url };
+        await kvSet(accountKey, account);
+      }
+    } catch {}
+
     const paid     = await kvGet(`paid:${user.email}`);
     const isPaid   = isAdmin(user.email) || !!(paid?.active && (!paid.expires_at || Date.now() < paid.expires_at));
 
@@ -239,18 +308,52 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  /* ── PATCH: zapis własnej domeny ──
-     UWAGA: slug/URL/QR są STAŁE per konto — nie ma tu (ani nigdzie) kasowania sluga.
-     Slug powstaje raz w save-menu.js i jest odtąd tylko nadpisywany pod tym samym adresem. */
+  /* ── PATCH: zapis własnej domeny / liczniki / naprawa admina ──
+     UWAGA: slug/URL/QR są STAŁE per konto. Źródłem prawdy jest rekord
+     slug:{email} (insert-only), tworzony w save-menu.js przez SET NX. */
   if (req.method === 'PATCH') {
-    const account = (await kvGet(accountKey)) || {};
+
+    /* Admin: przywrócenie kanonicznego (wydrukowanego) linku dla konta.
+       Jedyne miejsce w systemie, które może nadpisać rekord slug:{email}. */
+    if (req.body && req.body.admin_action === 'set_slug') {
+      if ((user.email || '') !== 'hubiwas@gmail.com') { res.status(403).json({ error: 'Brak uprawnień.' }); return; }
+      const target = String(req.body.target_email || '').toLowerCase().trim();
+      const slug   = String(req.body.slug || '').trim();
+      if (!target || !slug) { res.status(400).json({ error: 'Wymagane: target_email, slug.' }); return; }
+      const menuRec = await kvGet(`menu:${slug}`);
+      if (!menuRec) { res.status(404).json({ error: 'Menu o tym slugu nie istnieje.' }); return; }
+      if ((menuRec.owner || '').toLowerCase().trim() !== target) {
+        res.status(400).json({ error: 'Ten slug należy do innego konta.' }); return;
+      }
+      const url = `https://${(req.headers.host || 'qreat.pl').replace(/^www\./, '')}/menu/${slug}`;
+      await kvSet(`slug:${target}`, { slug, url, created_at: menuRec.published_at || Date.now(), restored_at: Date.now() });
+      let acc = await kvGet(`account:${target}`);
+      if (!acc) acc = await kvGet(`account:${target}`);
+      acc = acc || {};
+      acc.slug = slug; acc.published_url = url;
+      await kvSet(`account:${target}`, acc);
+      res.json({ ok: true, slug, url });
+      return;
+    }
+
+    /* Świeży odczyt z ponowieniem; gdy odczyt padnie, NIE nadpisujemy konta
+       (zapis "pustego" obiektu kasowałby slug i liczniki) */
+    let account = await kvGet(accountKey);
+    if (!account) account = await kvGet(accountKey);
 
     /* Zdarzenie: pobranie kodu QR — licznik do panelu admina */
     if (req.body && req.body.event === 'qr_downloaded') {
-      account.qr_downloads = (account.qr_downloads || 0) + 1;
-      account.last_qr_download_at = Date.now();
-      await kvSet(accountKey, account);
+      if (account) {
+        account.qr_downloads = (account.qr_downloads || 0) + 1;
+        account.last_qr_download_at = Date.now();
+        await kvSet(accountKey, account);
+      }
       res.json({ ok: true });
+      return;
+    }
+
+    if (!account) {
+      res.status(503).json({ error: 'Chwilowy problem z zapisem — spróbuj ponownie.' });
       return;
     }
 

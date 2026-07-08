@@ -41,6 +41,23 @@ async function kvDel(key) {
   } catch { return false; }
 }
 
+/* Atomowe "zapisz tylko jeśli klucz NIE istnieje" (Redis SET NX).
+   Gwarancja na poziomie bazy: rekordu sluga nie da się nadpisać —
+   nawet równoległe publikacje utworzą go dokładnie raz. */
+async function kvSetNX(key, value) {
+  const { url, token } = kvCreds();
+  if (!url || !token) return false;
+  try {
+    const res  = await fetch(url, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(['SET', key, JSON.stringify(value), 'NX'])
+    });
+    const data = await res.json();
+    return data.result === 'OK';
+  } catch { return false; }
+}
+
 function verifyToken(token) {
   if (!token) return null;
   try {
@@ -69,27 +86,42 @@ module.exports = async function handler(req, res) {
   if (!menu) { res.status(400).json({ error: 'Brak danych menu.' }); return; }
 
   const accountKey = `account:${user.email}`;
-  /* Podwójny odczyt: chwilowy błąd KV nie może skutkować nowym slugiem —
-     slug jest stały per konto na zawsze. */
-  let account = await kvGet(accountKey);
-  if (!account) account = await kvGet(accountKey);
-  account = account || {};
+  const slugKey    = `slug:${user.email}`;
+  const host       = (req.headers.host || 'qreat.pl').replace(/^www\./, '');
 
-  /* Reuse existing slug so the URL stays stable across republishes */
-  let slug = account.slug;
-  if (!slug) {
-    const base = (menu.restaurant_name || 'menu')
-      .toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
-      .replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').slice(0, 36);
-    slug = `${base}-${crypto.randomBytes(3).toString('hex')}`;
+  /* ═══ STAŁY SLUG — źródłem prawdy jest osobny rekord slug:{email} ═══
+     Rekord powstaje DOKŁADNIE RAZ (SET NX = insert-only, atomowo) i nigdy
+     nie jest nadpisywany. Nawet jeśli rekord konta zostanie uszkodzony
+     albo dwie publikacje pobiegną równolegle, URL i QR się nie zmienią. */
+  let rec = await kvGet(slugKey);
+  if (!rec) rec = await kvGet(slugKey); /* retry po chwilowym błędzie KV */
+
+  if (!rec) {
+    /* Konta sprzed tego mechanizmu: przenieś slug z rekordu konta */
+    let account0 = await kvGet(accountKey);
+    if (!account0) account0 = await kvGet(accountKey);
+
+    const candidate = account0?.slug
+      ? {
+          slug:       account0.slug,
+          url:        account0.published_url || `https://${host}/menu/${account0.slug}`,
+          created_at: account0.published_at || Date.now(),
+        }
+      : (() => {
+          const base = (menu.restaurant_name || 'menu')
+            .toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+            .replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').slice(0, 36);
+          const s = `${base}-${crypto.randomBytes(3).toString('hex')}`;
+          return { slug: s, url: `https://${host}/menu/${s}`, created_at: Date.now() };
+        })();
+
+    await kvSetNX(slugKey, candidate);
+    /* Po SET NX zawsze czytaj zwycięzcę — przy wyścigu wygrywa pierwszy zapis */
+    rec = (await kvGet(slugKey)) || (await kvGet(slugKey)) || candidate;
   }
 
-  /* URL jest stały: raz opublikowany adres nigdy się nie zmienia,
-     niezależnie od tego, z jakiej domeny otwarto edytor. */
-  const host          = (req.headers.host || 'qreat.pl').replace(/^www\./, '');
-  const published_url = (account.slug === slug && account.published_url)
-    ? account.published_url
-    : `https://${host}/menu/${slug}`;
+  const slug          = rec.slug;
+  const published_url = rec.url;
   const published_at  = Date.now();
 
   /* Save menu */
@@ -98,7 +130,10 @@ module.exports = async function handler(req, res) {
   /* Treść mogła się zmienić — unieważnij cache tłumaczeń tego menu */
   await Promise.all(['en','de','fr','it','es','ru'].map(l => kvDel(`menu:${slug}:${l}`)));
 
-  /* Update account record */
+  /* Update account record — świeży odczyt tuż przed zapisem, slug zawsze z rekordu */
+  let account = await kvGet(accountKey);
+  if (!account) account = await kvGet(accountKey);
+  account = account || {};
   account.slug          = slug;
   account.published_url = published_url;
   account.published_at  = published_at;

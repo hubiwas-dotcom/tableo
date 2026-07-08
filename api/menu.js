@@ -65,18 +65,39 @@ function paletteVars(p) {
     if (h.length===3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
     return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];
   };
-  const lh = (h, a) => {
-    const [r,g,b] = hr(h);
-    const n = c => Math.min(255,Math.round(c+a*255)).toString(16).padStart(2,'0');
-    return '#'+n(r)+n(g)+n(b);
-  };
   const [tr,tg,tb]   = hr(text);
   const [ar,ag,ab]   = hr(accent);
   const [pr,pg,pb]   = hr(price);
   const [bgr,bgg,bgb] = hr(bg);
+
+  /* Czytelny kolor cen: trzymamy odcień z palety restauracji, ale wymuszamy
+     nasycenie i jasność w zakresie, który jest ładny i czytelny na tle menu.
+     Brudne żółto-zielenie (seledynowe) i szarości ściągamy do ciepłego złota. */
+  const toHsl = (r,g,b) => {
+    r/=255; g/=255; b/=255;
+    const mx=Math.max(r,g,b), mn=Math.min(r,g,b), d=mx-mn;
+    let h=0;
+    if (d) { h = mx===r ? ((g-b)/d+(g<b?6:0)) : mx===g ? (b-r)/d+2 : (r-g)/d+4; h*=60; }
+    const l=(mx+mn)/2, s=d ? d/(1-Math.abs(2*l-1)) : 0;
+    return [h,s,l];
+  };
+  const fromHsl = (h,s,l) => {
+    const c=(1-Math.abs(2*l-1))*s, x=c*(1-Math.abs((h/60)%2-1)), m=l-c/2;
+    const [r,g,b] = h<60?[c,x,0]:h<120?[x,c,0]:h<180?[0,c,x]:h<240?[0,x,c]:h<300?[x,0,c]:[c,0,x];
+    const n=v=>Math.round((v+m)*255).toString(16).padStart(2,'0');
+    return '#'+n(r)+n(g)+n(b);
+  };
+  const bgLum = (0.2126*bgr + 0.7152*bgg + 0.0722*bgb) / 255;
+  let [ph,ps,pl] = toHsl(pr,pg,pb);
+  if (ps < 0.18)            { ph = 38; ps = 0.58; } /* szary/mętny → złoto */
+  if (ph > 52 && ph < 110)  { ph = 42; }            /* żółto-zielony → ciepłe złoto */
+  ps = Math.max(0.5, Math.min(ps, 0.85));
+  pl = bgLum < 0.5 ? Math.max(0.62, Math.min(pl, 0.74))  /* ciemne tło → jasny, soczysty */
+                   : Math.max(0.3,  Math.min(pl, 0.42)); /* jasne tło → głęboki, ciemny */
+
   return {
     bg, accent, price, text,
-    priceLight: lh(price, 0.12),
+    priceLight: fromHsl(ph, ps, pl),
     tRgb:  `${tr},${tg},${tb}`,
     aRgb:  `${ar},${ag},${ab}`,
     pRgb:  `${pr},${pg},${pb}`,

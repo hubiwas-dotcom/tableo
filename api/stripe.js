@@ -128,7 +128,7 @@ const handler = async function(req, res) {
       res.status(500).json({ error: `Brak STRIPE_PRICE_${plan.toUpperCase()} w env.` }); return;
     }
 
-    const origin = `https://${req.headers.host || 'tableo-murex.vercel.app'}`;
+    const origin = `https://${req.headers.host || 'www.qreat.pl'}`;
     const mode   = plan === 'lifetime' ? 'payment' : 'subscription';
 
     const params = {

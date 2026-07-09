@@ -16,7 +16,7 @@ Tableo to platforma SaaS dla restauracji: właściciel wgrywa zdjęcie papierowe
 
 ### Deployment
 - Platforma: **Vercel** (serverless Node.js functions w `api/`)
-- URL produkcyjny: `https://tableo-murex.vercel.app`
+- URL produkcyjny: `https://qreat.pl` (apex 308→ `https://www.qreat.pl`). Stary alias `tableo-murex.vercel.app` jest MARTWY (DEPLOYMENT_NOT_FOUND od 2026-07-09) — nie używaj go w linkach ani do weryfikacji.
 - Repo: `hubiwas-dotcom/tableo` na GitHubie, branch `master`
 - Deploy: Vercel jest podłączony do repo przez GitHub integration — każdy push do `master` automatycznie wdraża na produkcję. To ustawienie żyje na koncie Vercel, nie zależy od komputera ani lokalnego `vercel` CLI.
 - **Claude ma stałą autoryzację do `git commit` + `git push` na `master`, gdy użytkownik prosi o wdrożenie/aktualizację produkcji** — nie trzeba pytać za każdym razem o zgodę na ten konkretny push.

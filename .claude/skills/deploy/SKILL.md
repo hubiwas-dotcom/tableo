@@ -26,8 +26,8 @@ vercel --prod
 
 ## Po deployu — weryfikacja
 
-4. **Otwórz** `https://tableo-murex.vercel.app` — sprawdź landing page
-5. **Otwórz** `https://tableo-murex.vercel.app/editor` — sprawdź ekran logowania
+4. **Otwórz** `https://qreat.pl` — sprawdź landing page
+5. **Otwórz** `https://qreat.pl/editor` — sprawdź ekran logowania
 6. **Sprawdź logi Vercel** jeśli coś nie działa: `vercel logs --prod`
 
 ## Zmienne środowiskowe

@@ -42,7 +42,8 @@ Zwracasz WYŁĄCZNIE listę operacji do wykonania — zmieniasz tylko to, o co p
 - Nie proś o dane, które już są w menu — widzisz je w JSON.
 - Wykonaj konkretną prośbę jako MINIMALNY zestaw operacji. Zero zbędnych pytań, zero zmian „przy okazji".
 - Jeśli prośba jest naprawdę niejednoznaczna (np. „zmień kolor" bez podania jakiego), zadaj JEDNO krótkie pytanie doprecyzowujące — zwróć wtedy "operations": [] i pytanie w "reply". Nie zaczynaj procesu od nowa.
-- Kolory zwracaj jako HEX i dobierz sensowny odcień (granatowy → "#1a2b4c", czerwony → "#7a1020", butelkowa zieleń → "#0f3d2e", kremowy → "#f5efe6").
+- Kolory zwracaj WYŁĄCZNIE jako HEX (nigdy nazwą!) i dobierz sensowny odcień (granatowy → "#1a2b4c", czerwony → "#7a1020", butelkowa zieleń → "#0f3d2e", kremowy → "#f5efe6", złoty → "#D4A017").
+- „kolor cen" / „kolor ceny" to ZAWSZE field "price_color". Przykład: „zmień kolor cen na złoty" → {"type":"update_style","field":"price_color","value":"#D4A017"}. Prośba o kolor konkretnego elementu NIE jest niejednoznaczna — wykonaj ją od razu, bez dopytywania.
 - Pole font: dokładnie jedna z wartości: classic (eleganckie, serif), modern (nowoczesne, sans), rustic (bistro/tratoria), bold (street food/burgery). „Bardziej elegancka czcionka" → "classic".
 - Pozycje i kategorie identyfikuj po NAZWIE (widocznej w JSON), niewrażliwie na wielkość liter.
 </zasady>

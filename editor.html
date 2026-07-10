@@ -2384,10 +2384,16 @@
           if (r.ok) {
             updateMenuPreview();
             renderDishPhotoEditor();
-            const publishHint = currentPublishedUrl
-              ? ' Zmianę widzisz w podglądzie — kliknij „Opublikuj menu online", aby trafiła na Twoją stronę.'
-              : '';
-            _chatMsg('ai', (data.reply || 'Gotowe.') + publishHint);
+            /* Nie powtarzaj "zmieniłem" po AI, jeśli operacje zostały odrzucone */
+            let msg;
+            if (!r.applied) {
+              msg = 'Nie udało mi się zastosować tej zmiany (' + (r.skipped.join('; ') || 'brak operacji') + '). Opisz proszę inaczej, np. „zmień kolor cen na złoty".';
+            } else {
+              msg = data.reply || 'Gotowe.';
+              if (r.skipped.length) msg += ' Uwaga — część się nie udała: ' + r.skipped.join('; ') + '.';
+              if (currentPublishedUrl) msg += ' Zmianę widzisz w podglądzie — kliknij „Opublikuj menu online", aby trafiła na Twoją stronę.';
+            }
+            _chatMsg('ai', msg);
             /* Treść się zmieniła — odśwież tłumaczenia w tle, żeby flagi pokazywały aktualne menu */
             if (r.retranslate) {
               const langs = (currentMenu.languages || selectedLanguages || []).filter(l => l !== 'pl');
@@ -2440,24 +2446,68 @@
     const styleMap = { background_color: 'bg', text_color: 'text', accent_color: 'accent', price_color: 'price', price: 'price' };
     const fonts = ['classic', 'modern', 'rustic', 'bold'];
 
+    /* AI czasem zwraca nazwę koloru zamiast hexa — przetłumacz na hex,
+       zamiast wpisywać śmieć do palety (nie-hex łamie derywację kolorów) */
+    const COLOR_NAMES = {
+      'złoty':'#D4A017','zloty':'#D4A017','gold':'#D4A017','żółty':'#E6C229','zolty':'#E6C229','yellow':'#E6C229',
+      'srebrny':'#C0C0C0','silver':'#C0C0C0','biały':'#FFFFFF','bialy':'#FFFFFF','white':'#FFFFFF',
+      'czarny':'#111111','black':'#111111','szary':'#9E9E9E','gray':'#9E9E9E','grey':'#9E9E9E',
+      'czerwony':'#C0392B','red':'#C0392B','bordowy':'#7A1020','maroon':'#7A1020',
+      'zielony':'#2E7D32','green':'#2E7D32','butelkowy':'#0F3D2E',
+      'niebieski':'#2456A6','blue':'#2456A6','granatowy':'#1A2B4C','navy':'#1A2B4C',
+      'fioletowy':'#7B4FA6','purple':'#7B4FA6','różowy':'#D96A9A','rozowy':'#D96A9A','pink':'#D96A9A',
+      'pomarańczowy':'#E67E22','pomaranczowy':'#E67E22','orange':'#E67E22',
+      'brązowy':'#7B4A2D','brazowy':'#7B4A2D','brown':'#7B4A2D',
+      'beżowy':'#D9C7A7','bezowy':'#D9C7A7','beige':'#D9C7A7','kremowy':'#F5EFE6','cream':'#F5EFE6',
+      'turkusowy':'#159E93','teal':'#159E93',
+    };
+    const normColor = v => {
+      let s = norm(v).replace(/\s+/g, '');
+      if (COLOR_NAMES[s]) return COLOR_NAMES[s];
+      if (/^[0-9a-f]{6}$/.test(s) || /^[0-9a-f]{3}$/.test(s)) s = '#' + s;
+      return /^#[0-9a-f]{3}$|^#[0-9a-f]{6}$/.test(s) ? s : null;
+    };
+    /* Pole spoza schematu (np. "prices", "cena_kolor") — spróbuj dopasować po nazwie */
+    const styleKey = field => {
+      const f = norm(field);
+      if (styleMap[f]) return styleMap[f];
+      if (f.includes('price') || f.includes('cen'))       return 'price';
+      if (f.includes('background') || f.includes('bg') || f.includes('tł') || f.includes('tlo')) return 'bg';
+      if (f.includes('accent') || f.includes('akcent'))   return 'accent';
+      if (f.includes('text') || f.includes('tekst'))      return 'text';
+      return null;
+    };
+
+    /* Zbieraj, co się NAPRAWDĘ udało — czat nie może mówić "zmieniłem",
+       gdy operacja została po cichu zignorowana */
+    let applied = 0;
+    const skipped = [];
+
     for (const op of ops) {
       try {
         switch (op.type) {
           case 'update_style': {
             if (op.field === 'font') {
               const f = norm(op.value);
-              if (fonts.includes(f)) currentMenu.font_style = f;
-            } else if (styleMap[op.field]) {
-              currentMenu.palette[styleMap[op.field]] = op.value;
+              if (fonts.includes(f)) { currentMenu.font_style = f; applied++; }
+              else skipped.push(`nieznany font „${op.value}"`);
+            } else {
+              const key = styleKey(op.field);
+              const hex = normColor(op.value);
+              if (!key)      { skipped.push(`nieznane pole stylu „${op.field}"`); break; }
+              if (!hex)      { skipped.push(`nieznany kolor „${op.value}"`); break; }
+              currentMenu.palette[key] = hex;
               /* świadomy wybór koloru cen — szablon nie może go już "poprawiać" na złoto */
-              if (styleMap[op.field] === 'price') currentMenu.palette.price_user = true;
+              if (key === 'price') currentMenu.palette.price_user = true;
               currentLogoColors = null; // wybór użytkownika ma pierwszeństwo nad kolorami z logo
+              applied++;
             }
             break;
           }
           case 'update_item': {
             const it = findItem(op.item);
-            if (it && ['name', 'price', 'description'].includes(op.field)) it[op.field] = op.value;
+            if (it && ['name', 'price', 'description'].includes(op.field)) { it[op.field] = op.value; applied++; }
+            else skipped.push(it ? `nieznane pole „${op.field}"` : `nie znalazłem pozycji „${op.item}"`);
             break;
           }
           case 'add_item': {
@@ -2468,23 +2518,30 @@
             break;
           }
           case 'remove_item': {
+            let removed = false;
             for (const c of currentMenu.categories) {
               const i = (c.items || []).findIndex(x => norm(x.name) === norm(op.item));
-              if (i >= 0) { c.items.splice(i, 1); break; }
+              if (i >= 0) { c.items.splice(i, 1); removed = true; break; }
             }
+            if (removed) applied++; else skipped.push(`nie znalazłem pozycji „${op.item}"`);
             break;
           }
           case 'rename_category': {
             const c = findCat(op.from || op.category);
-            if (c) c.name = op.to || op.name;
+            if (c) { c.name = op.to || op.name; applied++; }
+            else skipped.push(`nie znalazłem kategorii „${op.from || op.category}"`);
             break;
           }
           case 'add_category': {
-            if (op.name && !findCat(op.name)) currentMenu.categories.push({ name: op.name, items: [] });
+            if (op.name && !findCat(op.name)) { currentMenu.categories.push({ name: op.name, items: [] }); applied++; }
+            else skipped.push(`kategoria „${op.name}" już istnieje`);
             break;
           }
           case 'remove_category': {
+            const before = currentMenu.categories.length;
             currentMenu.categories = currentMenu.categories.filter(c => norm(c.name) !== norm(op.name));
+            if (currentMenu.categories.length < before) applied++;
+            else skipped.push(`nie znalazłem kategorii „${op.name}"`);
             break;
           }
           case 'reorder_items': {
@@ -2493,14 +2550,18 @@
               const rest = (c.items || []).filter(i => !op.order.some(n => norm(n) === norm(i.name)));
               const ordered = op.order.map(n => (c.items || []).find(i => norm(i.name) === norm(n))).filter(Boolean);
               c.items = [...ordered, ...rest];
-            }
+              applied++;
+            } else skipped.push(`nie znalazłem kategorii „${op.category}"`);
             break;
           }
           case 'add_language': {
             currentMenu.languages = currentMenu.languages || ['pl'];
             if (op.code && !currentMenu.languages.includes(op.code)) currentMenu.languages.push(op.code);
+            applied++;
             break;
           }
+          default:
+            skipped.push(`nieznana operacja „${op.type}"`);
         }
       } catch (e) { /* pojedyncza operacja nie może wywalić całości */ }
     }
@@ -2513,7 +2574,7 @@
       delete currentMenu.translations;
       retranslate = true;
     }
-    return { ok: true, retranslate };
+    return { ok: true, retranslate, applied, skipped };
   }
 
   /* ── Domain card ── */

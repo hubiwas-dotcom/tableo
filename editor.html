@@ -1022,7 +1022,8 @@
       if (data.ok) {
         const stored = localStorage.getItem('tableo_auth');
         let existingTrialStart = null;
-        if (stored) { try { existingTrialStart = JSON.parse(stored).trial_start; } catch {} }
+        /* trial_start wolno przejąć TYLKO z sesji tego samego e-maila — nigdy z innego konta */
+        if (stored) { try { const s = JSON.parse(stored); if ((s.email || '').toLowerCase() === (data.email || '').toLowerCase()) existingTrialStart = s.trial_start; } catch {} }
         const ts = existingTrialStart || Date.now();
         currentToken = data.token; currentEmail = data.email;
         currentName = email.split('@')[0]; currentPicture = '';
@@ -1084,7 +1085,12 @@
     document.getElementById('editorScreen').style.display = 'none';
   }
 
+  let _uiOwnerEmail = null; /* e-mail, dla którego zbudowano obecny stan UI */
   function showEditor() {
+    /* Inne konto niż poprzednio w tej karcie → wyczyść wszystko po poprzednim */
+    const em = (currentEmail || '').toLowerCase();
+    if (_uiOwnerEmail && _uiOwnerEmail !== em) clearAccountUi();
+    _uiOwnerEmail = em;
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('editorScreen').style.display = 'block';
     document.getElementById('userEmailDisplay').textContent = currentName || currentEmail || '';
@@ -1092,6 +1098,8 @@
       const av = document.getElementById('userAvatar');
       av.src = currentPicture; av.style.display = 'block';
     }
+    const av = document.getElementById('userAvatar');
+    if (av && !currentPicture) { av.src = ''; av.style.display = 'none'; }
     updateTrialUI();
     loadUserAccount();
 
@@ -1152,13 +1160,31 @@
     } catch {}
   }
 
+  /* ── Pełne czyszczenie stanu konta w UI ──
+     Każde konto (np. różne konta Google na tym samym komputerze) musi widzieć
+     WYŁĄCZNIE swoje dane. Bez tego po przełączeniu konta w tej samej karcie
+     zostawały: link/QR poprzedniego konta, kody QR, status triala, kolory logo. */
+  function clearAccountUi() {
+    trialStart = null; trialData = null;
+    uploadedImages = []; currentMenu = null; currentLogo = null; currentLogoColors = null;
+    currentCustomDomain = null; currentPublishedSlug = null; currentPublishedUrl = null;
+    selectedLanguages = []; _previewLang = 'pl';
+    const results = document.getElementById('results');
+    if (results) { results.innerHTML = ''; results.style.display = ''; }
+    const notes = document.getElementById('notes');   if (notes)  notes.value = '';
+    const qrInp = document.getElementById('qrUrl');   if (qrInp)  qrInp.value = '';
+    const qrGrid = document.getElementById('qrGrid'); if (qrGrid) qrGrid.innerHTML = '';
+    const dish = document.getElementById('dishPhotoSection'); if (dish) dish.remove();
+    const badge = document.getElementById('trialBadge'); if (badge) badge.innerHTML = '';
+    const banner = document.getElementById('upgradeBanner'); if (banner) banner.style.display = 'none';
+    const fileInput = document.getElementById('fileInput'); if (fileInput) fileInput.value = '';
+    if (typeof resetDropzone === 'function') resetDropzone();
+  }
+
   function doLogout() {
     localStorage.removeItem('tableo_auth');
     currentToken = null; currentEmail = null; currentName = ''; currentPicture = '';
-    trialStart = null; uploadedImages = []; currentMenu = null; currentLogo = null;
-    currentCustomDomain = null; currentPublishedSlug = null; currentPublishedUrl = null;
-    document.getElementById('results').innerHTML = '';
-    document.getElementById('notes').value = '';
+    clearAccountUi();
     showLogin();
     loadGoogleSignIn();
     setupDropzone();

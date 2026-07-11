@@ -686,9 +686,9 @@
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
 
         <div class="plan-card" onclick="startCheckout('monthly')">
-          <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(27,42,74,.4);margin-bottom:8px;">Abonament</div>
+          <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(27,42,74,.4);margin-bottom:8px;">Miesięcznie</div>
           <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:4px;">
-            <span style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:600;color:var(--navy);">39</span>
+            <span style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:600;color:var(--navy);">29,99</span>
             <span style="font-size:13px;color:rgba(27,42,74,.5);">zł/mies.</span>
           </div>
           <p style="font-size:11.5px;color:rgba(27,42,74,.45);line-height:1.5;margin-bottom:14px;">Pełny dostęp do edytora, wielojęzyczność, aktualizacje. Anuluj kiedy chcesz.</p>
@@ -697,16 +697,16 @@
             onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">Wybierz →</div>
         </div>
 
-        <div class="plan-card featured" onclick="startCheckout('lifetime')">
-          <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;">Jednorazowo</div>
+        <div class="plan-card featured" onclick="startCheckout('yearly')">
+          <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;">Rocznie · 2 mies. gratis</div>
           <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:4px;">
-            <span style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:600;color:var(--navy);">349</span>
-            <span style="font-size:13px;color:rgba(27,42,74,.5);">zł</span>
+            <span style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:600;color:var(--navy);">299,99</span>
+            <span style="font-size:13px;color:rgba(27,42,74,.5);">zł/rok</span>
           </div>
-          <p style="font-size:11.5px;color:rgba(27,42,74,.45);line-height:1.5;margin-bottom:14px;">Menu aktywne na zawsze. Bez miesięcznych opłat. Wszystkie funkcje.</p>
-          <div id="btn-lifetime"
+          <p style="font-size:11.5px;color:rgba(27,42,74,.45);line-height:1.5;margin-bottom:14px;">To samo co miesięczny, ale taniej — płacisz za 10 miesięcy, korzystasz cały rok. Anuluj kiedy chcesz.</p>
+          <div id="btn-yearly"
             style="text-align:center;background:var(--gold);color:white;padding:11px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:opacity 150ms;"
-            onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">Kup teraz →</div>
+            onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">Wybierz →</div>
         </div>
 
       </div>
@@ -1207,7 +1207,8 @@
 
     if (t) {
       if (t.paid) {
-        const label = t.paid_plan === 'lifetime' ? 'Lifetime' : 'Aktywny plan';
+        const PLAN_LABELS = { lifetime: 'Lifetime', yearly: 'Plan roczny', monthly: 'Plan miesięczny' };
+        const label = PLAN_LABELS[t.paid_plan] || 'Aktywny plan';
         badge.innerHTML = `<span class="trial-badge trial-ok">${label}</span>`;
         editorMain.style.paddingTop = '80px';
         banner.style.display = 'none';
@@ -1304,7 +1305,7 @@
         window.location.href = data.url;
       } else {
         showToast(data.error || 'Błąd płatności. Spróbuj ponownie.', 'warn');
-        if (btn) { btn.style.opacity = '1'; btn.textContent = plan === 'monthly' ? 'Wybierz →' : 'Kup teraz →'; }
+        if (btn) { btn.style.opacity = '1'; btn.textContent = 'Wybierz →'; }
       }
     } catch {
       showToast('Błąd połączenia.', 'warn');

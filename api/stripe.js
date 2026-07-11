@@ -90,6 +90,18 @@ async function collectBody(req) {
   return Buffer.concat(chunks);
 }
 
+/* ── Plany ──
+   Oba oferowane plany to subskrypcje Stripe (odnawialne). `renewMs` to okno
+   ważności dostępu po każdej opłacie — z zapasem ponad realny okres, żeby
+   drobne opóźnienie webhooka odnawiającego nie zablokowało klienta.
+   Legacy: dawne konta z planem 'lifetime' (jednorazowy zakup) mają
+   expires_at=null i są obsłużone osobno w webhooku — nie usuwać. */
+const DAY_MS = 24 * 60 * 60 * 1000;
+const PLANS = {
+  monthly: { mode: 'subscription', priceEnv: 'STRIPE_PRICE_MONTHLY', renewMs: 35  * DAY_MS },
+  yearly:  { mode: 'subscription', priceEnv: 'STRIPE_PRICE_YEARLY',  renewMs: 372 * DAY_MS },
+};
+
 /* ══════════════════════════════════════════════════
    CHECKOUT  →  POST /api/stripe/checkout
    WEBHOOK   →  POST /api/stripe/webhook
@@ -116,20 +128,18 @@ const handler = async function(req, res) {
     let body = {};
     try { const raw = await collectBody(req); body = JSON.parse(raw.toString()); } catch {}
     const { plan } = body;
-    if (!['monthly', 'lifetime'].includes(plan)) {
+    const cfg = PLANS[plan];
+    if (!cfg) {
       res.status(400).json({ error: 'Nieprawidłowy plan.' }); return;
     }
 
-    const priceId = plan === 'monthly'
-      ? process.env.STRIPE_PRICE_MONTHLY
-      : process.env.STRIPE_PRICE_LIFETIME;
-
+    const priceId = (process.env[cfg.priceEnv] || '').trim();
     if (!priceId) {
-      res.status(500).json({ error: `Brak STRIPE_PRICE_${plan.toUpperCase()} w env.` }); return;
+      res.status(500).json({ error: `Brak ${cfg.priceEnv} w env.` }); return;
     }
 
     const origin = `https://${req.headers.host || 'www.qreat.pl'}`;
-    const mode   = plan === 'lifetime' ? 'payment' : 'subscription';
+    const mode   = cfg.mode;
 
     const params = {
       mode,
@@ -168,20 +178,20 @@ const handler = async function(req, res) {
     try { event = JSON.parse(rawBody.toString()); }
     catch { res.status(400).send('Invalid JSON'); return; }
 
-    const MONTH_MS = 35 * 24 * 60 * 60 * 1000;
-
     switch (event.type) {
       case 'checkout.session.completed': {
         const s     = event.data.object;
         const email = String(s.metadata?.email || s.customer_email || '').toLowerCase().trim();
         const plan  = s.metadata?.plan;
         if (!email) break;
+        const cfg = PLANS[plan];
         await kvSet(`paid:${email}`, {
           active: true, plan,
           activated_at:      Date.now(),
           stripe_customer:   s.customer,
-          expires_at:        plan === 'lifetime' ? null : Date.now() + MONTH_MS,
-          ...(plan !== 'lifetime' && { stripe_subscription: s.subscription }),
+          /* legacy 'lifetime' = dostęp bezterminowy; nowe plany = okno renewMs */
+          expires_at:        plan === 'lifetime' ? null : Date.now() + (cfg ? cfg.renewMs : 35 * DAY_MS),
+          ...(s.subscription && { stripe_subscription: s.subscription }),
         });
         break;
       }
@@ -189,8 +199,10 @@ const handler = async function(req, res) {
         const inv   = event.data.object;
         const email = String(inv.customer_email || '').toLowerCase().trim();
         if (!email) break;
-        const ex = (await kvGet(`paid:${email}`)) || {};
-        if (ex.plan === 'monthly') { ex.active = true; ex.expires_at = Date.now() + MONTH_MS; await kvSet(`paid:${email}`, ex); }
+        const ex  = (await kvGet(`paid:${email}`)) || {};
+        const cfg = PLANS[ex.plan];
+        /* odnowienie subskrypcji (miesięcznej lub rocznej) — przedłuż dostęp */
+        if (cfg) { ex.active = true; ex.expires_at = Date.now() + cfg.renewMs; await kvSet(`paid:${email}`, ex); }
         break;
       }
       case 'customer.subscription.deleted': {

@@ -222,7 +222,7 @@ module.exports = async function handler(req, res) {
 
   /* ── GET: return account metadata + current menu + trial status ── */
   if (req.method === 'GET') {
-    const TRIAL_MS = 7 * 24 * 60 * 60 * 1000;
+    const TRIAL_MS = parseInt(process.env.TRIAL_DAYS || '7', 10) * 24 * 60 * 60 * 1000;
     let account  = (await kvGet(accountKey)) || null;
 
     /* Migracja: starsze tokeny miały email z oryginalną wielkością liter,

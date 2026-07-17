@@ -1,7 +1,7 @@
 const https  = require('https');
 const crypto = require('crypto');
 
-const TRIAL_MS = 7 * 24 * 60 * 60 * 1000;
+const TRIAL_MS = parseInt(process.env.TRIAL_DAYS || '7', 10) * 24 * 60 * 60 * 1000;
 
 function isAdmin(email) {
   const admins = (process.env.ADMIN_EMAILS || 'hubiwas@gmail.com').split(',').map(e => e.trim().toLowerCase());

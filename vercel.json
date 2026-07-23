@@ -18,6 +18,7 @@
     { "src": "/api/activate",         "dest": "/api/activate.js"     },
     { "src": "/api/translate",        "dest": "/api/translate.js"    },
     { "src": "/editor",               "dest": "/editor.html"         },
+    { "src": "/kody-qr",              "dest": "/qr.html"             },
     { "src": "/kontakt",              "dest": "/kontakt.html"        },
     { "src": "/polityka-prywatnosci", "dest": "/polityka-prywatnosci.html" },
     { "src": "/regulamin",            "dest": "/regulamin.html"            },

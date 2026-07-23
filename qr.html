@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kod QR menu — Qreat</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <style>
+    :root {
+      --navy:#1B2A4A; --navy-deep:#0f1d33; --navy-mid:#243761;
+      --sage:#7BAA8F; --sage-pale:#EAF3EE;
+      --gold:#C9924A; --gold-pale:#FBF3E8;
+      --cream:#FDFBF7; --cream-mid:#F5EFE4; --cream-dark:#EDE5D8;
+      --ease-out:cubic-bezier(0.23,1,0.32,1);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--cream);color:var(--navy);-webkit-font-smoothing:antialiased;min-height:100vh;}
+    h1,h2,h3{font-family:'Playfair Display',serif;}
+    a{color:inherit;}
+
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 28px;background:white;border-bottom:1px solid rgba(27,42,74,.08);position:sticky;top:0;z-index:20;}
+    .backlink{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--navy);text-decoration:none;padding:8px 14px;border-radius:100px;border:1px solid rgba(27,42,74,.14);transition:background .15s;}
+    .backlink:hover{background:var(--cream-mid);}
+
+    .wrap{max-width:1080px;margin:0 auto;padding:32px 28px 60px;}
+    .head{margin-bottom:26px;}
+    .head h1{font-size:1.8rem;font-weight:500;margin-bottom:6px;}
+    .head p{font-size:13.5px;color:rgba(27,42,74,.55);line-height:1.6;}
+
+    .grid{display:grid;grid-template-columns:minmax(0,440px) 1fr;gap:28px;align-items:start;}
+
+    /* Preview (lewa strona) */
+    .preview-col{position:sticky;top:96px;}
+    .preview-card{background:white;border:1px solid rgba(27,42,74,.1);border-radius:20px;box-shadow:0 10px 40px rgba(27,42,74,.08);padding:30px;text-align:center;}
+    .preview-stage{border-radius:14px;padding:26px;display:flex;align-items:center;justify-content:center;transition:background .2s;}
+    #qrCanvas{display:block;width:100%;height:auto;max-width:320px;border-radius:8px;}
+    .dim{font-size:12px;color:rgba(27,42,74,.5);margin-top:16px;font-weight:600;letter-spacing:.02em;}
+    .scanwarn{display:none;margin-top:14px;background:#FEF2F2;border:1px solid rgba(239,68,68,.25);color:#991B1B;border-radius:10px;padding:9px 13px;font-size:12px;font-weight:600;line-height:1.5;}
+
+    /* Controls (prawa strona) */
+    .panel{background:white;border:1px solid rgba(27,42,74,.09);border-radius:18px;padding:24px 26px;}
+    .field-label{display:block;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(27,42,74,.45);margin-bottom:9px;}
+    .block{margin-bottom:22px;}
+    .swatches{display:flex;flex-wrap:wrap;gap:8px;}
+    .swatch{display:flex;align-items:center;gap:7px;padding:7px 13px 7px 8px;border-radius:100px;cursor:pointer;background:white;border:1.5px solid rgba(27,42,74,.13);transition:border-color .15s,background .15s;font-family:'Plus Jakarta Sans',sans-serif;}
+    .swatch:hover{border-color:rgba(27,42,74,.28);}
+    .swatch.active{border-color:var(--gold);background:var(--gold-pale);}
+    .swatch .dot{width:16px;height:16px;border-radius:50%;border:1px solid rgba(27,42,74,.2);flex-shrink:0;}
+    .swatch span{font-size:12px;font-weight:500;color:var(--navy);}
+    .swatch.active span{font-weight:700;}
+    .custom-color{display:inline-flex;align-items:center;gap:7px;padding:5px 12px 5px 6px;border-radius:100px;border:1.5px dashed rgba(27,42,74,.2);cursor:pointer;background:white;}
+    .custom-color input[type=color]{width:22px;height:22px;border:none;background:none;padding:0;cursor:pointer;border-radius:50%;}
+    .custom-color span{font-size:12px;font-weight:600;color:rgba(27,42,74,.6);}
+
+    .size-row{display:flex;align-items:center;gap:14px;}
+    input[type=range]{flex:1;accent-color:var(--gold);height:5px;cursor:pointer;}
+    .size-num{display:flex;align-items:center;gap:6px;border:1.5px solid rgba(27,42,74,.14);border-radius:10px;padding:8px 11px;background:white;}
+    .size-num input{width:58px;border:none;outline:none;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;color:var(--navy);text-align:right;background:none;}
+    .size-num span{font-size:12px;color:rgba(27,42,74,.4);font-weight:600;}
+    .size-presets{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap;}
+    .preset{padding:6px 13px;border-radius:100px;border:1px solid rgba(27,42,74,.14);background:white;font-size:12px;font-weight:600;color:var(--navy);cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:background .15s;}
+    .preset:hover{background:var(--cream-mid);}
+
+    .btn{width:100%;padding:13px;border-radius:12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;border:none;transition:opacity .15s,transform .15s;}
+    .btn:hover{opacity:.9;transform:translateY(-1px);}
+    .btn-primary{background:var(--gold);color:white;}
+    .btn-outline{background:white;color:var(--navy);border:1.5px solid rgba(27,42,74,.16);}
+    .actions{display:flex;flex-direction:column;gap:9px;margin-top:6px;}
+
+    .noauth{max-width:460px;margin:80px auto;text-align:center;background:white;border:1px solid rgba(27,42,74,.1);border-radius:20px;padding:38px 32px;}
+    .noauth h2{font-size:1.4rem;font-weight:500;margin-bottom:10px;}
+    .noauth p{font-size:13.5px;color:rgba(27,42,74,.55);line-height:1.65;margin-bottom:22px;}
+
+    @media(max-width:820px){
+      .grid{grid-template-columns:1fr;}
+      .preview-col{position:static;}
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:30px;height:30px;border-radius:8px;background:var(--navy);display:flex;align-items:center;justify-content:center;">
+        <svg width="16" height="16" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" stroke="white" stroke-width="1.3"/><rect x="8" y="1" width="5" height="5" rx="1" stroke="white" stroke-width="1.3"/><rect x="1" y="8" width="5" height="5" rx="1" stroke="white" stroke-width="1.3"/><rect x="9" y="9" width="1.5" height="1.5" fill="white"/><rect x="11.5" y="9" width="1.5" height="1.5" fill="white"/><rect x="9" y="11.5" width="1.5" height="1.5" fill="white"/><rect x="11.5" y="11.5" width="1.5" height="1.5" fill="white"/></svg>
+      </div>
+      <span style="font-family:'Playfair Display',serif;font-size:20px;font-weight:500;">qreat</span>
+    </div>
+    <a href="/editor" class="backlink">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M8.5 3L4.5 7l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Wróć do edytora
+    </a>
+  </div>
+
+  <!-- Ekran gdy brak opublikowanego menu / sesji -->
+  <div id="noauth" class="noauth" style="display:none;">
+    <h2>Najpierw opublikuj menu</h2>
+    <p id="noauthMsg">Aby wygenerować kod QR, opublikuj swoje menu w edytorze — dostaniesz stały adres, który zakodujemy w kodzie QR.</p>
+    <a href="/editor" class="btn btn-primary" style="display:inline-block;width:auto;padding:12px 26px;text-decoration:none;">Przejdź do edytora →</a>
+  </div>
+
+  <div id="app" class="wrap" style="display:none;">
+    <div class="head">
+      <h1>Twój kod QR</h1>
+      <p>Dobierz kolory i rozmiar — podgląd po lewej odświeża się na żywo. Gdy będzie gotowy, pobierz plik PNG lub wydrukuj.</p>
+    </div>
+
+    <div class="grid">
+      <!-- ── PODGLĄD (lewa strona) ── -->
+      <div class="preview-col">
+        <div class="preview-card">
+          <div class="preview-stage" id="previewStage" style="background:var(--cream-mid);">
+            <canvas id="qrCanvas"></canvas>
+          </div>
+          <div class="dim" id="dimLabel">—</div>
+          <div style="font-size:11.5px;color:rgba(27,42,74,.4);margin-top:8px;word-break:break-all;" id="urlLabel"></div>
+          <div class="scanwarn" id="scanWarn">⚠️ Zbyt mały kontrast między kolorem kodu a tłem — kod może się nie zeskanować. Wybierz ciemniejszy kod na jaśniejszym tle.</div>
+        </div>
+      </div>
+
+      <!-- ── USTAWIENIA (prawa strona) ── -->
+      <div class="panel">
+        <div class="block">
+          <label class="field-label">Kolor kodu</label>
+          <div class="swatches" id="fgSwatches"></div>
+        </div>
+
+        <div class="block">
+          <label class="field-label">Kolor tła</label>
+          <div class="swatches" id="bgSwatches"></div>
+        </div>
+
+        <div class="block">
+          <label class="field-label">Rozmiar (px)</label>
+          <div class="size-row">
+            <input type="range" id="sizeRange" min="150" max="2000" step="10" value="600">
+            <div class="size-num">
+              <input type="number" id="sizeNum" min="150" max="2000" step="10" value="600">
+              <span>px</span>
+            </div>
+          </div>
+          <div class="size-presets">
+            <button class="preset" onclick="setSize(300)">300</button>
+            <button class="preset" onclick="setSize(600)">600</button>
+            <button class="preset" onclick="setSize(1000)">1000</button>
+            <button class="preset" onclick="setSize(1500)">1500</button>
+          </div>
+          <p style="font-size:11px;color:rgba(27,42,74,.4);margin-top:9px;line-height:1.5;">Im większy rozmiar, tym ostrzejszy wydruk. Na stolik wystarczy 600 px, na plakat wybierz 1000–1500 px.</p>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" onclick="downloadQr()">↓ Pobierz kod QR (PNG)</button>
+          <button class="btn btn-outline" onclick="window.print()">Drukuj</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const FG_COLORS = [
+    { hex:'#1B2A4A', label:'Granat' },
+    { hex:'#111111', label:'Czarny' },
+    { hex:'#2F5D43', label:'Zielony' },
+    { hex:'#5A3921', label:'Brąz' },
+    { hex:'#6D1F2C', label:'Bordowy' },
+    { hex:'#3D2A5A', label:'Fiolet' },
+  ];
+  const BG_COLORS = [
+    { hex:'#FFFFFF', label:'Biały' },
+    { hex:'#FDFBF7', label:'Kremowy' },
+    { hex:'#F3E9D8', label:'Piaskowy' },
+    { hex:'#EAF3EE', label:'Miętowy' },
+    { hex:'#EDEEF0', label:'Szary' },
+  ];
+
+  let state = { fg:'#1B2A4A', bg:'#FFFFFF', size:600, url:'' };
+  let fgCustom = '#1B2A4A', bgCustom = '#FFFFFF';
+
+  /* ── Kontrast (WCAG luminancja względna) — ostrzeżenie o skanowaniu ── */
+  function luminance(hex) {
+    const h = hex.replace('#',''); const n = h.length===3 ? h.split('').map(c=>c+c).join('') : h;
+    const rgb = [0,2,4].map(i => parseInt(n.substr(i,2),16)/255).map(v => v<=0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055,2.4));
+    return 0.2126*rgb[0] + 0.7152*rgb[1] + 0.0722*rgb[2];
+  }
+  function contrastRatio(a,b){ const l1=luminance(a),l2=luminance(b); const hi=Math.max(l1,l2),lo=Math.min(l1,l2); return (hi+0.05)/(lo+0.05); }
+
+  function swatchHtml(field, c, activeHex) {
+    const active = activeHex.toLowerCase() === c.hex.toLowerCase();
+    return `<button class="swatch${active?' active':''}" onclick="pick('${field}','${c.hex}')">
+      <span class="dot" style="background:${c.hex};"></span><span>${c.label}</span></button>`;
+  }
+
+  function renderSwatches() {
+    document.getElementById('fgSwatches').innerHTML =
+      FG_COLORS.map(c => swatchHtml('fg', c, state.fg)).join('')
+      + `<label class="custom-color" title="Własny kolor kodu"><input type="color" id="fgCustom" value="${fgCustom}" oninput="pick('fg', this.value)"><span>Własny</span></label>`;
+    document.getElementById('bgSwatches').innerHTML =
+      BG_COLORS.map(c => swatchHtml('bg', c, state.bg)).join('')
+      + `<label class="custom-color" title="Własny kolor tła"><input type="color" id="bgCustom" value="${bgCustom}" oninput="pick('bg', this.value)"><span>Własny</span></label>`;
+  }
+
+  function pick(field, hex) {
+    state[field] = hex;
+    if (field==='fg') fgCustom = hex; else bgCustom = hex;
+    renderSwatches();
+    render();
+  }
+
+  function setSize(px) {
+    state.size = Math.max(150, Math.min(2000, px|0));
+    document.getElementById('sizeRange').value = state.size;
+    document.getElementById('sizeNum').value = state.size;
+    render();
+  }
+
+  let _renderTimer = null;
+  async function render() {
+    if (typeof QRCode === 'undefined') { setTimeout(render, 200); return; }
+    const canvas = document.getElementById('qrCanvas');
+    const px = state.size;
+    await QRCode.toCanvas(canvas, state.url || ' ', {
+      width: px, margin: 2,
+      color: { dark: state.fg, light: state.bg }
+    });
+    document.getElementById('previewStage').style.background = state.bg;
+    document.getElementById('dimLabel').textContent = `${px} × ${px} px`;
+
+    const ratio = contrastRatio(state.fg, state.bg);
+    document.getElementById('scanWarn').style.display = ratio < 3 ? 'block' : 'none';
+  }
+
+  function downloadQr() {
+    const canvas = document.getElementById('qrCanvas');
+    const a = document.createElement('a');
+    a.download = `menu-qr-${state.size}px.png`;
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+    /* Licznik pobrań do panelu admina */
+    try {
+      const auth = JSON.parse(localStorage.getItem('tableo_auth')||'null');
+      if (auth?.token) fetch('/api/account', {
+        method:'PATCH',
+        headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${auth.token}` },
+        body: JSON.stringify({ event:'qr_downloaded' })
+      }).catch(()=>{});
+    } catch {}
+  }
+
+  /* ── Init: pobierz adres menu (z ?url= albo z konta) ── */
+  async function init() {
+    const paramUrl = new URLSearchParams(location.search).get('url');
+    let url = paramUrl || '';
+
+    if (!url) {
+      try {
+        const auth = JSON.parse(localStorage.getItem('tableo_auth')||'null');
+        if (auth?.token) {
+          const r = await fetch('/api/account', { headers:{ Authorization:`Bearer ${auth.token}` } });
+          const d = await r.json();
+          url = d?.account?.published_url || '';
+        }
+      } catch {}
+    }
+
+    if (!url) {
+      document.getElementById('noauth').style.display = 'block';
+      return;
+    }
+
+    state.url = url;
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('urlLabel').textContent = url;
+
+    renderSwatches();
+    document.getElementById('sizeRange').addEventListener('input', e => setSize(+e.target.value));
+    document.getElementById('sizeNum').addEventListener('input', e => setSize(+e.target.value));
+    render();
+  }
+
+  init();
+</script>
+</body>
+</html>

@@ -679,8 +679,8 @@
       <div style="width:52px;height:52px;margin:0 auto 14px;border-radius:14px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;">
         <svg width="24" height="24" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9.5" r="6.5" stroke="white" stroke-width="1.4"/><path d="M9 6v3.5l2.2 1.6" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 1.5h6" stroke="white" stroke-width="1.4" stroke-linecap="round"/></svg>
       </div>
-      <h3 style="font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:500;color:white;margin-bottom:6px;">Okres próbny dobiegł końca</h3>
-      <p style="font-size:13px;color:rgba(255,255,255,.5);line-height:1.6;">Wybierz plan aby kontynuować korzystanie z generatora i utrzymać menu online.</p>
+      <h3 id="paywallTitle" style="font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:500;color:white;margin-bottom:6px;">Okres próbny dobiegł końca</h3>
+      <p id="paywallSubtitle" style="font-size:13px;color:rgba(255,255,255,.5);line-height:1.6;">Wybierz plan aby kontynuować korzystanie z generatora i utrzymać menu online.</p>
     </div>
     <div style="padding:24px 28px;">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
@@ -695,6 +695,7 @@
           <div id="btn-monthly"
             style="text-align:center;background:var(--navy);color:white;padding:11px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:opacity 150ms;"
             onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">Wybierz →</div>
+          <div id="renewTag-monthly" style="display:none;text-align:center;font-size:10px;font-weight:700;color:var(--gold);margin-top:6px;letter-spacing:.06em;text-transform:uppercase;">Twój poprzedni plan</div>
         </div>
 
         <div class="plan-card featured" onclick="startCheckout('yearly')">
@@ -707,11 +708,12 @@
           <div id="btn-yearly"
             style="text-align:center;background:var(--gold);color:white;padding:11px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:opacity 150ms;"
             onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">Wybierz →</div>
+          <div id="renewTag-yearly" style="display:none;text-align:center;font-size:10px;font-weight:700;color:var(--gold);margin-top:6px;letter-spacing:.06em;text-transform:uppercase;">Twój poprzedni plan</div>
         </div>
 
       </div>
       <p style="font-size:11px;color:rgba(27,42,74,.3);text-align:center;line-height:1.6;">
-        Płatność obsługuje Stripe — bezpieczna, szyfrowana. Faktura VAT na życzenie.<br>
+        Płatność obsługuje Tpay — BLIK, karta, przelewy. Faktura VAT na życzenie.<br>
         Pytania? <a href="/kontakt" target="_blank" style="color:var(--sage);font-weight:600;">Skontaktuj się z nami</a>
       </p>
     </div>
@@ -861,7 +863,7 @@
   document.addEventListener('DOMContentLoaded', () => {
     renderGenLangPicker();
 
-    /* Handle Stripe return */
+    /* Handle Tpay return */
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('payment') === 'success') {
       history.replaceState({}, '', '/editor');
@@ -1123,7 +1125,7 @@
         if (data.trial.first_generated_at) trialStart = data.trial.first_generated_at;
         updateTrialUI(data.trial);
 
-        /* After Stripe return: poll until paid flag appears (max ~30s) */
+        /* After Tpay return: poll until paid flag appears (max ~30s) */
         if (window._awaitingPayment && !data.trial.paid) {
           window._awaitingPayment = false;
           pollForPaidStatus(8, 3500);
@@ -1246,7 +1248,9 @@
         return;
       }
       if (t.expired) {
-        badge.innerHTML = `<span class="trial-badge trial-end">Trial wygasł</span>`;
+        badge.innerHTML = t.subscription_lapsed
+          ? `<span class="trial-badge trial-end">Plan wygasł — odnów</span>`
+          : `<span class="trial-badge trial-end">Trial wygasł</span>`;
         banner.style.display = 'block';
         editorMain.style.paddingTop = '20px';
         return;
@@ -1284,6 +1288,23 @@
   /* ── Paywall ── */
   function showPaywall() {
     const overlay = document.getElementById('paywallOverlay');
+    const lapsed  = !!trialData?.subscription_lapsed;
+    const lastPlan = trialData?.last_plan;
+
+    const title    = document.getElementById('paywallTitle');
+    const subtitle = document.getElementById('paywallSubtitle');
+    if (title)    title.textContent    = lapsed ? 'Twój abonament wygasł' : 'Okres próbny dobiegł końca';
+    if (subtitle) subtitle.textContent = lapsed
+      ? 'Odnów abonament, aby dalej korzystać z generatora i utrzymać menu online.'
+      : 'Wybierz plan aby kontynuować korzystanie z generatora i utrzymać menu online.';
+
+    ['monthly', 'yearly'].forEach(plan => {
+      const btn = document.getElementById(`btn-${plan}`);
+      const tag = document.getElementById(`renewTag-${plan}`);
+      if (btn) btn.textContent = (lapsed && lastPlan === plan) ? 'Odnów →' : (plan === 'monthly' ? 'Wybierz →' : 'Kup teraz →');
+      if (tag) tag.style.display = (lapsed && lastPlan === plan) ? 'block' : 'none';
+    });
+
     overlay.style.display = 'flex';
     document.body.style.overflow = 'hidden';
   }
@@ -1318,10 +1339,12 @@
   async function startCheckout(plan) {
     const btnId = `btn-${plan}`;
     const btn   = document.getElementById(btnId);
+    const resetLabel = (trialData?.subscription_lapsed && trialData?.last_plan === plan)
+      ? 'Odnów →' : (plan === 'monthly' ? 'Wybierz →' : 'Kup teraz →');
     if (btn) { btn.style.opacity = '.5'; btn.textContent = 'Przekierowuję…'; }
 
     try {
-      const res  = await fetch('/api/stripe/checkout', {
+      const res  = await fetch('/api/tpay/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentToken}` },
         body: JSON.stringify({ plan })
@@ -1331,11 +1354,11 @@
         window.location.href = data.url;
       } else {
         showToast(data.error || 'Błąd płatności. Spróbuj ponownie.', 'warn');
-        if (btn) { btn.style.opacity = '1'; btn.textContent = 'Wybierz →'; }
+        if (btn) { btn.style.opacity = '1'; btn.textContent = resetLabel; }
       }
     } catch {
       showToast('Błąd połączenia.', 'warn');
-      if (btn) { btn.style.opacity = '1'; btn.textContent = plan === 'monthly' ? 'Wybierz →' : 'Kup teraz →'; }
+      if (btn) { btn.style.opacity = '1'; btn.textContent = resetLabel; }
     }
   }
 

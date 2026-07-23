@@ -6,7 +6,7 @@
   ],
   "routes": [
     { "src": "/api/account",          "dest": "/api/account.js"      },
-    { "src": "/api/stripe/(.*)",      "dest": "/api/stripe.js"       },
+    { "src": "/api/tpay/(.*)",        "dest": "/api/tpay.js"         },
     { "src": "/api/chat",             "dest": "/api/chat.js"         },
     { "src": "/api/login",            "dest": "/api/login.js"        },
     { "src": "/api/register",         "dest": "/api/register.js"     },

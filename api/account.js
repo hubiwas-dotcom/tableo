@@ -302,6 +302,11 @@ module.exports = async function handler(req, res) {
       ? Math.max(0, Math.ceil((firstGen + TRIAL_MS - Date.now()) / 86400000))
       : 7;
 
+    /* Konto miało kiedyś aktywny płatny plan, ale okres minął bez odnowienia
+       (MVP bez auto-odnawiania kartą w Tpay — patrz api/tpay.js) — inny
+       komunikat w paywallu niż dla kogoś kto nigdy nie płacił. */
+    const subscriptionLapsed = !isPaid && !!paid?.plan;
+
     const trial = {
       started:            !!firstGen,
       first_generated_at: firstGen,
@@ -310,6 +315,8 @@ module.exports = async function handler(req, res) {
       expired:            trialExpired,
       paid:               isPaid,
       paid_plan:          isPaid ? (paid?.plan || null) : null,
+      subscription_lapsed: subscriptionLapsed,
+      last_plan:          subscriptionLapsed ? paid.plan : null,
     };
 
     if (!account?.slug) { res.json({ ok: true, account: null, menu: null, trial }); return; }

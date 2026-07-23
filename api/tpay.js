@@ -126,28 +126,27 @@ const PLANS = {
 };
 
 /* ── Stojaki na kody QR (produkt fizyczny, druk 3D) ──
-   Ceny liczone WYŁĄCZNIE po stronie serwera — klient przysyła tylko wybory,
-   nigdy kwoty. Zmiana cennika: te trzy stałe poniżej. */
+   Jedna cena za sztukę niezależnie od rodzaju podstawki, rozmiaru i koloru —
+   te wybory są wyłącznie konfiguracją druku, nie wpływają na kwotę.
+   Ceny liczone WYŁĄCZNIE po stronie serwera; klient przysyła tylko wybory. */
+const STAND_PRICE = 15;
+const SHIPPING    = 15;
 const STANDS = {
-  classic: { label: 'Klasyczny',           price: 15 },
-  premium: { label: 'Premium',             price: 25 },
-  logo:    { label: 'Z logo restauracji',  price: 35 },
+  classic: { label: 'Klasyczny' },
+  premium: { label: 'Premium' },
+  logo:    { label: 'Z logo restauracji' },
 };
 const SIZES = {
-  s: { label: 'Mały (74×105 mm)',   extra: 0 },
-  m: { label: 'Średni (105×148 mm)', extra: 4 },
-  l: { label: 'Duży (148×210 mm)',   extra: 8 },
+  s: { label: 'Mały (74×105 mm)' },
+  m: { label: 'Średni (105×148 mm)' },
+  l: { label: 'Duży (148×210 mm)' },
 };
 const COLORS = ['czarny', 'biały', 'szary', 'drewno', 'złoty', 'granatowy', 'bordowy'];
-const SHIPPING = 15;
 
 function priceOrder(standKey, sizeKey, qty) {
-  const stand = STANDS[standKey];
-  const size  = SIZES[sizeKey];
-  if (!stand || !size) return null;
-  const unit  = stand.price + size.extra;
-  const items = unit * qty;
-  return { unit, items, shipping: SHIPPING, total: Number((items + SHIPPING).toFixed(2)) };
+  if (!STANDS[standKey] || !SIZES[sizeKey]) return null;
+  const items = STAND_PRICE * qty;
+  return { unit: STAND_PRICE, items, shipping: SHIPPING, total: Number((items + SHIPPING).toFixed(2)) };
 }
 
 /* ══════════════════════════════════════════════════

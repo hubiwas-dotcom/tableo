@@ -636,9 +636,9 @@
         <div style="font-size:14px;font-weight:700;color:var(--navy);">Stojaki na kody QR</div>
         <div style="font-size:12.5px;color:rgba(27,42,74,.5);margin-top:3px;line-height:1.5;">Eleganckie stojaki na każdy stolik — drukowane 3D, z Twoim kodem QR i logo.</div>
         <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:11px;">
-          <span class="stand-chip">Klasyczny · 15 zł</span>
-          <span class="stand-chip">Premium · 25 zł</span>
-          <span class="stand-chip">Z logo · 35 zł</span>
+          <span class="stand-chip">15 zł za sztukę</span>
+          <span class="stand-chip">3 rodzaje podstawki</span>
+          <span class="stand-chip">3 rozmiary</span>
           <span class="stand-chip">7 kolorów filamentu</span>
         </div>
       </div>
@@ -756,7 +756,7 @@
         <svg width="22" height="22" viewBox="0 0 32 32" fill="none"><rect x="9" y="3.5" width="14" height="17" rx="2" stroke="white" stroke-width="1.4"/><rect x="12" y="6.5" width="3" height="3" rx=".6" stroke="white" stroke-width="1.1"/><rect x="17" y="6.5" width="3" height="3" rx=".6" stroke="white" stroke-width="1.1"/><rect x="12" y="11.5" width="3" height="3" rx=".6" stroke="white" stroke-width="1.1"/><path d="M11 20.5l-3 7h16l-3-7" stroke="var(--gold)" stroke-width="1.4" stroke-linejoin="round"/></svg>
       </div>
       <h3 style="font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:500;color:white;margin-bottom:6px;">Zamów stojaki na kody QR</h3>
-      <p style="font-size:12.5px;color:rgba(255,255,255,.5);line-height:1.55;">Drukowane 3D, z Twoim kodem QR. Skonfiguruj i zamów — wysyłka w 5–7 dni roboczych.</p>
+      <p style="font-size:12.5px;color:rgba(255,255,255,.5);line-height:1.55;">Drukowane 3D, z Twoim kodem QR. <b style="color:var(--gold);">15 zł za sztukę</b> — każdy rodzaj, rozmiar i kolor w tej samej cenie. Wysyłka w 5–7 dni roboczych.</p>
     </div>
 
     <div style="padding:24px 30px 28px;max-height:64vh;overflow-y:auto;">
@@ -2931,15 +2931,16 @@
      UWAGA: cennik tutaj służy WYŁĄCZNIE do podglądu ceny w UI. Kwota, którą
      płaci klient, jest liczona od nowa na serwerze (api/tpay.js) — przy
      zmianie cen trzeba zmienić OBA miejsca. */
+  const STAND_PRICE = 15;   // jedna cena za sztukę, niezależnie od konfiguracji
   const STAND_TYPES = [
-    { key:'classic', label:'Klasyczny',  price:15, desc:'Prosty, stabilny' },
-    { key:'premium', label:'Premium',    price:25, desc:'Większa podstawa' },
-    { key:'logo',    label:'Z logo',     price:35, desc:'Logo restauracji' },
+    { key:'classic', label:'Klasyczny',  desc:'Prosty, stabilny' },
+    { key:'premium', label:'Premium',    desc:'Większa podstawa' },
+    { key:'logo',    label:'Z logo',     desc:'Logo restauracji' },
   ];
   const STAND_SIZES = [
-    { key:'s', label:'Mały',   dim:'74×105 mm',  extra:0 },
-    { key:'m', label:'Średni', dim:'105×148 mm', extra:4 },
-    { key:'l', label:'Duży',   dim:'148×210 mm', extra:8 },
+    { key:'s', label:'Mały',   dim:'74×105 mm'  },
+    { key:'m', label:'Średni', dim:'105×148 mm' },
+    { key:'l', label:'Duży',   dim:'148×210 mm' },
   ];
   const STAND_COLORS = [
     { key:'czarny',    hex:'#1c1c1c' },
@@ -2967,7 +2968,6 @@
       <button type="button" onclick="pickStand('stand','${t.key}')" style="${_standCardStyle(standChoice.stand === t.key)}">
         <div style="font-size:12.5px;font-weight:700;color:var(--navy);">${t.label}</div>
         <div style="font-size:10.5px;color:rgba(27,42,74,.42);margin-top:2px;">${t.desc}</div>
-        <div style="font-size:12px;font-weight:700;color:var(--gold);margin-top:6px;">${t.price} zł</div>
       </button>`).join('');
 
     const sizeGrid = document.getElementById('standSizeGrid');
@@ -2975,7 +2975,6 @@
       <button type="button" onclick="pickStand('size','${s.key}')" style="${_standCardStyle(standChoice.size === s.key)}">
         <div style="font-size:12.5px;font-weight:700;color:var(--navy);">${s.label}</div>
         <div style="font-size:10.5px;color:rgba(27,42,74,.42);margin-top:2px;">${s.dim}</div>
-        <div style="font-size:11.5px;font-weight:600;color:${s.extra ? 'var(--gold)' : 'rgba(27,42,74,.35)'};margin-top:6px;">${s.extra ? '+' + s.extra + ' zł' : 'w cenie'}</div>
       </button>`).join('');
 
     const colorGrid = document.getElementById('standColorGrid');
@@ -3006,7 +3005,7 @@
     if (cnt && textEl) cnt.textContent = textEl.value.length;
 
     if (!type || !size) return;
-    const unit  = type.price + size.extra;
+    const unit  = STAND_PRICE;
     const items = unit * qty;
     const total = items + STAND_SHIPPING;
 

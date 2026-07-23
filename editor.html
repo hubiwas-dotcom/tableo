@@ -3077,12 +3077,10 @@
 
   /* ── QR Generator — otwiera osobną podstronę /kody-qr ── */
   function openQrPage() {
+    /* Zawsze przechodzimy na osobną stronę — jeśli menu nie jest jeszcze
+       opublikowane, strona /kody-qr sama pokaże komunikat "opublikuj menu". */
     const url = currentPublishedUrl || '';
-    if (!url) {
-      showToast('Najpierw opublikuj menu, aby wygenerować kod QR.', 'warn');
-      return;
-    }
-    window.location.href = '/kody-qr?url=' + encodeURIComponent(url);
+    window.location.href = url ? ('/kody-qr?url=' + encodeURIComponent(url)) : '/kody-qr';
   }
 
   /* ── Toast ── */

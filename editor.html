@@ -636,18 +636,18 @@
         <div style="font-size:14px;font-weight:700;color:var(--navy);">Stojaki na kody QR</div>
         <div style="font-size:12.5px;color:rgba(27,42,74,.5);margin-top:3px;line-height:1.5;">Eleganckie stojaki na każdy stolik — drukowane 3D, z Twoim kodem QR i logo.</div>
         <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:11px;">
-          <span class="stand-chip">Klasyczny</span>
-          <span class="stand-chip">Premium — drewno</span>
-          <span class="stand-chip">Z logo</span>
-          <span class="stand-chip">Zestaw 10 · rabat</span>
+          <span class="stand-chip">Klasyczny · 15 zł</span>
+          <span class="stand-chip">Premium · 25 zł</span>
+          <span class="stand-chip">Z logo · 35 zł</span>
+          <span class="stand-chip">7 kolorów filamentu</span>
         </div>
       </div>
-      <a href="https://allegro.com" target="_blank"
-        style="display:inline-flex;align-items:center;gap:8px;background:var(--navy);color:white;padding:11px 22px;border-radius:100px;font-size:13px;font-weight:600;text-decoration:none;transition:opacity 150ms ease,transform 150ms ease;white-space:nowrap;flex-shrink:0;"
+      <button onclick="openStandsModal()" type="button"
+        style="display:inline-flex;align-items:center;gap:8px;background:var(--navy);color:white;padding:11px 22px;border-radius:100px;font-size:13px;font-weight:600;border:none;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:opacity 150ms ease,transform 150ms ease;white-space:nowrap;flex-shrink:0;"
         onmouseover="this.style.opacity='.88';this.style.transform='translateY(-1px)'" onmouseout="this.style.opacity='1';this.style.transform='translateY(0)'">
-        Zobacz na Allegro
-        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M7 1h5v5M12 1L6 7M2 3H1v9h9v-1" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </a>
+        Zamów stojaki
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1 6.5h11M7.5 2l4.5 4.5L7.5 11" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
     </div>
 
     <!-- ══ CONTACT SECTION ══ -->
@@ -748,52 +748,95 @@
 </style>
 
 
-<!-- ══ STANDS MODAL ══ -->
-<div id="standsModal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(15,29,51,.6);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:24px;">
-  <div style="background:var(--cream);border-radius:24px;max-width:460px;width:100%;box-shadow:0 32px 80px rgba(15,29,51,.3);overflow:hidden;animation:fadeUp .35s var(--ease-out) both;">
-    <div style="background:linear-gradient(135deg,var(--navy),var(--navy-mid));padding:28px 32px;">
-      <div style="width:48px;height:48px;margin-bottom:14px;border-radius:13px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;">
-        <svg width="24" height="24" viewBox="0 0 32 32" fill="none"><rect x="9" y="3.5" width="14" height="17" rx="2" stroke="white" stroke-width="1.4"/><rect x="12" y="6.5" width="3" height="3" rx=".6" stroke="white" stroke-width="1.1"/><rect x="17" y="6.5" width="3" height="3" rx=".6" stroke="white" stroke-width="1.1"/><rect x="12" y="11.5" width="3" height="3" rx=".6" stroke="white" stroke-width="1.1"/><path d="M11 20.5l-3 7h16l-3-7" stroke="var(--gold)" stroke-width="1.4" stroke-linejoin="round"/></svg>
+<!-- ══ STANDS MODAL — konfigurator zamówienia ══ -->
+<div id="standsModal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(15,29,51,.6);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:24px;overflow:auto;">
+  <div style="background:var(--cream);border-radius:24px;max-width:560px;width:100%;margin:auto;box-shadow:0 32px 80px rgba(15,29,51,.3);overflow:hidden;animation:fadeUp .35s var(--ease-out) both;">
+    <div style="background:linear-gradient(135deg,var(--navy),var(--navy-mid));padding:26px 30px;">
+      <div style="width:44px;height:44px;margin-bottom:12px;border-radius:12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;">
+        <svg width="22" height="22" viewBox="0 0 32 32" fill="none"><rect x="9" y="3.5" width="14" height="17" rx="2" stroke="white" stroke-width="1.4"/><rect x="12" y="6.5" width="3" height="3" rx=".6" stroke="white" stroke-width="1.1"/><rect x="17" y="6.5" width="3" height="3" rx=".6" stroke="white" stroke-width="1.1"/><rect x="12" y="11.5" width="3" height="3" rx=".6" stroke="white" stroke-width="1.1"/><path d="M11 20.5l-3 7h16l-3-7" stroke="var(--gold)" stroke-width="1.4" stroke-linejoin="round"/></svg>
       </div>
-      <h3 style="font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:500;color:white;margin-bottom:6px;">Stojaki na kody QR</h3>
-      <p style="font-size:12.5px;color:rgba(255,255,255,.5);line-height:1.55;">Drukowane 3D eleganckie stojaki z miejscem na kartę z kodem QR. Wycena indywidualna.</p>
+      <h3 style="font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:500;color:white;margin-bottom:6px;">Zamów stojaki na kody QR</h3>
+      <p style="font-size:12.5px;color:rgba(255,255,255,.5);line-height:1.55;">Drukowane 3D, z Twoim kodem QR. Skonfiguruj i zamów — wysyłka w 5–7 dni roboczych.</p>
     </div>
-    <div style="padding:28px 32px;">
-      <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;">
+
+    <div style="padding:24px 30px 28px;max-height:64vh;overflow-y:auto;">
+
+      <!-- Rodzaj podstawki -->
+      <div style="margin-bottom:18px;">
+        <label class="field-label">Rodzaj podstawki</label>
+        <div id="standTypeGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:7px;"></div>
+      </div>
+
+      <!-- Rozmiar -->
+      <div style="margin-bottom:18px;">
+        <label class="field-label">Rozmiar</label>
+        <div id="standSizeGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:7px;"></div>
+      </div>
+
+      <!-- Kolor filamentu -->
+      <div style="margin-bottom:18px;">
+        <label class="field-label">Kolor filamentu</label>
+        <div id="standColorGrid" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:7px;"></div>
+      </div>
+
+      <!-- Napis + ilość -->
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:18px;">
         <div>
-          <label class="field-label">Twoje imię i nazwa restauracji</label>
-          <input id="standsName" type="text" class="field" placeholder="Jan Kowalski — Pizzeria Roma">
+          <label class="field-label">Napis na stojaku <span style="font-weight:500;color:rgba(27,42,74,.4);">(opcjonalnie)</span></label>
+          <input id="standText" type="text" class="field" maxlength="40" placeholder="np. Zeskanuj — nasze menu" oninput="updateStandsSummary()">
+          <div style="font-size:10.5px;color:rgba(27,42,74,.35);margin-top:4px;"><span id="standTextCount">0</span>/40 znaków</div>
         </div>
         <div>
-          <label class="field-label">Email do kontaktu</label>
-          <input id="standsEmail" type="email" class="field" placeholder="twoj@email.pl">
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <div>
-            <label class="field-label">Liczba stolików</label>
-            <input id="standsCount" type="number" class="field" placeholder="10" min="1" value="10">
-          </div>
-          <div>
-            <label class="field-label">Kolor stojaków</label>
-            <select id="standsColor" class="field">
-              <option value="czarny">Czarny</option>
-              <option value="biały">Biały</option>
-              <option value="drewno">Kolor drewna</option>
-              <option value="inny">Inny (opiszę)</option>
-            </select>
-          </div>
-        </div>
-        <div>
-          <label class="field-label">Dodatkowe uwagi</label>
-          <textarea id="standsNotes" class="field" rows="2" placeholder="np. logo restauracji na stojaku, konkretny kształt..."></textarea>
+          <label class="field-label">Liczba sztuk</label>
+          <input id="standQty" type="number" class="field" min="1" max="500" value="10" oninput="updateStandsSummary()">
         </div>
       </div>
+
+      <!-- Dane do wysyłki -->
+      <div style="border-top:1px solid rgba(27,42,74,.08);padding-top:18px;margin-bottom:18px;">
+        <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:11px;">Dane do wysyłki</div>
+        <div style="display:flex;flex-direction:column;gap:11px;">
+          <div>
+            <label class="field-label">Imię i nazwisko / firma</label>
+            <input id="shipName" type="text" class="field" placeholder="Jan Kowalski — Pizzeria Roma">
+          </div>
+          <div>
+            <label class="field-label">Ulica i numer</label>
+            <input id="shipStreet" type="text" class="field" placeholder="ul. Kwiatowa 12/3">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 2fr;gap:11px;">
+            <div>
+              <label class="field-label">Kod pocztowy</label>
+              <input id="shipZip" type="text" class="field" placeholder="00-001">
+            </div>
+            <div>
+              <label class="field-label">Miejscowość</label>
+              <input id="shipCity" type="text" class="field" placeholder="Warszawa">
+            </div>
+          </div>
+          <div>
+            <label class="field-label">Telefon</label>
+            <input id="shipPhone" type="tel" class="field" placeholder="600 100 200">
+          </div>
+        </div>
+      </div>
+
+      <!-- Podsumowanie ceny -->
+      <div style="background:white;border:1px solid rgba(27,42,74,.09);border-radius:14px;padding:15px 17px;margin-bottom:16px;">
+        <div id="standsSummaryLines" style="font-size:12.5px;color:rgba(27,42,74,.6);line-height:1.9;"></div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid rgba(27,42,74,.08);margin-top:10px;padding-top:10px;">
+          <span style="font-size:13px;font-weight:700;color:var(--navy);">Razem</span>
+          <span id="standsTotal" style="font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:600;color:var(--gold);">—</span>
+        </div>
+      </div>
+
       <div id="standsError" style="display:none;background:#FEF2F2;border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#991B1B;font-weight:500;"></div>
+
       <div style="display:flex;gap:10px;">
         <button onclick="closeStandsModal()" class="btn-outline" style="flex:1;padding:12px;">Anuluj</button>
-        <button onclick="sendStandsOrder()" id="standsBtn" class="btn-primary" style="flex:2;padding:12px;font-size:13px;">Wyślij zapytanie →</button>
+        <button onclick="sendStandsOrder()" id="standsBtn" class="btn-primary" style="flex:2;padding:12px;font-size:13px;">Zamawiam i płacę →</button>
       </div>
-      <p style="font-size:11px;color:rgba(27,42,74,.35);text-align:center;margin-top:12px;">Odpiszemy w ciągu 24h z wyceną i terminem realizacji</p>
+      <p style="font-size:11px;color:rgba(27,42,74,.35);text-align:center;margin-top:12px;">Płatność obsługuje Tpay — BLIK, karta, przelew. Faktura VAT na życzenie.</p>
     </div>
   </div>
 </div>
@@ -871,6 +914,12 @@
       window._awaitingPayment = true;
     } else if (urlParams.get('payment') === 'cancelled') {
       history.replaceState({}, '', '/editor');
+    } else if (urlParams.get('order') === 'success') {
+      history.replaceState({}, '', '/editor');
+      showToast('Zamówienie opłacone! Wysyłka w 5–7 dni roboczych.', 'ok');
+    } else if (urlParams.get('order') === 'cancelled') {
+      history.replaceState({}, '', '/editor');
+      showToast('Płatność przerwana — zamówienie czeka na opłacenie.', 'warn');
     }
 
     const stored = localStorage.getItem('tableo_auth');
@@ -2285,13 +2334,97 @@
         <tbody>${rows || '<tr><td colspan="11" style="padding:20px;text-align:center;color:rgba(27,42,74,.4);">Brak użytkowników.</td></tr>'}</tbody>
       </table></div>`;
 
-    /* ── Audyt stałych linków (na żądanie — skanuje wszystkie menu) ── */
-    const auditHtml = `<div style="padding:0 20px 16px;">
-      <button onclick="runLinkAudit()" id="linkAuditBtn" style="background:rgba(27,42,74,.05);border:1px solid rgba(27,42,74,.14);border-radius:10px;padding:8px 14px;font-size:12px;font-weight:600;color:var(--navy);cursor:pointer;">🔗 Audyt stałych linków (sprawdź duplikaty slugów)</button>
-      <div id="linkAuditResult" style="margin-top:10px;"></div>
+    /* ── Zamówienia stojaków + audyt linków (na żądanie) ── */
+    const auditHtml = `<div style="padding:0 20px 16px;display:flex;flex-direction:column;gap:10px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button onclick="loadStandOrders()" id="ordersBtn" style="background:var(--gold);border:none;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;color:white;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">📦 Zamówienia stojaków</button>
+        <button onclick="runLinkAudit()" id="linkAuditBtn" style="background:rgba(27,42,74,.05);border:1px solid rgba(27,42,74,.14);border-radius:10px;padding:8px 14px;font-size:12px;font-weight:600;color:var(--navy);cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">🔗 Audyt stałych linków (sprawdź duplikaty slugów)</button>
+      </div>
+      <div id="ordersResult"></div>
+      <div id="linkAuditResult"></div>
     </div>`;
 
     document.getElementById('adminTableWrap').innerHTML = globalsHtml + alertsHtml + auditHtml + tableHtml;
+  }
+
+  /* ── Zamówienia stojaków QR: lista do realizacji (druk + wysyłka) ── */
+  const ORDER_STATUS = {
+    awaiting_payment: { label: 'Czeka na płatność', color: '#C9924A' },
+    paid:             { label: 'Opłacone',          color: '#2e7d5b' },
+    in_production:    { label: 'W druku',           color: '#1B2A4A' },
+    shipped:          { label: 'Wysłane',           color: '#6b7280' },
+    cancelled:        { label: 'Anulowane',         color: '#c0392b' },
+  };
+
+  async function loadStandOrders() {
+    const btn = document.getElementById('ordersBtn');
+    const box = document.getElementById('ordersResult');
+    btn.disabled = true; btn.textContent = 'Ładuję…';
+    try {
+      const res  = await fetch('/api/account?admin=1&orders=1', { headers: { 'Authorization': `Bearer ${currentToken}` } });
+      const data = await res.json();
+      if (!data.ok) { box.innerHTML = `<div style="font-size:12px;color:#c0392b;">${data.error || 'Błąd.'}</div>`; return; }
+      renderStandOrders(data, box);
+    } catch {
+      box.innerHTML = `<div style="font-size:12px;color:#c0392b;">Błąd połączenia.</div>`;
+    } finally {
+      btn.disabled = false; btn.textContent = '📦 Zamówienia stojaków';
+    }
+  }
+
+  function renderStandOrders(data, box) {
+    const esc = s => String(s || '').replace(/[<>&"]/g, c => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;' }[c]));
+    if (!data.orders.length) {
+      box.innerHTML = `<div style="background:rgba(27,42,74,.03);border:1px solid rgba(27,42,74,.07);border-radius:12px;padding:14px 16px;font-size:12px;color:rgba(27,42,74,.45);">Brak zamówień.</div>`;
+      return;
+    }
+
+    const cards = data.orders.map(o => {
+      const st = ORDER_STATUS[o.status] || { label: o.status, color: '#6b7280' };
+      const c  = o.config || {};
+      const sh = o.shipping || {};
+      const opts = Object.entries(ORDER_STATUS)
+        .map(([k, v]) => `<option value="${k}"${k === o.status ? ' selected' : ''}>${v.label}</option>`).join('');
+      return `<div style="background:white;border:1px solid rgba(27,42,74,.1);border-radius:12px;padding:13px 15px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
+          <div style="font-size:12.5px;font-weight:700;color:var(--navy);">${esc(o.id)}
+            <span style="font-weight:500;color:rgba(27,42,74,.45);"> · ${_adminDate(o.created_at)}</span></div>
+          <span style="background:${st.color}1a;color:${st.color};border:1px solid ${st.color}44;border-radius:100px;padding:3px 10px;font-size:11px;font-weight:700;">${st.label}</span>
+        </div>
+        <div style="font-size:12px;color:rgba(27,42,74,.7);line-height:1.75;">
+          <b>${esc(c.stand_label)}</b> · ${esc(c.size_label)} · kolor: <b>${esc(c.color)}</b> · <b>${c.qty} szt.</b>
+          ${c.text ? `<br>Napis: „${esc(c.text)}"` : ''}
+          <br>Kod QR menu: ${o.menu_url ? `<a href="${esc(o.menu_url)}" target="_blank" style="color:var(--gold);font-weight:600;">${esc(o.menu_slug)}</a>` : '<span style="color:rgba(27,42,74,.35);">brak opublikowanego menu</span>'}
+          <br><b style="color:var(--navy);">${o.price?.total} zł</b> <span style="color:rgba(27,42,74,.4);">(${o.price?.items} zł + ${o.price?.shipping} zł wysyłka)</span>
+        </div>
+        <div style="background:rgba(27,42,74,.03);border-radius:9px;padding:9px 11px;margin-top:9px;font-size:11.5px;color:rgba(27,42,74,.65);line-height:1.6;">
+          <b style="color:var(--navy);">${esc(sh.name)}</b><br>${esc(sh.street)}<br>${esc(sh.zip)} ${esc(sh.city)}<br>tel. ${esc(sh.phone)} · ${esc(o.email)}
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:10px;">
+          <span style="font-size:11px;color:rgba(27,42,74,.45);">Status:</span>
+          <select onchange="setOrderStatus('${esc(o.id)}', this.value)" style="flex:1;padding:6px 10px;border:1px solid rgba(27,42,74,.15);border-radius:8px;font-size:12px;font-family:'Plus Jakarta Sans',sans-serif;color:var(--navy);cursor:pointer;">${opts}</select>
+        </div>
+      </div>`;
+    }).join('');
+
+    box.innerHTML = `<div style="background:rgba(27,42,74,.03);border:1px solid rgba(27,42,74,.07);border-radius:12px;padding:14px 16px;">
+      <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px;">📦 Zamówienia stojaków</div>
+      <div style="font-size:11.5px;color:rgba(27,42,74,.5);margin-bottom:12px;">${data.count} zamówień · ${data.paid_count} opłaconych · przychód ${data.revenue} zł</div>
+      <div style="display:flex;flex-direction:column;gap:9px;">${cards}</div>
+    </div>`;
+  }
+
+  async function setOrderStatus(orderId, status) {
+    try {
+      const res  = await fetch('/api/account', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentToken}` },
+        body: JSON.stringify({ admin_action: 'set_order_status', order_id: orderId, status })
+      });
+      const data = await res.json();
+      if (data.ok) { showToast(`Status zamówienia ${orderId}: ${ORDER_STATUS[status]?.label || status}`, 'ok'); loadStandOrders(); }
+      else showToast(data.error || 'Błąd zmiany statusu.', 'warn');
+    } catch { showToast('Błąd połączenia.', 'warn'); }
   }
 
   /* Rozwija wykres dzienny wejść dla pojedynczego konta */
@@ -2794,11 +2927,104 @@
     }
   }
 
-  /* ── Stands modal ── */
+  /* ── Stands modal — konfigurator zamówienia ──
+     UWAGA: cennik tutaj służy WYŁĄCZNIE do podglądu ceny w UI. Kwota, którą
+     płaci klient, jest liczona od nowa na serwerze (api/tpay.js) — przy
+     zmianie cen trzeba zmienić OBA miejsca. */
+  const STAND_TYPES = [
+    { key:'classic', label:'Klasyczny',  price:15, desc:'Prosty, stabilny' },
+    { key:'premium', label:'Premium',    price:25, desc:'Większa podstawa' },
+    { key:'logo',    label:'Z logo',     price:35, desc:'Logo restauracji' },
+  ];
+  const STAND_SIZES = [
+    { key:'s', label:'Mały',   dim:'74×105 mm',  extra:0 },
+    { key:'m', label:'Średni', dim:'105×148 mm', extra:4 },
+    { key:'l', label:'Duży',   dim:'148×210 mm', extra:8 },
+  ];
+  const STAND_COLORS = [
+    { key:'czarny',    hex:'#1c1c1c' },
+    { key:'biały',     hex:'#f4f2ed' },
+    { key:'szary',     hex:'#8b9096' },
+    { key:'drewno',    hex:'#a9763f' },
+    { key:'złoty',     hex:'#c9a227' },
+    { key:'granatowy', hex:'#1B2A4A' },
+    { key:'bordowy',   hex:'#6d1f2c' },
+  ];
+  const STAND_SHIPPING = 15;
+
+  let standChoice = { stand:'classic', size:'m', color:'czarny' };
+
+  function _standCardStyle(active) {
+    return `text-align:left;padding:11px 12px;border-radius:12px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:border-color .15s,background .15s;`
+      + (active
+        ? 'border:1.5px solid var(--gold);background:rgba(201,146,74,.07);'
+        : 'border:1.5px solid rgba(27,42,74,.13);background:white;');
+  }
+
+  function renderStandsPicker() {
+    const typeGrid = document.getElementById('standTypeGrid');
+    if (typeGrid) typeGrid.innerHTML = STAND_TYPES.map(t => `
+      <button type="button" onclick="pickStand('stand','${t.key}')" style="${_standCardStyle(standChoice.stand === t.key)}">
+        <div style="font-size:12.5px;font-weight:700;color:var(--navy);">${t.label}</div>
+        <div style="font-size:10.5px;color:rgba(27,42,74,.42);margin-top:2px;">${t.desc}</div>
+        <div style="font-size:12px;font-weight:700;color:var(--gold);margin-top:6px;">${t.price} zł</div>
+      </button>`).join('');
+
+    const sizeGrid = document.getElementById('standSizeGrid');
+    if (sizeGrid) sizeGrid.innerHTML = STAND_SIZES.map(s => `
+      <button type="button" onclick="pickStand('size','${s.key}')" style="${_standCardStyle(standChoice.size === s.key)}">
+        <div style="font-size:12.5px;font-weight:700;color:var(--navy);">${s.label}</div>
+        <div style="font-size:10.5px;color:rgba(27,42,74,.42);margin-top:2px;">${s.dim}</div>
+        <div style="font-size:11.5px;font-weight:600;color:${s.extra ? 'var(--gold)' : 'rgba(27,42,74,.35)'};margin-top:6px;">${s.extra ? '+' + s.extra + ' zł' : 'w cenie'}</div>
+      </button>`).join('');
+
+    const colorGrid = document.getElementById('standColorGrid');
+    if (colorGrid) colorGrid.innerHTML = STAND_COLORS.map(c => {
+      const active = standChoice.color === c.key;
+      return `<button type="button" onclick="pickStand('color','${c.key}')" title="${c.key}"
+        style="display:flex;align-items:center;gap:7px;padding:7px 12px 7px 8px;border-radius:100px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:border-color .15s,background .15s;${active ? 'border:1.5px solid var(--gold);background:rgba(201,146,74,.07);' : 'border:1.5px solid rgba(27,42,74,.13);background:white;'}">
+        <span style="width:17px;height:17px;border-radius:50%;background:${c.hex};border:1px solid rgba(27,42,74,.18);flex-shrink:0;"></span>
+        <span style="font-size:12px;font-weight:${active ? '700' : '500'};color:var(--navy);">${c.key}</span>
+      </button>`;
+    }).join('');
+  }
+
+  function pickStand(field, value) {
+    standChoice[field] = value;
+    renderStandsPicker();
+    updateStandsSummary();
+  }
+
+  function updateStandsSummary() {
+    const type = STAND_TYPES.find(t => t.key === standChoice.stand);
+    const size = STAND_SIZES.find(s => s.key === standChoice.size);
+    const qtyEl = document.getElementById('standQty');
+    const qty  = Math.max(1, Math.min(500, Math.floor(Number(qtyEl?.value) || 0) || 1));
+
+    const textEl = document.getElementById('standText');
+    const cnt = document.getElementById('standTextCount');
+    if (cnt && textEl) cnt.textContent = textEl.value.length;
+
+    if (!type || !size) return;
+    const unit  = type.price + size.extra;
+    const items = unit * qty;
+    const total = items + STAND_SHIPPING;
+
+    const lines = document.getElementById('standsSummaryLines');
+    if (lines) lines.innerHTML =
+      `<div style="display:flex;justify-content:space-between;"><span>${type.label} · ${size.label} · ${standChoice.color}</span><span>${unit} zł/szt.</span></div>`
+      + `<div style="display:flex;justify-content:space-between;"><span>${qty} szt.</span><span>${items} zł</span></div>`
+      + `<div style="display:flex;justify-content:space-between;"><span>Wysyłka</span><span>${STAND_SHIPPING} zł</span></div>`;
+
+    const totalEl = document.getElementById('standsTotal');
+    if (totalEl) totalEl.textContent = `${total} zł`;
+  }
+
   function openStandsModal() {
     const m = document.getElementById('standsModal');
     m.style.display = 'flex';
-    if (currentEmail) document.getElementById('standsEmail').value = currentEmail;
+    renderStandsPicker();
+    updateStandsSummary();
   }
   function closeStandsModal() {
     document.getElementById('standsModal').style.display = 'none';
@@ -2806,27 +3032,64 @@
   document.getElementById('standsModal').addEventListener('click', e => {
     if (e.target === document.getElementById('standsModal')) closeStandsModal();
   });
+
   async function sendStandsOrder() {
-    const name  = document.getElementById('standsName').value.trim();
-    const email = document.getElementById('standsEmail').value.trim();
-    const count = document.getElementById('standsCount').value;
-    const color = document.getElementById('standsColor').value;
-    const notes = document.getElementById('standsNotes').value.trim();
     const errDiv = document.getElementById('standsError');
+    const btn    = document.getElementById('standsBtn');
     errDiv.style.display = 'none';
 
-    if (!name || !email) {
-      errDiv.textContent = 'Podaj imię i adres email.';
+    if (!currentToken) {
+      errDiv.textContent = 'Zaloguj się, aby złożyć zamówienie.';
       errDiv.style.display = 'block'; return;
     }
 
-    const subject = encodeURIComponent(`Zamówienie stojaków QR — ${name}`);
-    const body = encodeURIComponent(
-      `Nowe zamówienie stojaków QR\n\nImię / Restauracja: ${name}\nEmail: ${email}\nLiczba stolików: ${count}\nKolor: ${color}\nUwagi: ${notes || 'brak'}\n\n— Qreat`
-    );
-    window.location.href = `mailto:hubiwas@gmail.com?subject=${subject}&body=${body}`;
-    showToast('Otwieramy Twój klient pocztowy…', 'ok');
-    setTimeout(closeStandsModal, 1200);
+    const shipping = {
+      name:   document.getElementById('shipName').value.trim(),
+      street: document.getElementById('shipStreet').value.trim(),
+      zip:    document.getElementById('shipZip').value.trim(),
+      city:   document.getElementById('shipCity').value.trim(),
+      phone:  document.getElementById('shipPhone').value.trim(),
+    };
+    if (!shipping.name || !shipping.street || !shipping.zip || !shipping.city || !shipping.phone) {
+      errDiv.textContent = 'Uzupełnij wszystkie dane do wysyłki.';
+      errDiv.style.display = 'block'; return;
+    }
+
+    const payload = {
+      ...standChoice,
+      qty:  Math.max(1, Math.min(500, Math.floor(Number(document.getElementById('standQty').value) || 1))),
+      text: document.getElementById('standText').value.trim(),
+      shipping,
+    };
+
+    btn.style.opacity = '.5';
+    btn.textContent = 'Wysyłam…';
+    try {
+      const res  = await fetch('/api/tpay/order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentToken}` },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.ok) {
+        errDiv.textContent = data.error || 'Nie udało się złożyć zamówienia.';
+        errDiv.style.display = 'block';
+        btn.style.opacity = '1'; btn.textContent = 'Zamawiam i płacę →';
+        return;
+      }
+
+      if (data.url) { window.location.href = data.url; return; }
+
+      /* Tpay jeszcze nieskonfigurowany — zamówienie zapisane, płatność ręcznie */
+      closeStandsModal();
+      showToast(`Zamówienie ${data.order_id} przyjęte (${data.total} zł). Wyślemy link do płatności mailem.`, 'ok');
+      btn.style.opacity = '1'; btn.textContent = 'Zamawiam i płacę →';
+    } catch {
+      errDiv.textContent = 'Błąd połączenia. Spróbuj ponownie.';
+      errDiv.style.display = 'block';
+      btn.style.opacity = '1'; btn.textContent = 'Zamawiam i płacę →';
+    }
   }
 
   /* ── QR Generator ── */

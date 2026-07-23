@@ -113,6 +113,25 @@ module.exports = async function handler(req, res) {
     /* Ostatnie 14 dni, od najstarszego — do wykresu wejść w panelu */
     const days14 = Array.from({ length: 14 }, (_, i) => new Date(now - (13 - i) * 86400000).toISOString().slice(0, 10));
 
+    /* ── Zamówienia stojaków QR: GET /api/account?admin=1&orders=1 ──
+       Lista wszystkich zamówień (api/tpay.js zapisuje je pod order:*),
+       najnowsze pierwsze — to jest lista rzeczy do wydrukowania i wysłania. */
+    if (req.query.orders === '1') {
+      const keys = await kvScan('order:*');
+      const orders = (await Promise.all(keys.map(k => kvGet(k)))).filter(Boolean);
+      orders.sort((a, b) => (b.created_at || 0) - (a.created_at || 0));
+      const revenue = orders.filter(o => o.status === 'paid')
+                            .reduce((s, o) => s + (o.price?.total || 0), 0);
+      res.json({
+        ok: true,
+        count: orders.length,
+        paid_count: orders.filter(o => o.status === 'paid').length,
+        revenue: Number(revenue.toFixed(2)),
+        orders,
+      });
+      return;
+    }
+
     /* ── Audyt stałych linków: GET /api/account?admin=1&audit=1 ──
        Wypisuje wszystkie opublikowane menu per konto. Jeśli konto ma >1 slug,
        to ślad po dawnym bugu — aktywny link mógł się różnić od wydrukowanego.
@@ -362,6 +381,24 @@ module.exports = async function handler(req, res) {
       acc.slug = slug; acc.published_url = url;
       await kvSet(`account:${target}`, acc);
       res.json({ ok: true, slug, url });
+      return;
+    }
+
+    /* Admin: zmiana statusu zamówienia stojaków (np. po wysłaniu paczki) */
+    if (req.body && req.body.admin_action === 'set_order_status') {
+      if ((user.email || '') !== 'hubiwas@gmail.com') { res.status(403).json({ error: 'Brak uprawnień.' }); return; }
+      const orderId = String(req.body.order_id || '').trim();
+      const status  = String(req.body.status || '').trim();
+      const ALLOWED = ['awaiting_payment', 'paid', 'in_production', 'shipped', 'cancelled'];
+      if (!orderId || !ALLOWED.includes(status)) {
+        res.status(400).json({ error: 'Wymagane: order_id + poprawny status.' }); return;
+      }
+      const order = await kvGet(`order:${orderId}`);
+      if (!order) { res.status(404).json({ error: 'Zamówienie nie istnieje.' }); return; }
+      order.status = status;
+      order.status_changed_at = Date.now();
+      await kvSet(`order:${orderId}`, order);
+      res.json({ ok: true, order });
       return;
     }
 

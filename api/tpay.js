@@ -125,6 +125,31 @@ const PLANS = {
   yearly:  { amount: 299.99, days: 365, description: 'Qreat — plan roczny' },
 };
 
+/* ── Stojaki na kody QR (produkt fizyczny, druk 3D) ──
+   Ceny liczone WYŁĄCZNIE po stronie serwera — klient przysyła tylko wybory,
+   nigdy kwoty. Zmiana cennika: te trzy stałe poniżej. */
+const STANDS = {
+  classic: { label: 'Klasyczny',           price: 15 },
+  premium: { label: 'Premium',             price: 25 },
+  logo:    { label: 'Z logo restauracji',  price: 35 },
+};
+const SIZES = {
+  s: { label: 'Mały (74×105 mm)',   extra: 0 },
+  m: { label: 'Średni (105×148 mm)', extra: 4 },
+  l: { label: 'Duży (148×210 mm)',   extra: 8 },
+};
+const COLORS = ['czarny', 'biały', 'szary', 'drewno', 'złoty', 'granatowy', 'bordowy'];
+const SHIPPING = 15;
+
+function priceOrder(standKey, sizeKey, qty) {
+  const stand = STANDS[standKey];
+  const size  = SIZES[sizeKey];
+  if (!stand || !size) return null;
+  const unit  = stand.price + size.extra;
+  const items = unit * qty;
+  return { unit, items, shipping: SHIPPING, total: Number((items + SHIPPING).toFixed(2)) };
+}
+
 /* ══════════════════════════════════════════════════
    CHECKOUT  →  POST /api/tpay/checkout
    WEBHOOK   →  POST /api/tpay/webhook
@@ -194,6 +219,94 @@ const handler = async function(req, res) {
     return;
   }
 
+  /* ── Zamówienie stojaków QR ──
+     Zamówienie zapisujemy ZAWSZE, nawet gdy Tpay nie jest jeszcze
+     skonfigurowany (konto w weryfikacji) — wtedy czeka ze statusem
+     'awaiting_payment' i właściciel wysyła link do płatności ręcznie. */
+  if (path.endsWith('/order')) {
+    const token = (req.headers.authorization || '').replace('Bearer ', '');
+    const user  = verifyToken(token);
+    if (!user) { res.status(401).json({ error: 'Sesja wygasła.' }); return; }
+
+    let body = {};
+    try { const raw = await collectBody(req); body = JSON.parse(raw.toString()); } catch {}
+
+    const stand = String(body.stand || '');
+    const size  = String(body.size  || '');
+    const color = String(body.color || '');
+    const qty   = Math.floor(Number(body.qty) || 0);
+    const text  = String(body.text || '').trim().slice(0, 40);
+
+    if (!STANDS[stand])          { res.status(400).json({ error: 'Wybierz rodzaj podstawki.' }); return; }
+    if (!SIZES[size])            { res.status(400).json({ error: 'Wybierz rozmiar.' }); return; }
+    if (!COLORS.includes(color)) { res.status(400).json({ error: 'Wybierz kolor filamentu.' }); return; }
+    if (qty < 1 || qty > 500)    { res.status(400).json({ error: 'Liczba sztuk: od 1 do 500.' }); return; }
+
+    const ship = body.shipping || {};
+    const name    = String(ship.name    || '').trim();
+    const street  = String(ship.street  || '').trim();
+    const zip     = String(ship.zip     || '').trim();
+    const city    = String(ship.city    || '').trim();
+    const phone   = String(ship.phone   || '').trim();
+    if (!name || !street || !zip || !city || !phone) {
+      res.status(400).json({ error: 'Uzupełnij dane do wysyłki.' }); return;
+    }
+
+    const price = priceOrder(stand, size, qty);
+    if (!price) { res.status(400).json({ error: 'Nieprawidłowa konfiguracja.' }); return; }
+
+    /* Slug konta — żeby wiadomo było jaki kod QR nadrukować na stojaki */
+    const account = await kvGet(`account:${user.email}`);
+
+    const orderId = 'ORD-' + Date.now().toString(36).toUpperCase() + '-' + crypto.randomBytes(3).toString('hex').toUpperCase();
+    const order = {
+      id: orderId,
+      email:      user.email,
+      created_at: Date.now(),
+      status:     'awaiting_payment',
+      config:     { stand, stand_label: STANDS[stand].label, size, size_label: SIZES[size].label, color, qty, text },
+      price,
+      shipping:   { name, street, zip, city, phone },
+      menu_slug:  account?.slug || null,
+      menu_url:   account?.published_url || null,
+    };
+    await kvSet(`order:${orderId}`, order);
+
+    if (!process.env.TPAY_CLIENT_ID || !process.env.TPAY_CLIENT_SECRET) {
+      res.json({ ok: true, order_id: orderId, total: price.total, payment_pending: true });
+      return;
+    }
+
+    try {
+      const accessToken = await getAccessToken();
+      const origin = `https://${req.headers.host || 'www.qreat.pl'}`;
+      const result = await tpayRequest('POST', '/transactions', accessToken, {
+        amount:      price.total,
+        description: `Qreat — stojaki QR ${STANDS[stand].label} ${qty} szt. (${orderId})`,
+        payer: { email: user.email, name: name || user.email },
+        callbacks: {
+          notification: { url: `${origin}/api/tpay/webhook` },
+          payerUrls: {
+            success: `${origin}/editor?order=success`,
+            error:   `${origin}/editor?order=cancelled`,
+          },
+        },
+      });
+
+      if (result.status >= 400 || !result.body?.transactionId) {
+        /* Zamówienie jest już zapisane — właściciel dośle link do płatności */
+        res.json({ ok: true, order_id: orderId, total: price.total, payment_pending: true });
+        return;
+      }
+
+      await kvSet(`tpay_tx:${result.body.transactionId}`, { email: user.email, kind: 'order', orderId }, 7 * 24 * 60 * 60);
+      res.json({ ok: true, order_id: orderId, total: price.total, url: result.body.transactionPaymentUrl });
+    } catch {
+      res.json({ ok: true, order_id: orderId, total: price.total, payment_pending: true });
+    }
+    return;
+  }
+
   /* ── Webhook ── */
   if (path.endsWith('/webhook')) {
     let body = {};
@@ -209,7 +322,17 @@ const handler = async function(req, res) {
 
     if (body.tr_status === 'TRUE' || body.tr_status === 'true') {
       const txMeta = await kvGet(`tpay_tx:${body.tr_id}`);
-      if (txMeta?.email) {
+
+      if (txMeta?.kind === 'order' && txMeta.orderId) {
+        /* Opłacone zamówienie stojaków — do realizacji przez właściciela */
+        const order = await kvGet(`order:${txMeta.orderId}`);
+        if (order) {
+          order.status = 'paid';
+          order.paid_at = Date.now();
+          order.tpay_transaction = body.tr_id;
+          await kvSet(`order:${txMeta.orderId}`, order);
+        }
+      } else if (txMeta?.email) {
         const cfg = PLANS[txMeta.plan];
         await kvSet(`paid:${txMeta.email}`, {
           active: true, plan: txMeta.plan,

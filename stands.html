@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zamów stojaki na kody QR — Qreat</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <style>
+    :root {
+      --navy:#1B2A4A; --navy-deep:#0f1d33; --navy-mid:#243761;
+      --sage:#7BAA8F; --sage-pale:#EAF3EE;
+      --gold:#C9924A; --gold-pale:#FBF3E8;
+      --cream:#FDFBF7; --cream-mid:#F5EFE4; --cream-dark:#EDE5D8;
+      --ease-out:cubic-bezier(0.23,1,0.32,1);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--cream);color:var(--navy);-webkit-font-smoothing:antialiased;min-height:100vh;}
+    h1,h2,h3{font-family:'Playfair Display',serif;}
+    a{color:inherit;}
+
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 28px;background:white;border-bottom:1px solid rgba(27,42,74,.08);position:sticky;top:0;z-index:20;}
+    .backlink{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--navy);text-decoration:none;padding:8px 14px;border-radius:100px;border:1px solid rgba(27,42,74,.14);transition:background .15s;}
+    .backlink:hover{background:var(--cream-mid);}
+
+    .wrap{max-width:1120px;margin:0 auto;padding:32px 28px 60px;}
+    .head{margin-bottom:26px;}
+    .head h1{font-size:1.8rem;font-weight:500;margin-bottom:6px;}
+    .head p{font-size:13.5px;color:rgba(27,42,74,.55);line-height:1.6;}
+
+    .grid{display:grid;grid-template-columns:minmax(0,440px) 1fr;gap:28px;align-items:start;}
+
+    /* Preview (lewa) */
+    .preview-col{position:sticky;top:96px;}
+    .preview-card{background:linear-gradient(160deg,#eef1f5,#e2e6ec);border:1px solid rgba(27,42,74,.1);border-radius:20px;box-shadow:0 10px 40px rgba(27,42,74,.08);padding:38px 30px 30px;text-align:center;}
+    .stage{display:flex;align-items:flex-end;justify-content:center;min-height:340px;perspective:900px;}
+
+    /* Mockup stojaka */
+    .stand{position:relative;width:220px;transform:rotateX(4deg);transform-style:preserve-3d;}
+    .stand-body{border-radius:16px 16px 10px 10px;padding:20px 18px 26px;box-shadow:0 22px 40px rgba(15,29,51,.28), inset 0 2px 0 rgba(255,255,255,.14);transition:background .2s;}
+    .stand-card{background:#fff;border-radius:9px;padding:14px 12px 12px;box-shadow:0 4px 12px rgba(0,0,0,.14);}
+    .stand-card canvas{display:block;width:100%;height:auto;border-radius:4px;}
+    .stand-text{font-size:11px;font-weight:700;letter-spacing:.02em;margin-top:9px;line-height:1.3;word-break:break-word;}
+    .stand-brand{font-family:'Playfair Display',serif;font-size:12px;font-weight:600;margin-top:14px;opacity:.9;transition:color .2s;}
+    .stand-base{width:150px;height:16px;margin:0 auto;border-radius:50%;background:rgba(15,29,51,.16);filter:blur(3px);margin-top:-6px;}
+    .dim{font-size:12px;color:rgba(27,42,74,.55);margin-top:20px;font-weight:600;}
+    .previewnote{font-size:11.5px;color:rgba(27,42,74,.42);margin-top:6px;line-height:1.5;}
+
+    /* Controls (prawa) */
+    .panel{background:white;border:1px solid rgba(27,42,74,.09);border-radius:18px;padding:24px 26px;}
+    .field-label{display:block;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(27,42,74,.45);margin-bottom:9px;}
+    .block{margin-bottom:22px;}
+    .field{width:100%;padding:11px 14px;border:1.5px solid rgba(27,42,74,.13);border-radius:12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;color:var(--navy);background:white;outline:none;transition:border-color .15s;}
+    .field:focus{border-color:var(--gold);}
+    .cards3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+    .opt{text-align:left;padding:11px 12px;border-radius:12px;cursor:pointer;background:white;border:1.5px solid rgba(27,42,74,.13);transition:border-color .15s,background .15s;font-family:'Plus Jakarta Sans',sans-serif;}
+    .opt:hover{border-color:rgba(27,42,74,.28);}
+    .opt.active{border-color:var(--gold);background:var(--gold-pale);}
+    .opt .t{font-size:12.5px;font-weight:700;color:var(--navy);}
+    .opt .s{font-size:10.5px;color:rgba(27,42,74,.42);margin-top:2px;}
+    .swatches{display:flex;flex-wrap:wrap;gap:8px;}
+    .swatch{display:flex;align-items:center;gap:7px;padding:7px 13px 7px 8px;border-radius:100px;cursor:pointer;background:white;border:1.5px solid rgba(27,42,74,.13);transition:border-color .15s,background .15s;font-family:'Plus Jakarta Sans',sans-serif;}
+    .swatch:hover{border-color:rgba(27,42,74,.28);}
+    .swatch.active{border-color:var(--gold);background:var(--gold-pale);}
+    .swatch .dot{width:17px;height:17px;border-radius:50%;border:1px solid rgba(27,42,74,.2);flex-shrink:0;}
+    .swatch span{font-size:12px;font-weight:500;color:var(--navy);}
+    .swatch.active span{font-weight:700;}
+    .two{display:grid;grid-template-columns:2fr 1fr;gap:12px;}
+    .grid2{display:grid;grid-template-columns:1fr 2fr;gap:11px;}
+    .counter{font-size:10.5px;color:rgba(27,42,74,.35);margin-top:4px;}
+
+    .summary{background:var(--cream);border:1px solid rgba(27,42,74,.09);border-radius:14px;padding:15px 17px;margin-bottom:16px;}
+    .summary .row{display:flex;justify-content:space-between;font-size:12.5px;color:rgba(27,42,74,.65);line-height:1.9;}
+    .summary .total{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid rgba(27,42,74,.09);margin-top:10px;padding-top:10px;}
+    .summary .total b{font-size:13px;color:var(--navy);}
+    .summary .total .amt{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:600;color:var(--gold);}
+
+    .err{display:none;background:#FEF2F2;border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#991B1B;font-weight:500;}
+    .btn{width:100%;padding:13px;border-radius:12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;border:none;transition:opacity .15s,transform .15s;}
+    .btn:hover{opacity:.9;transform:translateY(-1px);}
+    .btn-primary{background:var(--gold);color:white;}
+    .foot{font-size:11px;color:rgba(27,42,74,.35);text-align:center;margin-top:12px;line-height:1.5;}
+
+    .noauth{max-width:460px;margin:80px auto;text-align:center;background:white;border:1px solid rgba(27,42,74,.1);border-radius:20px;padding:38px 32px;}
+    .noauth h2{font-size:1.4rem;font-weight:500;margin-bottom:10px;}
+    .noauth p{font-size:13.5px;color:rgba(27,42,74,.55);line-height:1.65;margin-bottom:22px;}
+
+    @media(max-width:820px){
+      .grid{grid-template-columns:1fr;}
+      .preview-col{position:static;}
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:30px;height:30px;border-radius:8px;background:var(--navy);display:flex;align-items:center;justify-content:center;">
+        <svg width="16" height="16" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" stroke="white" stroke-width="1.3"/><rect x="8" y="1" width="5" height="5" rx="1" stroke="white" stroke-width="1.3"/><rect x="1" y="8" width="5" height="5" rx="1" stroke="white" stroke-width="1.3"/><rect x="9" y="9" width="1.5" height="1.5" fill="white"/><rect x="11.5" y="9" width="1.5" height="1.5" fill="white"/><rect x="9" y="11.5" width="1.5" height="1.5" fill="white"/><rect x="11.5" y="11.5" width="1.5" height="1.5" fill="white"/></svg>
+      </div>
+      <span style="font-family:'Playfair Display',serif;font-size:20px;font-weight:500;">qreat</span>
+    </div>
+    <a href="/editor" class="backlink">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M8.5 3L4.5 7l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Wróć do edytora
+    </a>
+  </div>
+
+  <div id="noauth" class="noauth" style="display:none;">
+    <h2>Zaloguj się, aby zamówić</h2>
+    <p>Aby złożyć zamówienie na stojaki z Twoim kodem QR, zaloguj się w edytorze.</p>
+    <a href="/editor" class="btn btn-primary" style="display:inline-block;width:auto;padding:12px 26px;text-decoration:none;">Przejdź do edytora →</a>
+  </div>
+
+  <div id="app" class="wrap" style="display:none;">
+    <div class="head">
+      <h1>Zamów stojaki na kody QR</h1>
+      <p>Drukowane 3D stojaki z Twoim kodem QR. <b style="color:var(--gold)">15 zł za sztukę</b> — każdy rodzaj, rozmiar i kolor w tej samej cenie. Podgląd po lewej pokazuje, jak będzie wyglądał gotowy stojak.</p>
+    </div>
+
+    <div class="grid">
+      <!-- ── PODGLĄD (lewa) ── -->
+      <div class="preview-col">
+        <div class="preview-card">
+          <div class="stage">
+            <div>
+              <div class="stand" id="standMockup">
+                <div class="stand-body" id="standBody">
+                  <div class="stand-card">
+                    <canvas id="previewQr"></canvas>
+                    <div class="stand-text" id="previewText" style="color:var(--navy);">Zeskanuj — nasze menu</div>
+                  </div>
+                  <div class="stand-brand" id="previewBrand">qreat</div>
+                </div>
+              </div>
+              <div class="stand-base"></div>
+            </div>
+          </div>
+          <div class="dim" id="dimLabel">Klasyczny · Średni · czarny</div>
+          <div class="previewnote" id="previewNote"></div>
+        </div>
+      </div>
+
+      <!-- ── USTAWIENIA (prawa) ── -->
+      <div class="panel">
+        <div class="block">
+          <label class="field-label">Rodzaj podstawki</label>
+          <div class="cards3" id="typeGrid"></div>
+        </div>
+        <div class="block">
+          <label class="field-label">Rozmiar</label>
+          <div class="cards3" id="sizeGrid"></div>
+        </div>
+        <div class="block">
+          <label class="field-label">Kolor filamentu</label>
+          <div class="swatches" id="colorGrid"></div>
+        </div>
+
+        <div class="block two">
+          <div>
+            <label class="field-label">Napis na stojaku <span style="font-weight:500;color:rgba(27,42,74,.4);text-transform:none;letter-spacing:0;">(opcjonalnie)</span></label>
+            <input id="standText" type="text" class="field" maxlength="40" placeholder="np. Zeskanuj — nasze menu">
+            <div class="counter"><span id="textCount">0</span>/40 znaków</div>
+          </div>
+          <div>
+            <label class="field-label">Liczba sztuk</label>
+            <input id="standQty" type="number" class="field" min="1" max="500" value="10">
+          </div>
+        </div>
+
+        <div class="block" style="border-top:1px solid rgba(27,42,74,.08);padding-top:20px;">
+          <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:12px;">Dane do wysyłki</div>
+          <div style="display:flex;flex-direction:column;gap:11px;">
+            <div>
+              <label class="field-label">Imię i nazwisko / firma</label>
+              <input id="shipName" type="text" class="field" placeholder="Jan Kowalski — Pizzeria Roma">
+            </div>
+            <div>
+              <label class="field-label">Ulica i numer</label>
+              <input id="shipStreet" type="text" class="field" placeholder="ul. Kwiatowa 12/3">
+            </div>
+            <div class="grid2">
+              <div>
+                <label class="field-label">Kod pocztowy</label>
+                <input id="shipZip" type="text" class="field" placeholder="00-001">
+              </div>
+              <div>
+                <label class="field-label">Miejscowość</label>
+                <input id="shipCity" type="text" class="field" placeholder="Warszawa">
+              </div>
+            </div>
+            <div>
+              <label class="field-label">Telefon</label>
+              <input id="shipPhone" type="tel" class="field" placeholder="600 100 200">
+            </div>
+          </div>
+        </div>
+
+        <div class="summary">
+          <div id="summaryLines"></div>
+          <div class="total"><b>Razem</b><span class="amt" id="totalAmt">—</span></div>
+        </div>
+
+        <div id="err" class="err"></div>
+        <button class="btn btn-primary" id="orderBtn" onclick="sendOrder()">Zamawiam i płacę →</button>
+        <p class="foot">Płatność obsługuje Tpay — BLIK, karta, przelew. Faktura VAT na życzenie.</p>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const STAND_PRICE = 15, SHIPPING = 15;
+  const TYPES = [
+    { key:'classic', label:'Klasyczny', desc:'Prosty, stabilny' },
+    { key:'premium', label:'Premium',   desc:'Większa podstawa' },
+    { key:'logo',    label:'Z logo',    desc:'Logo restauracji' },
+  ];
+  const SIZES = [
+    { key:'s', label:'Mały',   dim:'74×105 mm'  },
+    { key:'m', label:'Średni', dim:'105×148 mm' },
+    { key:'l', label:'Duży',   dim:'148×210 mm' },
+  ];
+  const COLORS = [
+    { key:'czarny',    hex:'#1c1c1c' },
+    { key:'biały',     hex:'#f4f2ed' },
+    { key:'szary',     hex:'#8b9096' },
+    { key:'drewno',    hex:'#a9763f' },
+    { key:'złoty',     hex:'#c9a227' },
+    { key:'granatowy', hex:'#1B2A4A' },
+    { key:'bordowy',   hex:'#6d1f2c' },
+  ];
+
+  let choice = { stand:'classic', size:'m', color:'czarny' };
+  let menuUrl = '', token = '';
+
+  function labelFor(arr, key, field){ const o = arr.find(x=>x.key===key); return o ? (o[field]||o.label) : key; }
+  function colorHex(key){ const c = COLORS.find(x=>x.key===key); return c ? c.hex : '#1c1c1c'; }
+
+  /* Jasność koloru → dobór koloru tekstu na korpusie stojaka */
+  function isLight(hex){
+    const h=hex.replace('#',''); const n=h.length===3?h.split('').map(c=>c+c).join(''):h;
+    const r=parseInt(n.substr(0,2),16),g=parseInt(n.substr(2,2),16),b=parseInt(n.substr(4,2),16);
+    return (0.299*r+0.587*g+0.114*b) > 150;
+  }
+
+  function optCard(arr, field, x){
+    const active = choice[field]===x.key;
+    return `<button type="button" class="opt${active?' active':''}" onclick="pick('${field}','${x.key}')">
+      <div class="t">${x.label}</div><div class="s">${x.desc||x.dim||''}</div></button>`;
+  }
+
+  function renderPickers(){
+    document.getElementById('typeGrid').innerHTML  = TYPES.map(x=>optCard(TYPES,'stand',x)).join('');
+    document.getElementById('sizeGrid').innerHTML  = SIZES.map(x=>optCard(SIZES,'size',x)).join('');
+    document.getElementById('colorGrid').innerHTML = COLORS.map(c=>{
+      const active = choice.color===c.key;
+      return `<button type="button" class="swatch${active?' active':''}" onclick="pick('color','${c.key}')">
+        <span class="dot" style="background:${c.hex}"></span><span>${c.key}</span></button>`;
+    }).join('');
+  }
+
+  function pick(field, val){ choice[field]=val; renderPickers(); updatePreview(); }
+
+  function updatePreview(){
+    const hex = colorHex(choice.color);
+    document.getElementById('standBody').style.background = hex;
+    const light = isLight(hex);
+    document.getElementById('previewBrand').style.color = light ? 'rgba(20,30,50,.65)' : 'rgba(255,255,255,.85)';
+
+    const textEl = document.getElementById('standText');
+    const preview = document.getElementById('previewText');
+    const txt = (textEl.value || 'Zeskanuj — nasze menu');
+    preview.textContent = txt;
+    document.getElementById('textCount').textContent = textEl.value.length;
+
+    document.getElementById('dimLabel').textContent =
+      `${labelFor(TYPES,choice.stand,'label')} · ${labelFor(SIZES,choice.size,'label')} · ${choice.color}`;
+    document.getElementById('previewNote').textContent = menuUrl
+      ? '' : 'Opublikuj menu w edytorze, aby na stojaku pojawił się Twój działający kod QR.';
+
+    updateSummary();
+  }
+
+  function updateSummary(){
+    const qty = Math.max(1, Math.min(500, Math.floor(Number(document.getElementById('standQty').value)||0)||1));
+    const items = STAND_PRICE*qty, total = items+SHIPPING;
+    document.getElementById('summaryLines').innerHTML =
+      `<div class="row"><span>${labelFor(TYPES,choice.stand,'label')} · ${labelFor(SIZES,choice.size,'label')} · ${choice.color}</span><span>${STAND_PRICE} zł/szt.</span></div>`
+      + `<div class="row"><span>${qty} szt.</span><span>${items} zł</span></div>`
+      + `<div class="row"><span>Wysyłka</span><span>${SHIPPING} zł</span></div>`;
+    document.getElementById('totalAmt').textContent = `${total} zł`;
+  }
+
+  async function drawPreviewQr(){
+    if (typeof QRCode==='undefined'){ setTimeout(drawPreviewQr,200); return; }
+    await QRCode.toCanvas(document.getElementById('previewQr'), menuUrl || 'https://qreat.pl', {
+      width: 300, margin: 1, color:{ dark:'#1B2A4A', light:'#FFFFFF' }
+    });
+  }
+
+  async function sendOrder(){
+    const err = document.getElementById('err');
+    const btn = document.getElementById('orderBtn');
+    err.style.display='none';
+
+    const shipping = {
+      name:   document.getElementById('shipName').value.trim(),
+      street: document.getElementById('shipStreet').value.trim(),
+      zip:    document.getElementById('shipZip').value.trim(),
+      city:   document.getElementById('shipCity').value.trim(),
+      phone:  document.getElementById('shipPhone').value.trim(),
+    };
+    if (!shipping.name || !shipping.street || !shipping.zip || !shipping.city || !shipping.phone){
+      err.textContent='Uzupełnij wszystkie dane do wysyłki.'; err.style.display='block'; return;
+    }
+
+    const payload = {
+      ...choice,
+      qty:  Math.max(1, Math.min(500, Math.floor(Number(document.getElementById('standQty').value)||1))),
+      text: document.getElementById('standText').value.trim(),
+      shipping,
+    };
+
+    btn.style.opacity='.5'; btn.textContent='Wysyłam…';
+    try {
+      const res = await fetch('/api/tpay/order', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${token}` },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok){
+        err.textContent = data.error || 'Nie udało się złożyć zamówienia.'; err.style.display='block';
+        btn.style.opacity='1'; btn.textContent='Zamawiam i płacę →'; return;
+      }
+      if (data.url){ window.location.href = data.url; return; }
+      /* Tpay jeszcze nieskonfigurowany — zamówienie zapisane */
+      document.getElementById('app').innerHTML =
+        `<div class="noauth" style="margin:40px auto;"><h2>Zamówienie przyjęte 🎉</h2>
+         <p>Numer <b>${data.order_id}</b> na kwotę <b>${data.total} zł</b>. Wyślemy link do płatności mailem na Twój adres.</p>
+         <a href="/editor" class="btn btn-primary" style="display:inline-block;width:auto;padding:12px 26px;text-decoration:none;">Wróć do edytora</a></div>`;
+    } catch {
+      err.textContent='Błąd połączenia. Spróbuj ponownie.'; err.style.display='block';
+      btn.style.opacity='1'; btn.textContent='Zamawiam i płacę →';
+    }
+  }
+
+  async function init(){
+    try {
+      const auth = JSON.parse(localStorage.getItem('tableo_auth')||'null');
+      token = auth?.token || '';
+    } catch {}
+    if (!token){ document.getElementById('noauth').style.display='block'; return; }
+
+    /* Adres menu do podglądu kodu QR */
+    menuUrl = new URLSearchParams(location.search).get('url') || '';
+    if (!menuUrl){
+      try {
+        const r = await fetch('/api/account', { headers:{ Authorization:`Bearer ${token}` } });
+        const d = await r.json();
+        menuUrl = d?.account?.published_url || '';
+      } catch {}
+    }
+
+    document.getElementById('app').style.display='block';
+    renderPickers();
+    document.getElementById('standText').addEventListener('input', updatePreview);
+    document.getElementById('standQty').addEventListener('input', updateSummary);
+    updatePreview();
+    drawPreviewQr();
+  }
+
+  init();
+</script>
+</body>
+</html>

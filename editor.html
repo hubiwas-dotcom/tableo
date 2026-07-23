@@ -688,7 +688,7 @@
         <div class="plan-card" onclick="startCheckout('monthly')">
           <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(27,42,74,.4);margin-bottom:8px;">Miesięcznie</div>
           <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:4px;">
-            <span style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:600;color:var(--navy);">29,99</span>
+            <span style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:600;color:var(--navy);">29<span style="font-size:1.1rem;">,99</span></span>
             <span style="font-size:13px;color:rgba(27,42,74,.5);">zł/mies.</span>
           </div>
           <p style="font-size:11.5px;color:rgba(27,42,74,.45);line-height:1.5;margin-bottom:14px;">Pełny dostęp do edytora, wielojęzyczność, aktualizacje. Anuluj kiedy chcesz.</p>
@@ -700,7 +700,7 @@
         <div class="plan-card featured" onclick="startCheckout('yearly')">
           <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;">Rocznie · 2 mies. gratis</div>
           <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:4px;">
-            <span style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:600;color:var(--navy);">299,99</span>
+            <span style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:600;color:var(--navy);">299<span style="font-size:1.1rem;">,99</span></span>
             <span style="font-size:13px;color:rgba(27,42,74,.5);">zł/rok</span>
           </div>
           <p style="font-size:11.5px;color:rgba(27,42,74,.45);line-height:1.5;margin-bottom:14px;">To samo co miesięczny, ale taniej — płacisz za 10 miesięcy, korzystasz cały rok. Anuluj kiedy chcesz.</p>
@@ -2128,6 +2128,31 @@
     return new Date(ts).toLocaleString('pl-PL', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
   }
 
+  /* Słupkowy wykres wejść dzień po dniu (dane z /api/account?admin=1) */
+  function _viewsChart(daily, title) {
+    if (!Array.isArray(daily) || !daily.length) return '';
+    const max = Math.max(1, ...daily.map(d => d.count || 0));
+    const sum = daily.reduce((s, d) => s + (d.count || 0), 0);
+    const bars = daily.map(d => {
+      const h = Math.round(((d.count || 0) / max) * 100);
+      const dd = d.day.slice(8) + '.' + d.day.slice(5, 7);
+      return `<div title="${dd} — ${d.count} wejść" style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;cursor:default;">
+        <div style="font-size:9.5px;color:rgba(27,42,74,.45);">${d.count || ''}</div>
+        <div style="width:100%;max-width:26px;height:${Math.max(h, d.count ? 4 : 1)}px;border-radius:4px 4px 2px 2px;background:${d.count ? 'linear-gradient(180deg,#C9924A,#a9762f)' : 'rgba(27,42,74,.09)'};"></div>
+        <div style="font-size:9px;color:rgba(27,42,74,.35);white-space:nowrap;">${dd}</div>
+      </div>`;
+    }).join('');
+    return `<div style="padding:6px 20px 16px;">
+      <div style="background:rgba(27,42,74,.03);border:1px solid rgba(27,42,74,.07);border-radius:12px;padding:14px 16px;">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;">
+          <div style="font-size:12px;font-weight:700;color:var(--navy);">${title}</div>
+          <div style="font-size:11px;color:rgba(27,42,74,.45);">razem ${sum}</div>
+        </div>
+        <div style="display:flex;align-items:flex-end;gap:5px;height:120px;">${bars}</div>
+      </div>
+    </div>`;
+  }
+
   async function showAdminPanel() {
     const ov = document.getElementById('adminOverlay');
     ov.style.display = 'flex';
@@ -2160,9 +2185,13 @@
       <div style="font-family:'Playfair Display',serif;font-size:1.7rem;font-weight:600;color:var(--navy);line-height:1;">${n ?? 0}</div>
       <div style="font-size:11px;color:rgba(27,42,74,.5);margin-top:5px;text-transform:uppercase;letter-spacing:.04em;">${label}</div>
     </div>`;
-    const globalsHtml = `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:16px 20px;">
+    const globalsHtml = `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:16px 20px 10px;">
       ${tile(g.accounts, 'Konta')}${tile(g.active_7d, 'Aktywne (7 dni)')}${tile(g.total_views, 'Wejścia gości')}${tile(g.total_generations, 'Generacje')}
-    </div>`;
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:0 20px 6px;">
+      ${tile(g.total_qr_scans, '📷 Skany QR')}${tile(g.views_7d, 'Wejścia (7 dni)')}${tile(g.total_devices, 'Unikalne urządzenia')}${tile((g.total_views || 0) - (g.total_qr_scans || 0), 'Wejścia z linku')}
+    </div>
+    ${_viewsChart(g.views_daily, 'Wejścia do menu — ostatnie 14 dni (wszystkie konta)')}`;
 
     /* ── Alerty ── */
     const a = data.alerts || {};
@@ -2177,7 +2206,9 @@
       : `<div style="padding:4px 20px 16px;"><div style="font-size:12px;color:rgba(27,42,74,.4);">✅ Brak alertów.</div></div>`;
 
     /* ── Tabela kont ── */
-    const rows = (data.users || []).map(u => {
+    window._adminViewsDaily = {};
+    const rows = (data.users || []).map((u, idx) => {
+      window._adminViewsDaily[idx] = { daily: u.views_daily, email: u.email };
       let status;
       if (u.paid)              status = `<span style="color:#2e7d5b;font-weight:600;">Opłacony${u.paid_plan ? ' · ' + esc(u.paid_plan) : ''}</span>`;
       else if (u.trial_expired) status = `<span style="color:#c0392b;font-weight:600;">Trial wygasł</span>`;
@@ -2194,11 +2225,22 @@
         <td style="padding:9px 12px;white-space:nowrap;color:rgba(27,42,74,.7);">${_adminDate(u.last_login)}</td>
         <td style="padding:9px 12px;text-align:center;color:rgba(27,42,74,.7);">${u.login_count}</td>
         <td style="padding:9px 12px;text-align:center;color:rgba(27,42,74,.7);">${u.generation_count}</td>
-        <td style="padding:9px 12px;text-align:center;color:rgba(27,42,74,.7);white-space:nowrap;">${u.views_7d} / ${u.views_total}</td>
-        <td style="padding:9px 12px;text-align:center;color:rgba(27,42,74,.7);">${u.qr_downloads}</td>
+        <td style="padding:9px 12px;text-align:center;color:rgba(27,42,74,.7);white-space:nowrap;">
+          ${u.slug && u.views_total
+            ? `<button onclick="toggleViewsChart(${idx})" title="Pokaż wykres dzienny" style="background:none;border:none;padding:0;font:inherit;color:var(--gold);font-weight:700;cursor:pointer;text-decoration:underline;">${u.views_7d} / ${u.views_total}</button>`
+            : `${u.views_7d} / ${u.views_total}`}
+        </td>
+        <td style="padding:9px 12px;text-align:center;color:rgba(27,42,74,.7);white-space:nowrap;">
+          <span title="Skany kodu QR (wejścia bez referrera)" style="color:#2e7d5b;font-weight:600;">📷 ${u.views_qr ?? 0}</span>
+          <span style="color:rgba(27,42,74,.3);"> / </span>
+          <span title="Wejścia z linku, wyszukiwarki, social">🔗 ${u.views_link ?? 0}</span>
+        </td>
+        <td style="padding:9px 12px;text-align:center;color:rgba(27,42,74,.7);" title="Unikalne urządzenia gości">${u.views_devices ?? 0}</td>
+        <td style="padding:9px 12px;text-align:center;color:rgba(27,42,74,.7);" title="Pobrania kodu QR przez właściciela">${u.qr_downloads}</td>
         <td style="padding:9px 12px;white-space:nowrap;">${status}</td>
         <td style="padding:9px 12px;text-align:center;">${problem}</td>
-      </tr>`;
+      </tr>
+      <tr id="viewsChartRow${idx}" style="display:none;"><td colspan="11" style="padding:0;background:rgba(27,42,74,.02);"><div id="viewsChartCell${idx}"></div></td></tr>`;
     }).join('');
 
     const tableHtml = `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;">
@@ -2210,12 +2252,14 @@
             <th style="padding:11px 12px;text-align:center;">Logowań</th>
             <th style="padding:11px 12px;text-align:center;">Generacji</th>
             <th style="padding:11px 12px;text-align:center;">Wejścia 7d/total</th>
-            <th style="padding:11px 12px;text-align:center;">QR</th>
+            <th style="padding:11px 12px;text-align:center;">Skan QR / link</th>
+            <th style="padding:11px 12px;text-align:center;">Urządzeń</th>
+            <th style="padding:11px 12px;text-align:center;">Pobrań QR</th>
             <th style="padding:11px 12px;">Status / trial</th>
             <th style="padding:11px 12px;text-align:center;">Problem</th>
           </tr>
         </thead>
-        <tbody>${rows || '<tr><td colspan="9" style="padding:20px;text-align:center;color:rgba(27,42,74,.4);">Brak użytkowników.</td></tr>'}</tbody>
+        <tbody>${rows || '<tr><td colspan="11" style="padding:20px;text-align:center;color:rgba(27,42,74,.4);">Brak użytkowników.</td></tr>'}</tbody>
       </table></div>`;
 
     /* ── Audyt stałych linków (na żądanie — skanuje wszystkie menu) ── */
@@ -2225,6 +2269,19 @@
     </div>`;
 
     document.getElementById('adminTableWrap').innerHTML = globalsHtml + alertsHtml + auditHtml + tableHtml;
+  }
+
+  /* Rozwija wykres dzienny wejść dla pojedynczego konta */
+  function toggleViewsChart(idx) {
+    const row  = document.getElementById('viewsChartRow' + idx);
+    const cell = document.getElementById('viewsChartCell' + idx);
+    if (!row || !cell) return;
+    const open = row.style.display !== 'none';
+    if (open) { row.style.display = 'none'; return; }
+    const rec = (window._adminViewsDaily || {})[idx] || {};
+    const email = String(rec.email || '').replace(/[<>&"]/g, c => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;' }[c]));
+    cell.innerHTML = _viewsChart(rec.daily, `Wejścia — ${email} (14 dni)`);
+    row.style.display = '';
   }
 
   /* ── Audyt linków: wykrywa konta z >1 opublikowanym menu (ślad po bugu

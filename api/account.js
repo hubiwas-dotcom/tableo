@@ -110,7 +110,8 @@ module.exports = async function handler(req, res) {
     }
     const TRIAL_MS = parseInt(process.env.TRIAL_DAYS || '7') * 24 * 60 * 60 * 1000;
     const now = Date.now();
-    const days7 = Array.from({ length: 7 }, (_, i) => new Date(now - i * 86400000).toISOString().slice(0, 10));
+    /* Ostatnie 14 dni, od najstarszego — do wykresu wejść w panelu */
+    const days14 = Array.from({ length: 14 }, (_, i) => new Date(now - (13 - i) * 86400000).toISOString().slice(0, 10));
 
     /* ── Audyt stałych linków: GET /api/account?admin=1&audit=1 ──
        Wypisuje wszystkie opublikowane menu per konto. Jeśli konto ma >1 slug,
@@ -160,16 +161,25 @@ module.exports = async function handler(req, res) {
       const trialExpired = !isPaidRow && firstGen ? (now - firstGen > TRIAL_MS) : false;
       const daysLeft   = firstGen ? Math.max(0, Math.ceil((firstGen + TRIAL_MS - now) / 86400000)) : null;
 
-      /* Anonimowe wejścia gości z licznika beacon (views:{slug} + dzienne) */
-      let viewsTotal = 0, views7 = 0;
+      /* Anonimowe wejścia gości z licznika beacon (views:{slug} + dzienne,
+         rozbicie na skany QR / wejścia z linku, unikalne urządzenia) */
+      let viewsTotal = 0, views7 = 0, viewsQr = 0, viewsLink = 0, devices = 0;
+      let viewsDaily = days14.map(d => ({ day: d, count: 0 }));
       const slug = acc?.slug || null;
       if (slug) {
-        const [tot, ...daily] = await Promise.all([
+        const [tot, qr, link, dev, ...daily] = await Promise.all([
           kvGet(`views:${slug}`),
-          ...days7.map(d => kvGet(`views:${slug}:${d}`)),
+          kvGet(`views:${slug}:src:qr`),
+          kvGet(`views:${slug}:src:link`),
+          kvGet(`views:${slug}:devices`),
+          ...days14.map(d => kvGet(`views:${slug}:${d}`)),
         ]);
         viewsTotal = Number(tot) || 0;
-        views7 = daily.reduce((s, v) => s + (Number(v) || 0), 0);
+        viewsQr    = Number(qr)  || 0;
+        viewsLink  = Number(link)|| 0;
+        devices    = Number(dev) || 0;
+        viewsDaily = days14.map((d, i) => ({ day: d, count: Number(daily[i]) || 0 }));
+        views7 = viewsDaily.slice(-7).reduce((s, x) => s + x.count, 0);
       }
 
       return {
@@ -184,6 +194,10 @@ module.exports = async function handler(req, res) {
         qr_downloads:      acc?.qr_downloads || 0,
         views_total:       viewsTotal,
         views_7d:          views7,
+        views_qr:          viewsQr,
+        views_link:        viewsLink,
+        views_devices:     devices,
+        views_daily:       viewsDaily,
         error_count:       acc?.error_count || 0,
         last_error:        acc?.last_error || null,
         last_error_at:     acc?.last_error_at || null,
@@ -205,6 +219,14 @@ module.exports = async function handler(req, res) {
       active_7d:         active7d,
       total_views:       rows.reduce((s, r) => s + r.views_total, 0),
       total_generations: rows.reduce((s, r) => s + r.generation_count, 0),
+      total_qr_scans:    rows.reduce((s, r) => s + r.views_qr, 0),
+      total_devices:     rows.reduce((s, r) => s + r.views_devices, 0),
+      views_7d:          rows.reduce((s, r) => s + r.views_7d, 0),
+      /* Suma wejść wszystkich menu dzień po dniu (14 dni) — wykres w panelu */
+      views_daily:       days14.map((d, i) => ({
+        day:   d,
+        count: rows.reduce((s, r) => s + (r.views_daily[i]?.count || 0), 0),
+      })),
     };
 
     /* Alerty */

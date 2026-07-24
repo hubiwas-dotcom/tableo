@@ -136,18 +136,14 @@ const STANDS = {
   premium: { label: 'Premium' },
   logo:    { label: 'Z logo restauracji' },
 };
-const SIZES = {
-  s: { label: 'Mały (74×105 mm)' },
-  m: { label: 'Średni (105×148 mm)' },
-  l: { label: 'Duży (148×210 mm)' },
-};
 const COLORS = ['czarny', 'biały', 'szary', 'drewno', 'złoty', 'granatowy', 'bordowy'];
 
-function priceOrder(standKey, sizeKey, qty) {
-  if (!STANDS[standKey] || !SIZES[sizeKey]) return null;
+function priceOrder(qty) {
   const items = STAND_PRICE * qty;
   return { unit: STAND_PRICE, items, shipping: SHIPPING, total: Number((items + SHIPPING).toFixed(2)) };
 }
+/* Wymiary płytki w mm — niezależne szerokość i wysokość */
+const MM_MIN = 40, MM_MAX = 300;
 
 /* ══════════════════════════════════════════════════
    CHECKOUT  →  POST /api/tpay/checkout
@@ -230,16 +226,21 @@ const handler = async function(req, res) {
     let body = {};
     try { const raw = await collectBody(req); body = JSON.parse(raw.toString()); } catch {}
 
-    const stand = String(body.stand || '');
-    const size  = String(body.size  || '');
-    const color = String(body.color || '');
+    const stand     = String(body.stand || '');
+    const widthMm   = Math.round(Number(body.width_mm)  || 0);
+    const heightMm  = Math.round(Number(body.height_mm) || 0);
+    const plateColor = String(body.plate_color || '');
+    const codeColor  = String(body.code_color  || '');
     const qty   = Math.floor(Number(body.qty) || 0);
     const text  = String(body.text || '').trim().slice(0, 40);
 
-    if (!STANDS[stand])          { res.status(400).json({ error: 'Wybierz rodzaj podstawki.' }); return; }
-    if (!SIZES[size])            { res.status(400).json({ error: 'Wybierz rozmiar.' }); return; }
-    if (!COLORS.includes(color)) { res.status(400).json({ error: 'Wybierz kolor filamentu.' }); return; }
-    if (qty < 1 || qty > 500)    { res.status(400).json({ error: 'Liczba sztuk: od 1 do 500.' }); return; }
+    if (!STANDS[stand])                  { res.status(400).json({ error: 'Wybierz rodzaj podstawki.' }); return; }
+    if (widthMm  < MM_MIN || widthMm  > MM_MAX) { res.status(400).json({ error: `Szerokość: ${MM_MIN}–${MM_MAX} mm.` }); return; }
+    if (heightMm < MM_MIN || heightMm > MM_MAX) { res.status(400).json({ error: `Wysokość: ${MM_MIN}–${MM_MAX} mm.` }); return; }
+    if (!COLORS.includes(plateColor))    { res.status(400).json({ error: 'Wybierz kolor płytki.' }); return; }
+    if (!COLORS.includes(codeColor))     { res.status(400).json({ error: 'Wybierz kolor kodu.' }); return; }
+    if (plateColor === codeColor)        { res.status(400).json({ error: 'Kolor kodu musi różnić się od koloru płytki.' }); return; }
+    if (qty < 1 || qty > 500)            { res.status(400).json({ error: 'Liczba sztuk: od 1 do 500.' }); return; }
 
     const ship = body.shipping || {};
     const name    = String(ship.name    || '').trim();
@@ -251,8 +252,7 @@ const handler = async function(req, res) {
       res.status(400).json({ error: 'Uzupełnij dane do wysyłki.' }); return;
     }
 
-    const price = priceOrder(stand, size, qty);
-    if (!price) { res.status(400).json({ error: 'Nieprawidłowa konfiguracja.' }); return; }
+    const price = priceOrder(qty);
 
     /* Slug konta — żeby wiadomo było jaki kod QR nadrukować na stojaki */
     const account = await kvGet(`account:${user.email}`);
@@ -263,7 +263,7 @@ const handler = async function(req, res) {
       email:      user.email,
       created_at: Date.now(),
       status:     'awaiting_payment',
-      config:     { stand, stand_label: STANDS[stand].label, size, size_label: SIZES[size].label, color, qty, text },
+      config:     { stand, stand_label: STANDS[stand].label, width_mm: widthMm, height_mm: heightMm, plate_color: plateColor, code_color: codeColor, qty, text },
       price,
       shipping:   { name, street, zip, city, phone },
       menu_slug:  account?.slug || null,
@@ -281,7 +281,7 @@ const handler = async function(req, res) {
       const origin = `https://${req.headers.host || 'www.qreat.pl'}`;
       const result = await tpayRequest('POST', '/transactions', accessToken, {
         amount:      price.total,
-        description: `Qreat — stojaki QR ${STANDS[stand].label} ${qty} szt. (${orderId})`,
+        description: `Qreat — stojaki QR ${STANDS[stand].label} ${widthMm}x${heightMm}mm ${qty} szt. (${orderId})`,
         payer: { email: user.email, name: name || user.email },
         callbacks: {
           notification: { url: `${origin}/api/tpay/webhook` },

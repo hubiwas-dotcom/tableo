@@ -35,16 +35,14 @@
     /* Preview (lewa) */
     .preview-col{position:sticky;top:96px;}
     .preview-card{background:linear-gradient(160deg,#eef1f5,#e2e6ec);border:1px solid rgba(27,42,74,.1);border-radius:20px;box-shadow:0 10px 40px rgba(27,42,74,.08);padding:38px 30px 30px;text-align:center;}
-    .stage{display:flex;align-items:flex-end;justify-content:center;min-height:340px;perspective:900px;}
+    .stage{display:flex;align-items:center;justify-content:center;min-height:340px;}
 
-    /* Mockup stojaka */
-    .stand{position:relative;width:220px;transform:rotateX(4deg);transform-style:preserve-3d;}
-    .stand-body{border-radius:16px 16px 10px 10px;padding:20px 18px 26px;box-shadow:0 22px 40px rgba(15,29,51,.28), inset 0 2px 0 rgba(255,255,255,.14);transition:background .2s;}
-    .stand-card{background:#fff;border-radius:9px;padding:14px 12px 12px;box-shadow:0 4px 12px rgba(0,0,0,.14);}
-    .stand-card canvas{display:block;width:100%;height:auto;border-radius:4px;}
-    .stand-text{font-size:11px;font-weight:700;letter-spacing:.02em;margin-top:9px;line-height:1.3;word-break:break-word;}
-    .stand-brand{font-family:'Playfair Display',serif;font-size:12px;font-weight:600;margin-top:14px;opacity:.9;transition:color .2s;}
-    .stand-base{width:150px;height:16px;margin:0 auto;border-radius:50%;background:rgba(15,29,51,.16);filter:blur(3px);margin-top:-6px;}
+    /* Makieta płytki QR (druk 3D) — płaska płytka jak w podglądzie 3D */
+    .plate{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;
+      border-radius:14px;box-shadow:0 22px 44px rgba(15,29,51,.26), inset 0 2px 0 rgba(255,255,255,.14), inset 0 -3px 6px rgba(0,0,0,.12);
+      transition:background .2s;overflow:hidden;}
+    #plateQr{display:block;image-rendering:pixelated;}
+    .plate-text{font-weight:700;letter-spacing:.02em;text-align:center;line-height:1.2;word-break:break-word;transition:color .2s;}
     .dim{font-size:12px;color:rgba(27,42,74,.55);margin-top:20px;font-weight:600;}
     .previewnote{font-size:11.5px;color:rgba(27,42,74,.42);margin-top:6px;line-height:1.5;}
 
@@ -67,6 +65,11 @@
     .swatch .dot{width:17px;height:17px;border-radius:50%;border:1px solid rgba(27,42,74,.2);flex-shrink:0;}
     .swatch span{font-size:12px;font-weight:500;color:var(--navy);}
     .swatch.active span{font-weight:700;}
+    .size-row{display:flex;align-items:center;gap:14px;}
+    .size-row input[type=range]{flex:1;accent-color:var(--gold);height:5px;cursor:pointer;}
+    .size-num{display:flex;align-items:center;gap:6px;border:1.5px solid rgba(27,42,74,.14);border-radius:10px;padding:8px 11px;background:white;}
+    .size-num input{width:56px;border:none;outline:none;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;color:var(--navy);text-align:right;background:none;}
+    .size-num span{font-size:12px;color:rgba(27,42,74,.4);font-weight:600;}
     .two{display:grid;grid-template-columns:2fr 1fr;gap:12px;}
     .grid2{display:grid;grid-template-columns:1fr 2fr;gap:11px;}
     .counter{font-size:10.5px;color:rgba(27,42,74,.35);margin-top:4px;}
@@ -116,7 +119,7 @@
   <div id="app" class="wrap" style="display:none;">
     <div class="head">
       <h1>Zamów stojaki na kody QR</h1>
-      <p>Drukowane 3D stojaki z Twoim kodem QR. <b style="color:var(--gold)">15 zł za sztukę</b> — każdy rodzaj, rozmiar i kolor w tej samej cenie. Podgląd po lewej pokazuje, jak będzie wyglądał gotowy stojak.</p>
+      <p>Drukowane 3D płytki z Twoim kodem QR. <b style="color:var(--gold)">15 zł za sztukę</b> — dowolny rozmiar i kolory w tej samej cenie. Ustaw szerokość, wysokość, kolor płytki i kolor kodu — podgląd po lewej pokazuje gotowy produkt.</p>
     </div>
 
     <div class="grid">
@@ -124,20 +127,12 @@
       <div class="preview-col">
         <div class="preview-card">
           <div class="stage">
-            <div>
-              <div class="stand" id="standMockup">
-                <div class="stand-body" id="standBody">
-                  <div class="stand-card">
-                    <canvas id="previewQr"></canvas>
-                    <div class="stand-text" id="previewText" style="color:var(--navy);">Zeskanuj — nasze menu</div>
-                  </div>
-                  <div class="stand-brand" id="previewBrand">qreat</div>
-                </div>
-              </div>
-              <div class="stand-base"></div>
+            <div class="plate" id="plate">
+              <canvas id="plateQr"></canvas>
+              <div class="plate-text" id="plateText">Zeskanuj — nasze menu</div>
             </div>
           </div>
-          <div class="dim" id="dimLabel">Klasyczny · Średni · czarny</div>
+          <div class="dim" id="dimLabel">—</div>
           <div class="previewnote" id="previewNote"></div>
         </div>
       </div>
@@ -148,13 +143,34 @@
           <label class="field-label">Rodzaj podstawki</label>
           <div class="cards3" id="typeGrid"></div>
         </div>
+
         <div class="block">
-          <label class="field-label">Rozmiar</label>
-          <div class="cards3" id="sizeGrid"></div>
+          <label class="field-label">Szerokość płytki (mm)</label>
+          <div class="size-row">
+            <input type="range" id="wRange" min="40" max="300" step="1" value="80">
+            <div class="size-num"><input type="number" id="wNum" min="40" max="300" step="1" value="80"><span>mm</span></div>
+          </div>
         </div>
         <div class="block">
-          <label class="field-label">Kolor filamentu</label>
-          <div class="swatches" id="colorGrid"></div>
+          <label class="field-label">Wysokość płytki (mm)</label>
+          <div class="size-row">
+            <input type="range" id="hRange" min="40" max="300" step="1" value="110">
+            <div class="size-num"><input type="number" id="hNum" min="40" max="300" step="1" value="110"><span>mm</span></div>
+          </div>
+          <label style="display:flex;align-items:center;gap:8px;margin-top:11px;font-size:12.5px;color:rgba(27,42,74,.6);cursor:pointer;font-weight:600;">
+            <input type="checkbox" id="lockRatio" style="width:15px;height:15px;accent-color:var(--gold);cursor:pointer;">
+            Kwadrat (ta sama szerokość i wysokość)
+          </label>
+        </div>
+
+        <div class="block">
+          <label class="field-label">Kolor płytki</label>
+          <div class="swatches" id="plateColorGrid"></div>
+        </div>
+        <div class="block">
+          <label class="field-label">Kolor kodu</label>
+          <div class="swatches" id="codeColorGrid"></div>
+          <div id="contrastWarn" style="display:none;margin-top:10px;background:#FEF2F2;border:1px solid rgba(239,68,68,.25);color:#991B1B;border-radius:10px;padding:9px 13px;font-size:12px;font-weight:600;line-height:1.5;">⚠️ Za mały kontrast między kodem a płytką — kod może się nie zeskanować. Wybierz mocniej kontrastujące kolory.</div>
         </div>
 
         <div class="block two">
@@ -215,15 +231,11 @@
 
 <script>
   const STAND_PRICE = 15, SHIPPING = 15;
+  const MM_MIN = 40, MM_MAX = 300;
   const TYPES = [
     { key:'classic', label:'Klasyczny', desc:'Prosty, stabilny' },
     { key:'premium', label:'Premium',   desc:'Większa podstawa' },
     { key:'logo',    label:'Z logo',    desc:'Logo restauracji' },
-  ];
-  const SIZES = [
-    { key:'s', label:'Mały',   dim:'74×105 mm'  },
-    { key:'m', label:'Średni', dim:'105×148 mm' },
-    { key:'l', label:'Duży',   dim:'148×210 mm' },
   ];
   const COLORS = [
     { key:'czarny',    hex:'#1c1c1c' },
@@ -235,54 +247,96 @@
     { key:'bordowy',   hex:'#6d1f2c' },
   ];
 
-  let choice = { stand:'classic', size:'m', color:'czarny' };
+  let choice = { stand:'classic', plate:'granatowy', code:'bordowy', w:80, h:110 };
   let menuUrl = '', token = '';
 
   function labelFor(arr, key, field){ const o = arr.find(x=>x.key===key); return o ? (o[field]||o.label) : key; }
   function colorHex(key){ const c = COLORS.find(x=>x.key===key); return c ? c.hex : '#1c1c1c'; }
 
-  /* Jasność koloru → dobór koloru tekstu na korpusie stojaka */
   function isLight(hex){
     const h=hex.replace('#',''); const n=h.length===3?h.split('').map(c=>c+c).join(''):h;
     const r=parseInt(n.substr(0,2),16),g=parseInt(n.substr(2,2),16),b=parseInt(n.substr(4,2),16);
     return (0.299*r+0.587*g+0.114*b) > 150;
   }
+  function luminance(hex){
+    const h=hex.replace('#',''); const n=h.length===3?h.split('').map(c=>c+c).join(''):h;
+    const rgb=[0,2,4].map(i=>parseInt(n.substr(i,2),16)/255).map(v=>v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4));
+    return 0.2126*rgb[0]+0.7152*rgb[1]+0.0722*rgb[2];
+  }
+  function contrastRatio(a,b){ const l1=luminance(a),l2=luminance(b); return (Math.max(l1,l2)+0.05)/(Math.min(l1,l2)+0.05); }
+  const clampMm = mm => Math.max(MM_MIN, Math.min(MM_MAX, Math.round(mm)||MM_MIN));
 
   function optCard(arr, field, x){
     const active = choice[field]===x.key;
     return `<button type="button" class="opt${active?' active':''}" onclick="pick('${field}','${x.key}')">
-      <div class="t">${x.label}</div><div class="s">${x.desc||x.dim||''}</div></button>`;
+      <div class="t">${x.label}</div><div class="s">${x.desc||''}</div></button>`;
+  }
+  function swatch(field, c){
+    const active = choice[field]===c.key;
+    return `<button type="button" class="swatch${active?' active':''}" onclick="pick('${field}','${c.key}')">
+      <span class="dot" style="background:${c.hex}"></span><span>${c.key}</span></button>`;
   }
 
   function renderPickers(){
-    document.getElementById('typeGrid').innerHTML  = TYPES.map(x=>optCard(TYPES,'stand',x)).join('');
-    document.getElementById('sizeGrid').innerHTML  = SIZES.map(x=>optCard(SIZES,'size',x)).join('');
-    document.getElementById('colorGrid').innerHTML = COLORS.map(c=>{
-      const active = choice.color===c.key;
-      return `<button type="button" class="swatch${active?' active':''}" onclick="pick('color','${c.key}')">
-        <span class="dot" style="background:${c.hex}"></span><span>${c.key}</span></button>`;
-    }).join('');
+    document.getElementById('typeGrid').innerHTML       = TYPES.map(x=>optCard(TYPES,'stand',x)).join('');
+    document.getElementById('plateColorGrid').innerHTML = COLORS.map(c=>swatch('plate',c)).join('');
+    document.getElementById('codeColorGrid').innerHTML  = COLORS.map(c=>swatch('code',c)).join('');
   }
 
-  function pick(field, val){ choice[field]=val; renderPickers(); updatePreview(); }
+  function pick(field, val){ choice[field]=val; renderPickers(); renderPlate(); }
 
-  function updatePreview(){
-    const hex = colorHex(choice.color);
-    document.getElementById('standBody').style.background = hex;
-    const light = isLight(hex);
-    document.getElementById('previewBrand').style.color = light ? 'rgba(20,30,50,.65)' : 'rgba(255,255,255,.85)';
+  function setDim(field, mm){
+    const v = clampMm(mm);
+    if (document.getElementById('lockRatio').checked){ choice.w=v; choice.h=v; }
+    else choice[field]=v;
+    syncDimInputs();
+    renderPlate();
+  }
+  function syncDimInputs(){
+    document.getElementById('wRange').value = choice.w;
+    document.getElementById('wNum').value   = choice.w;
+    document.getElementById('hRange').value = choice.h;
+    document.getElementById('hNum').value   = choice.h;
+  }
 
-    const textEl = document.getElementById('standText');
-    const preview = document.getElementById('previewText');
-    const txt = (textEl.value || 'Zeskanuj — nasze menu');
-    preview.textContent = txt;
-    document.getElementById('textCount').textContent = textEl.value.length;
+  /* Makieta płaskiej płytki QR — kod renderowany w kolorze kodu bezpośrednio
+     na kolorze płytki (jak w druku 3D), proporcje = szerokość:wysokość. */
+  async function renderPlate(){
+    if (typeof QRCode==='undefined'){ setTimeout(renderPlate,200); return; }
+    const W = choice.w, H = choice.h;
+    const plateHex = colorHex(choice.plate), codeHex = colorHex(choice.code);
 
-    document.getElementById('dimLabel').textContent =
-      `${labelFor(TYPES,choice.stand,'label')} · ${labelFor(SIZES,choice.size,'label')} · ${choice.color}`;
+    const box = 290;
+    const scale = Math.min(box/W, box/H);
+    const pw = Math.round(W*scale), ph = Math.round(H*scale);
+    const pad = Math.round(Math.min(pw,ph)*0.09);
+
+    const plate = document.getElementById('plate');
+    plate.style.width = pw+'px';
+    plate.style.height = ph+'px';
+    plate.style.background = plateHex;
+    plate.style.padding = pad+'px';
+
+    const hasText = !!document.getElementById('standText').value.trim();
+    const side = Math.round((Math.min(pw,ph) - pad*2) * (hasText ? 0.82 : 0.94));
+    const canvas = document.getElementById('plateQr');
+    await QRCode.toCanvas(canvas, menuUrl || 'https://qreat.pl', {
+      width: Math.max(120, side*2), margin: 1, color:{ dark: codeHex, light: plateHex }
+    });
+    canvas.style.width = side+'px';
+    canvas.style.height = side+'px';
+
+    const t = document.getElementById('plateText');
+    t.textContent = document.getElementById('standText').value.trim() || 'Zeskanuj — nasze menu';
+    t.style.color = isLight(plateHex) ? 'rgba(20,28,45,.85)' : 'rgba(255,255,255,.9)';
+    t.style.fontSize = Math.max(8, Math.round(Math.min(pw,ph)*0.068))+'px';
+    t.style.marginTop = Math.round(Math.min(pw,ph)*0.04)+'px';
+
+    document.getElementById('dimLabel').textContent = `${W} × ${H} mm · płytka: ${choice.plate} · kod: ${choice.code}`;
     document.getElementById('previewNote').textContent = menuUrl
-      ? '' : 'Opublikuj menu w edytorze, aby na stojaku pojawił się Twój działający kod QR.';
-
+      ? '' : 'Opublikuj menu w edytorze, aby na płytce pojawił się Twój działający kod QR.';
+    document.getElementById('contrastWarn').style.display = contrastRatio(plateHex, codeHex) < 2.2 ? 'block' : 'none';
+    document.getElementById('textCount').textContent = document.getElementById('standText').value.length;
     updateSummary();
   }
 
@@ -290,17 +344,11 @@
     const qty = Math.max(1, Math.min(500, Math.floor(Number(document.getElementById('standQty').value)||0)||1));
     const items = STAND_PRICE*qty, total = items+SHIPPING;
     document.getElementById('summaryLines').innerHTML =
-      `<div class="row"><span>${labelFor(TYPES,choice.stand,'label')} · ${labelFor(SIZES,choice.size,'label')} · ${choice.color}</span><span>${STAND_PRICE} zł/szt.</span></div>`
+      `<div class="row"><span>${labelFor(TYPES,choice.stand,'label')} · ${choice.w}×${choice.h} mm</span><span>${STAND_PRICE} zł/szt.</span></div>`
+      + `<div class="row"><span>Płytka ${choice.plate} · kod ${choice.code}</span><span></span></div>`
       + `<div class="row"><span>${qty} szt.</span><span>${items} zł</span></div>`
       + `<div class="row"><span>Wysyłka</span><span>${SHIPPING} zł</span></div>`;
     document.getElementById('totalAmt').textContent = `${total} zł`;
-  }
-
-  async function drawPreviewQr(){
-    if (typeof QRCode==='undefined'){ setTimeout(drawPreviewQr,200); return; }
-    await QRCode.toCanvas(document.getElementById('previewQr'), menuUrl || 'https://qreat.pl', {
-      width: 300, margin: 1, color:{ dark:'#1B2A4A', light:'#FFFFFF' }
-    });
   }
 
   async function sendOrder(){
@@ -324,7 +372,11 @@
     }
 
     const payload = {
-      ...choice,
+      stand:       choice.stand,
+      width_mm:    choice.w,
+      height_mm:   choice.h,
+      plate_color: choice.plate,
+      code_color:  choice.code,
       qty:  Math.max(1, Math.min(500, Math.floor(Number(document.getElementById('standQty').value)||1))),
       text: document.getElementById('standText').value.trim(),
       shipping,
@@ -373,10 +425,14 @@
 
     document.getElementById('app').style.display='block';
     renderPickers();
-    document.getElementById('standText').addEventListener('input', updatePreview);
+    syncDimInputs();
+    document.getElementById('wRange').addEventListener('input', e => setDim('w', +e.target.value));
+    document.getElementById('wNum').addEventListener('input',   e => setDim('w', +e.target.value));
+    document.getElementById('hRange').addEventListener('input', e => setDim('h', +e.target.value));
+    document.getElementById('hNum').addEventListener('input',   e => setDim('h', +e.target.value));
+    document.getElementById('standText').addEventListener('input', renderPlate);
     document.getElementById('standQty').addEventListener('input', updateSummary);
-    updatePreview();
-    drawPreviewQr();
+    renderPlate();
   }
 
   init();

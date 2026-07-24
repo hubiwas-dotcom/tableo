@@ -2297,7 +2297,7 @@
           <span style="background:${st.color}1a;color:${st.color};border:1px solid ${st.color}44;border-radius:100px;padding:3px 10px;font-size:11px;font-weight:700;">${st.label}</span>
         </div>
         <div style="font-size:12px;color:rgba(27,42,74,.7);line-height:1.75;">
-          <b>${esc(c.stand_label)}</b> · ${esc(c.size_label)} · kolor: <b>${esc(c.color)}</b> · <b>${c.qty} szt.</b>
+          <b>${esc(c.stand_label)}</b> · <b>${c.width_mm}×${c.height_mm} mm</b> · płytka: <b>${esc(c.plate_color)}</b> · kod: <b>${esc(c.code_color)}</b> · <b>${c.qty} szt.</b>
           ${c.text ? `<br>Napis: „${esc(c.text)}"` : ''}
           <br>Kod QR menu: ${o.menu_url ? `<a href="${esc(o.menu_url)}" target="_blank" style="color:var(--gold);font-weight:600;">${esc(o.menu_slug)}</a>` : '<span style="color:rgba(27,42,74,.35);">brak opublikowanego menu</span>'}
           <br><b style="color:var(--navy);">${o.price?.total} zł</b> <span style="color:rgba(27,42,74,.4);">(${o.price?.items} zł + ${o.price?.shipping} zł wysyłka)</span>

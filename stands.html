@@ -202,6 +202,10 @@
           <div class="total"><b>Razem</b><span class="amt" id="totalAmt">—</span></div>
         </div>
 
+        <label style="display:flex;align-items:flex-start;gap:9px;margin-bottom:14px;font-size:12px;color:rgba(27,42,74,.65);line-height:1.5;cursor:pointer;">
+          <input type="checkbox" id="acceptTerms" style="width:16px;height:16px;margin-top:1px;accent-color:var(--gold);cursor:pointer;flex-shrink:0;">
+          <span>Zamawiam z obowiązkiem zapłaty i akceptuję <a href="/regulamin" target="_blank">regulamin</a> oraz <a href="/polityka-prywatnosci" target="_blank">politykę prywatności</a>. Wiem, że stojaki są personalizowane, więc nie podlegają zwrotowi w ramach odstąpienia od umowy.</span>
+        </label>
         <div id="err" class="err"></div>
         <button class="btn btn-primary" id="orderBtn" onclick="sendOrder()">Zamawiam i płacę →</button>
         <p class="foot">Płatność obsługuje Tpay — BLIK, karta, przelew. Faktura VAT na życzenie.</p>
@@ -303,6 +307,10 @@
     const err = document.getElementById('err');
     const btn = document.getElementById('orderBtn');
     err.style.display='none';
+
+    if (!document.getElementById('acceptTerms').checked){
+      err.textContent='Zaznacz akceptację regulaminu i polityki prywatności.'; err.style.display='block'; return;
+    }
 
     const shipping = {
       name:   document.getElementById('shipName').value.trim(),

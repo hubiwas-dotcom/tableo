@@ -2298,6 +2298,7 @@
         </div>
         <div style="font-size:12px;color:rgba(27,42,74,.7);line-height:1.75;">
           <b>${esc(c.stand_label)}</b> · <b>${c.width_mm}×${c.height_mm} mm</b> · płytka: <b>${esc(c.plate_color)}</b> · kod: <b>${esc(c.code_color)}</b> · <b>${c.qty} szt.</b>
+          <br>Układ: kod ${c.qr_scale ?? '—'}% · pozycja ${esc(c.block_pos || '—')} · napis ${esc(c.text_pos || '—')}${c.text_pos !== 'none' ? ` (${c.text_scale ?? 100}%, ${esc(c.text_color || '—')})` : ''}
           ${c.text ? `<br>Napis: „${esc(c.text)}"` : ''}
           <br>Kod QR menu: ${o.menu_url ? `<a href="${esc(o.menu_url)}" target="_blank" style="color:var(--gold);font-weight:600;">${esc(o.menu_slug)}</a>` : '<span style="color:rgba(27,42,74,.35);">brak opublikowanego menu</span>'}
           <br><b style="color:var(--navy);">${o.price?.total} zł</b> <span style="color:rgba(27,42,74,.4);">(${o.price?.items} zł + ${o.price?.shipping} zł wysyłka)</span>
@@ -2740,7 +2741,7 @@
         </div>
         <div style="font-size:11px;color:rgba(27,42,74,.38);margin-top:8px;line-height:1.55;">
           Po ustawieniu DNS wyślij nam email na
-          <a href="mailto:kontakt@qreat.pl" style="color:var(--sage);font-weight:600;">kontakt@qreat.pl</a>
+          <a href="mailto:hubiwas@gmail.com" style="color:var(--sage);font-weight:600;">hubiwas@gmail.com</a>
           — aktywujemy domenę w ciągu 24h.
         </div>
       </div>` : `

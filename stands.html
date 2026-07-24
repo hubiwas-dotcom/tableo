@@ -173,9 +173,22 @@
           <div id="contrastWarn" style="display:none;margin-top:10px;background:#FEF2F2;border:1px solid rgba(239,68,68,.25);color:#991B1B;border-radius:10px;padding:9px 13px;font-size:12px;font-weight:600;line-height:1.5;">⚠️ Za mały kontrast między kodem a płytką — kod może się nie zeskanować. Wybierz mocniej kontrastujące kolory.</div>
         </div>
 
+        <div class="block">
+          <label class="field-label">Wielkość kodu</label>
+          <div class="size-row">
+            <input type="range" id="qrScale" min="40" max="95" step="1" value="72">
+            <div class="size-num"><input type="number" id="qrScaleNum" min="40" max="95" step="1" value="72"><span>%</span></div>
+          </div>
+        </div>
+
+        <div class="block">
+          <label class="field-label">Pozycja kodu i napisu</label>
+          <div class="cards3" id="blockPosGrid"></div>
+        </div>
+
         <div class="block two">
           <div>
-            <label class="field-label">Napis na stojaku <span style="font-weight:500;color:rgba(27,42,74,.4);text-transform:none;letter-spacing:0;">(opcjonalnie)</span></label>
+            <label class="field-label">Napis na płytce <span style="font-weight:500;color:rgba(27,42,74,.4);text-transform:none;letter-spacing:0;">(opcjonalnie)</span></label>
             <input id="standText" type="text" class="field" maxlength="40" placeholder="np. Zeskanuj — nasze menu">
             <div class="counter"><span id="textCount">0</span>/40 znaków</div>
           </div>
@@ -183,6 +196,22 @@
             <label class="field-label">Liczba sztuk</label>
             <input id="standQty" type="number" class="field" min="1" max="500" value="10">
           </div>
+        </div>
+
+        <div class="block">
+          <label class="field-label">Umiejscowienie napisu</label>
+          <div class="cards3" id="textPosGrid"></div>
+        </div>
+        <div class="block">
+          <label class="field-label">Wielkość napisu</label>
+          <div class="size-row">
+            <input type="range" id="textScale" min="50" max="180" step="5" value="100">
+            <div class="size-num"><input type="number" id="textScaleNum" min="50" max="180" step="5" value="100"><span>%</span></div>
+          </div>
+        </div>
+        <div class="block">
+          <label class="field-label">Kolor napisu</label>
+          <div class="swatches" id="textColorGrid"></div>
         </div>
 
         <div class="block" style="border-top:1px solid rgba(27,42,74,.08);padding-top:20px;">
@@ -237,6 +266,16 @@
     { key:'premium', label:'Premium',   desc:'Większa podstawa' },
     { key:'logo',    label:'Z logo',    desc:'Logo restauracji' },
   ];
+  const BLOCK_POS = [
+    { key:'top',    label:'Góra' },
+    { key:'center', label:'Środek' },
+    { key:'bottom', label:'Dół' },
+  ];
+  const TEXT_POS = [
+    { key:'above', label:'Nad kodem' },
+    { key:'below', label:'Pod kodem' },
+    { key:'none',  label:'Bez napisu' },
+  ];
   const COLORS = [
     { key:'czarny',    hex:'#1c1c1c' },
     { key:'biały',     hex:'#f4f2ed' },
@@ -247,7 +286,8 @@
     { key:'bordowy',   hex:'#6d1f2c' },
   ];
 
-  let choice = { stand:'classic', plate:'granatowy', code:'bordowy', w:80, h:110 };
+  let choice = { stand:'classic', plate:'granatowy', code:'bordowy', w:80, h:110,
+    qrScale:72, blockPos:'center', textPos:'below', textScale:100, textColor:'biały' };
   let menuUrl = '', token = '';
 
   function labelFor(arr, key, field){ const o = arr.find(x=>x.key===key); return o ? (o[field]||o.label) : key; }
@@ -281,6 +321,17 @@
     document.getElementById('typeGrid').innerHTML       = TYPES.map(x=>optCard(TYPES,'stand',x)).join('');
     document.getElementById('plateColorGrid').innerHTML = COLORS.map(c=>swatch('plate',c)).join('');
     document.getElementById('codeColorGrid').innerHTML  = COLORS.map(c=>swatch('code',c)).join('');
+    document.getElementById('blockPosGrid').innerHTML   = BLOCK_POS.map(x=>optCard(BLOCK_POS,'blockPos',x)).join('');
+    document.getElementById('textPosGrid').innerHTML    = TEXT_POS.map(x=>optCard(TEXT_POS,'textPos',x)).join('');
+    document.getElementById('textColorGrid').innerHTML  = COLORS.map(c=>swatch('textColor',c)).join('');
+  }
+
+  const clampPct = (v,lo,hi) => Math.max(lo, Math.min(hi, Math.round(v)||lo));
+  function setScale(field, val, lo, hi, rangeId, numId){
+    choice[field] = clampPct(val, lo, hi);
+    document.getElementById(rangeId).value = choice[field];
+    document.getElementById(numId).value   = choice[field];
+    renderPlate();
   }
 
   function pick(field, val){ choice[field]=val; renderPickers(); renderPlate(); }
@@ -316,21 +367,33 @@
     plate.style.height = ph+'px';
     plate.style.background = plateHex;
     plate.style.padding = pad+'px';
+    plate.style.gap = Math.round(Math.min(pw,ph)*0.04)+'px';
+    /* Pozycja bloku kod+napis: góra / środek / dół */
+    plate.style.justifyContent = choice.blockPos==='top' ? 'flex-start'
+      : choice.blockPos==='bottom' ? 'flex-end' : 'center';
 
-    const hasText = !!document.getElementById('standText').value.trim();
-    const side = Math.round((Math.min(pw,ph) - pad*2) * (hasText ? 0.82 : 0.94));
+    /* Wielkość kodu — % dostępnej przestrzeni (bez marginesu płytki) */
+    const side = Math.round((Math.min(pw,ph) - pad*2) * (choice.qrScale/100));
     const canvas = document.getElementById('plateQr');
     await QRCode.toCanvas(canvas, menuUrl || 'https://qreat.pl', {
       width: Math.max(120, side*2), margin: 1, color:{ dark: codeHex, light: plateHex }
     });
     canvas.style.width = side+'px';
     canvas.style.height = side+'px';
+    canvas.style.order = '0';
 
     const t = document.getElementById('plateText');
-    t.textContent = document.getElementById('standText').value.trim() || 'Zeskanuj — nasze menu';
-    t.style.color = isLight(plateHex) ? 'rgba(20,28,45,.85)' : 'rgba(255,255,255,.9)';
-    t.style.fontSize = Math.max(8, Math.round(Math.min(pw,ph)*0.068))+'px';
-    t.style.marginTop = Math.round(Math.min(pw,ph)*0.04)+'px';
+    if (choice.textPos==='none'){
+      t.style.display = 'none';
+    } else {
+      t.style.display = '';
+      t.textContent = document.getElementById('standText').value.trim() || 'Zeskanuj — nasze menu';
+      t.style.color = colorHex(choice.textColor);
+      t.style.fontSize = Math.max(7, Math.round(Math.min(pw,ph)*0.068*(choice.textScale/100)))+'px';
+      t.style.marginTop = '0';
+      /* Nad kodem / pod kodem — kolejność we flexboxie */
+      t.style.order = choice.textPos==='above' ? '-1' : '1';
+    }
 
     document.getElementById('dimLabel').textContent = `${W} × ${H} mm · płytka: ${choice.plate} · kod: ${choice.code}`;
     document.getElementById('previewNote').textContent = menuUrl
@@ -377,6 +440,11 @@
       height_mm:   choice.h,
       plate_color: choice.plate,
       code_color:  choice.code,
+      qr_scale:    choice.qrScale,
+      block_pos:   choice.blockPos,
+      text_pos:    choice.textPos,
+      text_scale:  choice.textScale,
+      text_color:  choice.textColor,
       qty:  Math.max(1, Math.min(500, Math.floor(Number(document.getElementById('standQty').value)||1))),
       text: document.getElementById('standText').value.trim(),
       shipping,
@@ -430,6 +498,10 @@
     document.getElementById('wNum').addEventListener('input',   e => setDim('w', +e.target.value));
     document.getElementById('hRange').addEventListener('input', e => setDim('h', +e.target.value));
     document.getElementById('hNum').addEventListener('input',   e => setDim('h', +e.target.value));
+    document.getElementById('qrScale').addEventListener('input',     e => setScale('qrScale', +e.target.value, 40, 95, 'qrScale', 'qrScaleNum'));
+    document.getElementById('qrScaleNum').addEventListener('input',  e => setScale('qrScale', +e.target.value, 40, 95, 'qrScale', 'qrScaleNum'));
+    document.getElementById('textScale').addEventListener('input',   e => setScale('textScale', +e.target.value, 50, 180, 'textScale', 'textScaleNum'));
+    document.getElementById('textScaleNum').addEventListener('input',e => setScale('textScale', +e.target.value, 50, 180, 'textScale', 'textScaleNum'));
     document.getElementById('standText').addEventListener('input', renderPlate);
     document.getElementById('standQty').addEventListener('input', updateSummary);
     renderPlate();

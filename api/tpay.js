@@ -242,6 +242,14 @@ const handler = async function(req, res) {
     if (plateColor === codeColor)        { res.status(400).json({ error: 'Kolor kodu musi różnić się od koloru płytki.' }); return; }
     if (qty < 1 || qty > 500)            { res.status(400).json({ error: 'Liczba sztuk: od 1 do 500.' }); return; }
 
+    /* Układ na płytce (kosmetyka druku) — sanityzacja z bezpiecznymi domyślnymi */
+    const clampInt = (v, lo, hi, def) => { const n = Math.round(Number(v)); return Number.isFinite(n) ? Math.max(lo, Math.min(hi, n)) : def; };
+    const qrScale   = clampInt(body.qr_scale, 40, 95, 72);
+    const textScale = clampInt(body.text_scale, 50, 180, 100);
+    const blockPos  = ['top','center','bottom'].includes(body.block_pos) ? body.block_pos : 'center';
+    const textPos   = ['above','below','none'].includes(body.text_pos)   ? body.text_pos  : 'below';
+    const textColor = COLORS.includes(String(body.text_color)) ? String(body.text_color) : (plateColor === 'biały' ? 'czarny' : 'biały');
+
     const ship = body.shipping || {};
     const name    = String(ship.name    || '').trim();
     const street  = String(ship.street  || '').trim();
@@ -263,7 +271,7 @@ const handler = async function(req, res) {
       email:      user.email,
       created_at: Date.now(),
       status:     'awaiting_payment',
-      config:     { stand, stand_label: STANDS[stand].label, width_mm: widthMm, height_mm: heightMm, plate_color: plateColor, code_color: codeColor, qty, text },
+      config:     { stand, stand_label: STANDS[stand].label, width_mm: widthMm, height_mm: heightMm, plate_color: plateColor, code_color: codeColor, qr_scale: qrScale, block_pos: blockPos, text_pos: textPos, text_scale: textScale, text_color: textColor, qty, text },
       price,
       shipping:   { name, street, zip, city, phone },
       menu_slug:  account?.slug || null,

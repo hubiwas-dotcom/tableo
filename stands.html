@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Zamów stojaki na kody QR — Qreat</title>
+  <title>Kody QR z druku 3D — zapytanie — Qreat</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -25,74 +25,42 @@
     .backlink{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--navy);text-decoration:none;padding:8px 14px;border-radius:100px;border:1px solid rgba(27,42,74,.14);transition:background .15s;}
     .backlink:hover{background:var(--cream-mid);}
 
-    .wrap{max-width:1120px;margin:0 auto;padding:32px 28px 60px;}
-    .head{margin-bottom:26px;}
-    .head h1{font-size:1.8rem;font-weight:500;margin-bottom:6px;}
-    .head p{font-size:13.5px;color:rgba(27,42,74,.55);line-height:1.6;}
+    .wrap{max-width:960px;margin:0 auto;padding:36px 28px 70px;}
+    .grid{display:grid;grid-template-columns:minmax(0,380px) 1fr;gap:28px;align-items:start;}
 
-    .grid{display:grid;grid-template-columns:minmax(0,440px) 1fr;gap:28px;align-items:start;}
+    /* Wizualizacja produktu */
+    .show-col{position:sticky;top:96px;}
+    .show-card{background:linear-gradient(160deg,#eef1f5,#e2e6ec);border:1px solid rgba(27,42,74,.1);border-radius:20px;box-shadow:0 10px 40px rgba(27,42,74,.08);padding:32px 28px;text-align:center;}
+    .plate{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:190px;height:250px;border-radius:16px;background:var(--navy);padding:20px;box-shadow:0 22px 44px rgba(15,29,51,.28), inset 0 2px 0 rgba(255,255,255,.14), inset 0 -3px 6px rgba(0,0,0,.14);}
+    .plate canvas{width:130px;height:130px;display:block;border-radius:6px;}
+    .plate .cap{margin-top:14px;font-size:12px;font-weight:700;color:rgba(255,255,255,.9);letter-spacing:.02em;}
+    .chips{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-top:20px;}
+    .chip{background:white;border:1px solid rgba(27,42,74,.12);border-radius:100px;padding:6px 13px;font-size:11.5px;font-weight:600;color:var(--navy);}
 
-    /* Preview (lewa) */
-    .preview-col{position:sticky;top:96px;}
-    .preview-card{background:linear-gradient(160deg,#eef1f5,#e2e6ec);border:1px solid rgba(27,42,74,.1);border-radius:20px;box-shadow:0 10px 40px rgba(27,42,74,.08);padding:38px 30px 30px;text-align:center;}
-    .stage{display:flex;align-items:center;justify-content:center;min-height:340px;}
-
-    /* Makieta płytki QR (druk 3D) — płaska płytka jak w podglądzie 3D */
-    .plate{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;
-      border-radius:14px;box-shadow:0 22px 44px rgba(15,29,51,.26), inset 0 2px 0 rgba(255,255,255,.14), inset 0 -3px 6px rgba(0,0,0,.12);
-      transition:background .2s;overflow:hidden;}
-    #plateQr{display:block;image-rendering:pixelated;}
-    .plate-text{font-weight:700;letter-spacing:.02em;text-align:center;line-height:1.2;word-break:break-word;transition:color .2s;}
-    .dim{font-size:12px;color:rgba(27,42,74,.55);margin-top:20px;font-weight:600;}
-    .previewnote{font-size:11.5px;color:rgba(27,42,74,.42);margin-top:6px;line-height:1.5;}
-
-    /* Controls (prawa) */
-    .panel{background:white;border:1px solid rgba(27,42,74,.09);border-radius:18px;padding:24px 26px;}
-    .field-label{display:block;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(27,42,74,.45);margin-bottom:9px;}
-    .block{margin-bottom:22px;}
+    /* Formularz */
+    .panel{background:white;border:1px solid rgba(27,42,74,.09);border-radius:18px;padding:26px 28px;}
+    .panel h1{font-size:1.55rem;font-weight:500;margin-bottom:6px;}
+    .panel .lead{font-size:13.5px;color:rgba(27,42,74,.55);line-height:1.6;margin-bottom:22px;}
+    .field-label{display:block;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(27,42,74,.45);margin-bottom:8px;}
     .field{width:100%;padding:11px 14px;border:1.5px solid rgba(27,42,74,.13);border-radius:12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;color:var(--navy);background:white;outline:none;transition:border-color .15s;}
     .field:focus{border-color:var(--gold);}
-    .cards3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
-    .opt{text-align:left;padding:11px 12px;border-radius:12px;cursor:pointer;background:white;border:1.5px solid rgba(27,42,74,.13);transition:border-color .15s,background .15s;font-family:'Plus Jakarta Sans',sans-serif;}
-    .opt:hover{border-color:rgba(27,42,74,.28);}
-    .opt.active{border-color:var(--gold);background:var(--gold-pale);}
-    .opt .t{font-size:12.5px;font-weight:700;color:var(--navy);}
-    .opt .s{font-size:10.5px;color:rgba(27,42,74,.42);margin-top:2px;}
-    .swatches{display:flex;flex-wrap:wrap;gap:8px;}
-    .swatch{display:flex;align-items:center;gap:7px;padding:7px 13px 7px 8px;border-radius:100px;cursor:pointer;background:white;border:1.5px solid rgba(27,42,74,.13);transition:border-color .15s,background .15s;font-family:'Plus Jakarta Sans',sans-serif;}
-    .swatch:hover{border-color:rgba(27,42,74,.28);}
-    .swatch.active{border-color:var(--gold);background:var(--gold-pale);}
-    .swatch .dot{width:17px;height:17px;border-radius:50%;border:1px solid rgba(27,42,74,.2);flex-shrink:0;}
-    .swatch span{font-size:12px;font-weight:500;color:var(--navy);}
-    .swatch.active span{font-weight:700;}
-    .size-row{display:flex;align-items:center;gap:14px;}
-    .size-row input[type=range]{flex:1;accent-color:var(--gold);height:5px;cursor:pointer;}
-    .size-num{display:flex;align-items:center;gap:6px;border:1.5px solid rgba(27,42,74,.14);border-radius:10px;padding:8px 11px;background:white;}
-    .size-num input{width:56px;border:none;outline:none;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;color:var(--navy);text-align:right;background:none;}
-    .size-num span{font-size:12px;color:rgba(27,42,74,.4);font-weight:600;}
-    .two{display:grid;grid-template-columns:2fr 1fr;gap:12px;}
-    .grid2{display:grid;grid-template-columns:1fr 2fr;gap:11px;}
-    .counter{font-size:10.5px;color:rgba(27,42,74,.35);margin-top:4px;}
-
-    .summary{background:var(--cream);border:1px solid rgba(27,42,74,.09);border-radius:14px;padding:15px 17px;margin-bottom:16px;}
-    .summary .row{display:flex;justify-content:space-between;font-size:12.5px;color:rgba(27,42,74,.65);line-height:1.9;}
-    .summary .total{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid rgba(27,42,74,.09);margin-top:10px;padding-top:10px;}
-    .summary .total b{font-size:13px;color:var(--navy);}
-    .summary .total .amt{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:600;color:var(--gold);}
+    textarea.field{resize:vertical;min-height:88px;}
+    .row{margin-bottom:15px;}
+    .two{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 
     .err{display:none;background:#FEF2F2;border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#991B1B;font-weight:500;}
     .btn{width:100%;padding:13px;border-radius:12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;border:none;transition:opacity .15s,transform .15s;}
     .btn:hover{opacity:.9;transform:translateY(-1px);}
     .btn-primary{background:var(--gold);color:white;}
-    .foot{font-size:11px;color:rgba(27,42,74,.35);text-align:center;margin-top:12px;line-height:1.5;}
+    .foot{font-size:11.5px;color:rgba(27,42,74,.4);text-align:center;margin-top:13px;line-height:1.5;}
+    .ok{display:none;background:var(--sage-pale);border:1px solid rgba(123,170,143,.3);border-radius:12px;padding:18px;text-align:center;margin-bottom:8px;}
+    .ok .em{font-size:22px;margin-bottom:6px;}
+    .ok .t{font-size:14px;font-weight:700;color:var(--navy);}
+    .ok .s{font-size:12.5px;color:rgba(27,42,74,.55);margin-top:4px;line-height:1.55;}
 
-    .noauth{max-width:460px;margin:80px auto;text-align:center;background:white;border:1px solid rgba(27,42,74,.1);border-radius:20px;padding:38px 32px;}
-    .noauth h2{font-size:1.4rem;font-weight:500;margin-bottom:10px;}
-    .noauth p{font-size:13.5px;color:rgba(27,42,74,.55);line-height:1.65;margin-bottom:22px;}
-
-    @media(max-width:820px){
+    @media(max-width:780px){
       .grid{grid-template-columns:1fr;}
-      .preview-col{position:static;}
+      .show-col{position:static;}
     }
   </style>
 </head>
@@ -110,404 +78,122 @@
     </a>
   </div>
 
-  <div id="noauth" class="noauth" style="display:none;">
-    <h2>Zaloguj się, aby zamówić</h2>
-    <p>Aby złożyć zamówienie na stojaki z Twoim kodem QR, zaloguj się w edytorze.</p>
-    <a href="/editor" class="btn btn-primary" style="display:inline-block;width:auto;padding:12px 26px;text-decoration:none;">Przejdź do edytora →</a>
-  </div>
-
-  <div id="app" class="wrap" style="display:none;">
-    <div class="head">
-      <h1>Zamów stojaki na kody QR</h1>
-      <p>Drukowane 3D płytki z Twoim kodem QR. <b style="color:var(--gold)">15 zł za sztukę</b> — dowolny rozmiar i kolory w tej samej cenie. Ustaw szerokość, wysokość, kolor płytki i kolor kodu — podgląd po lewej pokazuje gotowy produkt.</p>
-    </div>
-
+  <div class="wrap">
     <div class="grid">
-      <!-- ── PODGLĄD (lewa) ── -->
-      <div class="preview-col">
-        <div class="preview-card">
-          <div class="stage">
-            <div class="plate" id="plate">
-              <canvas id="plateQr"></canvas>
-              <div class="plate-text" id="plateText">Zeskanuj — nasze menu</div>
-            </div>
+      <!-- ── Wizualizacja produktu ── -->
+      <div class="show-col">
+        <div class="show-card">
+          <div class="plate">
+            <canvas id="showQr"></canvas>
+            <div class="cap">Twoje menu</div>
           </div>
-          <div class="dim" id="dimLabel">—</div>
-          <div class="previewnote" id="previewNote"></div>
+          <div class="chips">
+            <span class="chip">Druk 3D</span>
+            <span class="chip">Twój kod QR</span>
+            <span class="chip">Trwałe</span>
+            <span class="chip">Na każdy stolik</span>
+          </div>
         </div>
       </div>
 
-      <!-- ── USTAWIENIA (prawa) ── -->
+      <!-- ── Formularz kontaktowy ── -->
       <div class="panel">
-        <div class="block">
-          <label class="field-label">Rodzaj podstawki</label>
-          <div class="cards3" id="typeGrid"></div>
+        <h1>Kody QR z druku 3D</h1>
+        <p class="lead">Trwałe, drukowane 3D tabliczki z Twoim kodem QR — gość skanuje i widzi menu. Zostaw dane, a skontaktujemy się z wyceną i szczegółami (rozmiar, kolory, ilość).</p>
+
+        <div id="ok" class="ok">
+          <div class="em">✅</div>
+          <div class="t">Zapytanie gotowe do wysłania</div>
+          <div class="s">Otworzyliśmy Twój program pocztowy z gotową wiadomością. Jeśli się nie otworzył, napisz na <b>hubiwas@gmail.com</b>.</div>
         </div>
 
-        <div class="block">
-          <label class="field-label">Szerokość płytki (mm)</label>
-          <div class="size-row">
-            <input type="range" id="wRange" min="40" max="300" step="1" value="80">
-            <div class="size-num"><input type="number" id="wNum" min="40" max="300" step="1" value="80"><span>mm</span></div>
+        <div id="form">
+          <div class="row">
+            <label class="field-label">Imię i nazwa restauracji</label>
+            <input id="cName" type="text" class="field" placeholder="Jan Kowalski — Pizzeria Roma">
           </div>
-        </div>
-        <div class="block">
-          <label class="field-label">Wysokość płytki (mm)</label>
-          <div class="size-row">
-            <input type="range" id="hRange" min="40" max="300" step="1" value="110">
-            <div class="size-num"><input type="number" id="hNum" min="40" max="300" step="1" value="110"><span>mm</span></div>
-          </div>
-          <label style="display:flex;align-items:center;gap:8px;margin-top:11px;font-size:12.5px;color:rgba(27,42,74,.6);cursor:pointer;font-weight:600;">
-            <input type="checkbox" id="lockRatio" style="width:15px;height:15px;accent-color:var(--gold);cursor:pointer;">
-            Kwadrat (ta sama szerokość i wysokość)
-          </label>
-        </div>
-
-        <div class="block">
-          <label class="field-label">Kolor płytki</label>
-          <div class="swatches" id="plateColorGrid"></div>
-        </div>
-        <div class="block">
-          <label class="field-label">Kolor kodu</label>
-          <div class="swatches" id="codeColorGrid"></div>
-          <div id="contrastWarn" style="display:none;margin-top:10px;background:#FEF2F2;border:1px solid rgba(239,68,68,.25);color:#991B1B;border-radius:10px;padding:9px 13px;font-size:12px;font-weight:600;line-height:1.5;">⚠️ Za mały kontrast między kodem a płytką — kod może się nie zeskanować. Wybierz mocniej kontrastujące kolory.</div>
-        </div>
-
-        <div class="block">
-          <label class="field-label">Wielkość kodu</label>
-          <div class="size-row">
-            <input type="range" id="qrScale" min="40" max="95" step="1" value="72">
-            <div class="size-num"><input type="number" id="qrScaleNum" min="40" max="95" step="1" value="72"><span>%</span></div>
-          </div>
-        </div>
-
-        <div class="block">
-          <label class="field-label">Pozycja kodu i napisu</label>
-          <div class="cards3" id="blockPosGrid"></div>
-        </div>
-
-        <div class="block two">
-          <div>
-            <label class="field-label">Napis na płytce <span style="font-weight:500;color:rgba(27,42,74,.4);text-transform:none;letter-spacing:0;">(opcjonalnie)</span></label>
-            <input id="standText" type="text" class="field" maxlength="40" placeholder="np. Zeskanuj — nasze menu">
-            <div class="counter"><span id="textCount">0</span>/40 znaków</div>
-          </div>
-          <div>
-            <label class="field-label">Liczba sztuk</label>
-            <input id="standQty" type="number" class="field" min="1" max="500" value="10">
-          </div>
-        </div>
-
-        <div class="block">
-          <label class="field-label">Umiejscowienie napisu</label>
-          <div class="cards3" id="textPosGrid"></div>
-        </div>
-        <div class="block">
-          <label class="field-label">Wielkość napisu</label>
-          <div class="size-row">
-            <input type="range" id="textScale" min="50" max="180" step="5" value="100">
-            <div class="size-num"><input type="number" id="textScaleNum" min="50" max="180" step="5" value="100"><span>%</span></div>
-          </div>
-        </div>
-        <div class="block">
-          <label class="field-label">Kolor napisu</label>
-          <div class="swatches" id="textColorGrid"></div>
-        </div>
-
-        <div class="block" style="border-top:1px solid rgba(27,42,74,.08);padding-top:20px;">
-          <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:12px;">Dane do wysyłki</div>
-          <div style="display:flex;flex-direction:column;gap:11px;">
-            <div>
-              <label class="field-label">Imię i nazwisko / firma</label>
-              <input id="shipName" type="text" class="field" placeholder="Jan Kowalski — Pizzeria Roma">
+          <div class="two">
+            <div class="row">
+              <label class="field-label">Email</label>
+              <input id="cEmail" type="email" class="field" placeholder="twoj@email.pl">
             </div>
-            <div>
-              <label class="field-label">Ulica i numer</label>
-              <input id="shipStreet" type="text" class="field" placeholder="ul. Kwiatowa 12/3">
-            </div>
-            <div class="grid2">
-              <div>
-                <label class="field-label">Kod pocztowy</label>
-                <input id="shipZip" type="text" class="field" placeholder="00-001">
-              </div>
-              <div>
-                <label class="field-label">Miejscowość</label>
-                <input id="shipCity" type="text" class="field" placeholder="Warszawa">
-              </div>
-            </div>
-            <div>
+            <div class="row">
               <label class="field-label">Telefon</label>
-              <input id="shipPhone" type="tel" class="field" placeholder="600 100 200">
+              <input id="cPhone" type="tel" class="field" placeholder="600 100 200">
             </div>
           </div>
-        </div>
+          <div class="row">
+            <label class="field-label">Liczba sztuk <span style="font-weight:500;color:rgba(27,42,74,.4);text-transform:none;letter-spacing:0;">(orientacyjnie)</span></label>
+            <input id="cQty" type="number" min="1" class="field" placeholder="np. 10">
+          </div>
+          <div class="row">
+            <label class="field-label">Uwagi</label>
+            <textarea id="cNotes" class="field" placeholder="np. kolor tabliczki, rozmiar, logo restauracji…"></textarea>
+          </div>
 
-        <div class="summary">
-          <div id="summaryLines"></div>
-          <div class="total"><b>Razem</b><span class="amt" id="totalAmt">—</span></div>
+          <div id="err" class="err"></div>
+          <button class="btn btn-primary" id="sendBtn" onclick="sendInquiry()">Wyślij zapytanie →</button>
+          <p class="foot">Odpowiadamy zwykle w ciągu 24 godzin w dni robocze.</p>
         </div>
-
-        <label style="display:flex;align-items:flex-start;gap:9px;margin-bottom:14px;font-size:12px;color:rgba(27,42,74,.65);line-height:1.5;cursor:pointer;">
-          <input type="checkbox" id="acceptTerms" style="width:16px;height:16px;margin-top:1px;accent-color:var(--gold);cursor:pointer;flex-shrink:0;">
-          <span>Zamawiam z obowiązkiem zapłaty i akceptuję <a href="/regulamin" target="_blank">regulamin</a> oraz <a href="/polityka-prywatnosci" target="_blank">politykę prywatności</a>. Wiem, że stojaki są personalizowane, więc nie podlegają zwrotowi w ramach odstąpienia od umowy.</span>
-        </label>
-        <div id="err" class="err"></div>
-        <button class="btn btn-primary" id="orderBtn" onclick="sendOrder()">Zamawiam i płacę →</button>
-        <p class="foot">Płatność obsługuje Tpay — BLIK, karta, przelew. Faktura VAT na życzenie.</p>
       </div>
     </div>
   </div>
 
 <script>
-  const STAND_PRICE = 15, SHIPPING = 15;
-  const MM_MIN = 40, MM_MAX = 300;
-  const TYPES = [
-    { key:'classic', label:'Klasyczny', desc:'Prosty, stabilny' },
-    { key:'premium', label:'Premium',   desc:'Większa podstawa' },
-    { key:'logo',    label:'Z logo',    desc:'Logo restauracji' },
-  ];
-  const BLOCK_POS = [
-    { key:'top',    label:'Góra' },
-    { key:'center', label:'Środek' },
-    { key:'bottom', label:'Dół' },
-  ];
-  const TEXT_POS = [
-    { key:'above', label:'Nad kodem' },
-    { key:'below', label:'Pod kodem' },
-    { key:'none',  label:'Bez napisu' },
-  ];
-  const COLORS = [
-    { key:'czarny',    hex:'#1c1c1c' },
-    { key:'biały',     hex:'#f4f2ed' },
-    { key:'szary',     hex:'#8b9096' },
-    { key:'drewno',    hex:'#a9763f' },
-    { key:'złoty',     hex:'#c9a227' },
-    { key:'granatowy', hex:'#1B2A4A' },
-    { key:'bordowy',   hex:'#6d1f2c' },
-  ];
-
-  let choice = { stand:'classic', plate:'granatowy', code:'bordowy', w:80, h:110,
-    qrScale:72, blockPos:'center', textPos:'below', textScale:100, textColor:'biały' };
-  let menuUrl = '', token = '';
-
-  function labelFor(arr, key, field){ const o = arr.find(x=>x.key===key); return o ? (o[field]||o.label) : key; }
-  function colorHex(key){ const c = COLORS.find(x=>x.key===key); return c ? c.hex : '#1c1c1c'; }
-
-  function isLight(hex){
-    const h=hex.replace('#',''); const n=h.length===3?h.split('').map(c=>c+c).join(''):h;
-    const r=parseInt(n.substr(0,2),16),g=parseInt(n.substr(2,2),16),b=parseInt(n.substr(4,2),16);
-    return (0.299*r+0.587*g+0.114*b) > 150;
-  }
-  function luminance(hex){
-    const h=hex.replace('#',''); const n=h.length===3?h.split('').map(c=>c+c).join(''):h;
-    const rgb=[0,2,4].map(i=>parseInt(n.substr(i,2),16)/255).map(v=>v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4));
-    return 0.2126*rgb[0]+0.7152*rgb[1]+0.0722*rgb[2];
-  }
-  function contrastRatio(a,b){ const l1=luminance(a),l2=luminance(b); return (Math.max(l1,l2)+0.05)/(Math.min(l1,l2)+0.05); }
-  const clampMm = mm => Math.max(MM_MIN, Math.min(MM_MAX, Math.round(mm)||MM_MIN));
-
-  function optCard(arr, field, x){
-    const active = choice[field]===x.key;
-    return `<button type="button" class="opt${active?' active':''}" onclick="pick('${field}','${x.key}')">
-      <div class="t">${x.label}</div><div class="s">${x.desc||''}</div></button>`;
-  }
-  function swatch(field, c){
-    const active = choice[field]===c.key;
-    return `<button type="button" class="swatch${active?' active':''}" onclick="pick('${field}','${c.key}')">
-      <span class="dot" style="background:${c.hex}"></span><span>${c.key}</span></button>`;
-  }
-
-  function renderPickers(){
-    document.getElementById('typeGrid').innerHTML       = TYPES.map(x=>optCard(TYPES,'stand',x)).join('');
-    document.getElementById('plateColorGrid').innerHTML = COLORS.map(c=>swatch('plate',c)).join('');
-    document.getElementById('codeColorGrid').innerHTML  = COLORS.map(c=>swatch('code',c)).join('');
-    document.getElementById('blockPosGrid').innerHTML   = BLOCK_POS.map(x=>optCard(BLOCK_POS,'blockPos',x)).join('');
-    document.getElementById('textPosGrid').innerHTML    = TEXT_POS.map(x=>optCard(TEXT_POS,'textPos',x)).join('');
-    document.getElementById('textColorGrid').innerHTML  = COLORS.map(c=>swatch('textColor',c)).join('');
-  }
-
-  const clampPct = (v,lo,hi) => Math.max(lo, Math.min(hi, Math.round(v)||lo));
-  function setScale(field, val, lo, hi, rangeId, numId){
-    choice[field] = clampPct(val, lo, hi);
-    document.getElementById(rangeId).value = choice[field];
-    document.getElementById(numId).value   = choice[field];
-    renderPlate();
-  }
-
-  function pick(field, val){ choice[field]=val; renderPickers(); renderPlate(); }
-
-  function setDim(field, mm){
-    const v = clampMm(mm);
-    if (document.getElementById('lockRatio').checked){ choice.w=v; choice.h=v; }
-    else choice[field]=v;
-    syncDimInputs();
-    renderPlate();
-  }
-  function syncDimInputs(){
-    document.getElementById('wRange').value = choice.w;
-    document.getElementById('wNum').value   = choice.w;
-    document.getElementById('hRange').value = choice.h;
-    document.getElementById('hNum').value   = choice.h;
-  }
-
-  /* Makieta płaskiej płytki QR — kod renderowany w kolorze kodu bezpośrednio
-     na kolorze płytki (jak w druku 3D), proporcje = szerokość:wysokość. */
-  async function renderPlate(){
-    if (typeof QRCode==='undefined'){ setTimeout(renderPlate,200); return; }
-    const W = choice.w, H = choice.h;
-    const plateHex = colorHex(choice.plate), codeHex = colorHex(choice.code);
-
-    const box = 290;
-    const scale = Math.min(box/W, box/H);
-    const pw = Math.round(W*scale), ph = Math.round(H*scale);
-    const pad = Math.round(Math.min(pw,ph)*0.09);
-
-    const plate = document.getElementById('plate');
-    plate.style.width = pw+'px';
-    plate.style.height = ph+'px';
-    plate.style.background = plateHex;
-    plate.style.padding = pad+'px';
-    plate.style.gap = Math.round(Math.min(pw,ph)*0.04)+'px';
-    /* Pozycja bloku kod+napis: góra / środek / dół */
-    plate.style.justifyContent = choice.blockPos==='top' ? 'flex-start'
-      : choice.blockPos==='bottom' ? 'flex-end' : 'center';
-
-    /* Wielkość kodu — % dostępnej przestrzeni (bez marginesu płytki) */
-    const side = Math.round((Math.min(pw,ph) - pad*2) * (choice.qrScale/100));
-    const canvas = document.getElementById('plateQr');
-    await QRCode.toCanvas(canvas, menuUrl || 'https://qreat.pl', {
-      width: Math.max(120, side*2), margin: 1, color:{ dark: codeHex, light: plateHex }
-    });
-    canvas.style.width = side+'px';
-    canvas.style.height = side+'px';
-    canvas.style.order = '0';
-
-    const t = document.getElementById('plateText');
-    if (choice.textPos==='none'){
-      t.style.display = 'none';
-    } else {
-      t.style.display = '';
-      t.textContent = document.getElementById('standText').value.trim() || 'Zeskanuj — nasze menu';
-      t.style.color = colorHex(choice.textColor);
-      t.style.fontSize = Math.max(7, Math.round(Math.min(pw,ph)*0.068*(choice.textScale/100)))+'px';
-      t.style.marginTop = '0';
-      /* Nad kodem / pod kodem — kolejność we flexboxie */
-      t.style.order = choice.textPos==='above' ? '-1' : '1';
-    }
-
-    document.getElementById('dimLabel').textContent = `${W} × ${H} mm · płytka: ${choice.plate} · kod: ${choice.code}`;
-    document.getElementById('previewNote').textContent = menuUrl
-      ? '' : 'Opublikuj menu w edytorze, aby na płytce pojawił się Twój działający kod QR.';
-    document.getElementById('contrastWarn').style.display = contrastRatio(plateHex, codeHex) < 2.2 ? 'block' : 'none';
-    document.getElementById('textCount').textContent = document.getElementById('standText').value.length;
-    updateSummary();
-  }
-
-  function updateSummary(){
-    const qty = Math.max(1, Math.min(500, Math.floor(Number(document.getElementById('standQty').value)||0)||1));
-    const items = STAND_PRICE*qty, total = items+SHIPPING;
-    document.getElementById('summaryLines').innerHTML =
-      `<div class="row"><span>${labelFor(TYPES,choice.stand,'label')} · ${choice.w}×${choice.h} mm</span><span>${STAND_PRICE} zł/szt.</span></div>`
-      + `<div class="row"><span>Płytka ${choice.plate} · kod ${choice.code}</span><span></span></div>`
-      + `<div class="row"><span>${qty} szt.</span><span>${items} zł</span></div>`
-      + `<div class="row"><span>Wysyłka</span><span>${SHIPPING} zł</span></div>`;
-    document.getElementById('totalAmt').textContent = `${total} zł`;
-  }
-
-  async function sendOrder(){
-    const err = document.getElementById('err');
-    const btn = document.getElementById('orderBtn');
-    err.style.display='none';
-
-    if (!document.getElementById('acceptTerms').checked){
-      err.textContent='Zaznacz akceptację regulaminu i polityki prywatności.'; err.style.display='block'; return;
-    }
-
-    const shipping = {
-      name:   document.getElementById('shipName').value.trim(),
-      street: document.getElementById('shipStreet').value.trim(),
-      zip:    document.getElementById('shipZip').value.trim(),
-      city:   document.getElementById('shipCity').value.trim(),
-      phone:  document.getElementById('shipPhone').value.trim(),
-    };
-    if (!shipping.name || !shipping.street || !shipping.zip || !shipping.city || !shipping.phone){
-      err.textContent='Uzupełnij wszystkie dane do wysyłki.'; err.style.display='block'; return;
-    }
-
-    const payload = {
-      stand:       choice.stand,
-      width_mm:    choice.w,
-      height_mm:   choice.h,
-      plate_color: choice.plate,
-      code_color:  choice.code,
-      qr_scale:    choice.qrScale,
-      block_pos:   choice.blockPos,
-      text_pos:    choice.textPos,
-      text_scale:  choice.textScale,
-      text_color:  choice.textColor,
-      qty:  Math.max(1, Math.min(500, Math.floor(Number(document.getElementById('standQty').value)||1))),
-      text: document.getElementById('standText').value.trim(),
-      shipping,
-    };
-
-    btn.style.opacity='.5'; btn.textContent='Wysyłam…';
-    try {
-      const res = await fetch('/api/tpay/order', {
-        method:'POST',
-        headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${token}` },
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      if (!res.ok || !data.ok){
-        err.textContent = data.error || 'Nie udało się złożyć zamówienia.'; err.style.display='block';
-        btn.style.opacity='1'; btn.textContent='Zamawiam i płacę →'; return;
-      }
-      if (data.url){ window.location.href = data.url; return; }
-      /* Tpay jeszcze nieskonfigurowany — zamówienie zapisane */
-      document.getElementById('app').innerHTML =
-        `<div class="noauth" style="margin:40px auto;"><h2>Zamówienie przyjęte 🎉</h2>
-         <p>Numer <b>${data.order_id}</b> na kwotę <b>${data.total} zł</b>. Wyślemy link do płatności mailem na Twój adres.</p>
-         <a href="/editor" class="btn btn-primary" style="display:inline-block;width:auto;padding:12px 26px;text-decoration:none;">Wróć do edytora</a></div>`;
-    } catch {
-      err.textContent='Błąd połączenia. Spróbuj ponownie.'; err.style.display='block';
-      btn.style.opacity='1'; btn.textContent='Zamawiam i płacę →';
-    }
-  }
-
-  async function init(){
+  /* Prefill email + adres menu do wizualizacji z sesji (jeśli zalogowany) */
+  let menuUrl = new URLSearchParams(location.search).get('url') || '';
+  (async function init(){
     try {
       const auth = JSON.parse(localStorage.getItem('tableo_auth')||'null');
-      token = auth?.token || '';
-    } catch {}
-    if (!token){ document.getElementById('noauth').style.display='block'; return; }
-
-    /* Adres menu do podglądu kodu QR */
-    menuUrl = new URLSearchParams(location.search).get('url') || '';
-    if (!menuUrl){
-      try {
-        const r = await fetch('/api/account', { headers:{ Authorization:`Bearer ${token}` } });
+      if (auth?.email) document.getElementById('cEmail').value = auth.email;
+      if (!menuUrl && auth?.token){
+        const r = await fetch('/api/account', { headers:{ Authorization:`Bearer ${auth.token}` } });
         const d = await r.json();
         menuUrl = d?.account?.published_url || '';
-      } catch {}
-    }
+      }
+    } catch {}
+    drawShowQr();
+  })();
 
-    document.getElementById('app').style.display='block';
-    renderPickers();
-    syncDimInputs();
-    document.getElementById('wRange').addEventListener('input', e => setDim('w', +e.target.value));
-    document.getElementById('wNum').addEventListener('input',   e => setDim('w', +e.target.value));
-    document.getElementById('hRange').addEventListener('input', e => setDim('h', +e.target.value));
-    document.getElementById('hNum').addEventListener('input',   e => setDim('h', +e.target.value));
-    document.getElementById('qrScale').addEventListener('input',     e => setScale('qrScale', +e.target.value, 40, 95, 'qrScale', 'qrScaleNum'));
-    document.getElementById('qrScaleNum').addEventListener('input',  e => setScale('qrScale', +e.target.value, 40, 95, 'qrScale', 'qrScaleNum'));
-    document.getElementById('textScale').addEventListener('input',   e => setScale('textScale', +e.target.value, 50, 180, 'textScale', 'textScaleNum'));
-    document.getElementById('textScaleNum').addEventListener('input',e => setScale('textScale', +e.target.value, 50, 180, 'textScale', 'textScaleNum'));
-    document.getElementById('standText').addEventListener('input', renderPlate);
-    document.getElementById('standQty').addEventListener('input', updateSummary);
-    renderPlate();
+  async function drawShowQr(){
+    if (typeof QRCode==='undefined'){ setTimeout(drawShowQr,200); return; }
+    await QRCode.toCanvas(document.getElementById('showQr'), menuUrl || 'https://qreat.pl', {
+      width: 260, margin: 1, color:{ dark:'#FFFFFF', light:'#1B2A4A' }
+    });
   }
 
-  init();
+  function sendInquiry(){
+    const name  = document.getElementById('cName').value.trim();
+    const email = document.getElementById('cEmail').value.trim();
+    const phone = document.getElementById('cPhone').value.trim();
+    const qty   = document.getElementById('cQty').value.trim();
+    const notes = document.getElementById('cNotes').value.trim();
+    const err   = document.getElementById('err');
+    err.style.display = 'none';
+
+    if (!name || !email){
+      err.textContent = 'Podaj imię i adres email.'; err.style.display = 'block'; return;
+    }
+
+    const subject = encodeURIComponent(`Zapytanie: kody QR z druku 3D — ${name}`);
+    const bodyLines = [
+      'Zapytanie o kody QR z druku 3D',
+      '',
+      `Imię / Restauracja: ${name}`,
+      `Email: ${email}`,
+      `Telefon: ${phone || '—'}`,
+      `Liczba sztuk: ${qty || '—'}`,
+      `Adres menu: ${menuUrl || '—'}`,
+      '',
+      `Uwagi: ${notes || '—'}`,
+      '',
+      '— wysłane z qreat.pl',
+    ];
+    window.location.href = `mailto:hubiwas@gmail.com?subject=${subject}&body=${encodeURIComponent(bodyLines.join('\n'))}`;
+
+    document.getElementById('form').style.display = 'none';
+    document.getElementById('ok').style.display = 'block';
+  }
 </script>
 </body>
 </html>

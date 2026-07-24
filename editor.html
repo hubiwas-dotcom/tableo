@@ -624,8 +624,8 @@
 
     <div id="results" style="margin-top:36px;"></div>
 
-    <!-- ══ STANDS SHOWCASE ══ (tymczasowo ukryte — zamawianie stojaków wróci później; kod zostaje) -->
-    <div class="card" style="margin-top:36px;padding:24px 26px;display:none;align-items:center;gap:22px;flex-wrap:wrap;">
+    <!-- ══ STANDS SHOWCASE ══ -->
+    <div class="card" style="margin-top:36px;padding:24px 26px;display:flex;align-items:center;gap:22px;flex-wrap:wrap;">
       <div style="width:62px;height:62px;border-radius:14px;background:var(--cream-mid);border:1px solid rgba(27,42,74,.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
         <svg width="30" height="30" viewBox="0 0 32 32" fill="none">
           <rect x="9" y="3.5" width="14" height="17" rx="2" stroke="var(--navy)" stroke-width="1.4"/>
@@ -637,19 +637,18 @@
         </svg>
       </div>
       <div style="flex:1;min-width:200px;">
-        <div style="font-size:14px;font-weight:700;color:var(--navy);">Stojaki na kody QR</div>
-        <div style="font-size:12.5px;color:rgba(27,42,74,.5);margin-top:3px;line-height:1.5;">Eleganckie stojaki na każdy stolik — drukowane 3D, z Twoim kodem QR i logo.</div>
+        <div style="font-size:14px;font-weight:700;color:var(--navy);">Kody QR z druku 3D</div>
+        <div style="font-size:12.5px;color:rgba(27,42,74,.5);margin-top:3px;line-height:1.5;">Trwałe, drukowane 3D tabliczki z Twoim kodem QR — na każdy stolik. Zostaw dane, a skontaktujemy się z wyceną.</div>
         <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:11px;">
-          <span class="stand-chip">15 zł za sztukę</span>
-          <span class="stand-chip">3 rodzaje podstawki</span>
-          <span class="stand-chip">3 rozmiary</span>
-          <span class="stand-chip">7 kolorów filamentu</span>
+          <span class="stand-chip">Druk 3D</span>
+          <span class="stand-chip">Twój kod QR</span>
+          <span class="stand-chip">Na każdy stolik</span>
         </div>
       </div>
       <button onclick="openStandsPage()" type="button"
         style="display:inline-flex;align-items:center;gap:8px;background:var(--navy);color:white;padding:11px 22px;border-radius:100px;font-size:13px;font-weight:600;border:none;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:opacity 150ms ease,transform 150ms ease;white-space:nowrap;flex-shrink:0;"
         onmouseover="this.style.opacity='.88';this.style.transform='translateY(-1px)'" onmouseout="this.style.opacity='1';this.style.transform='translateY(0)'">
-        Zamów stojaki
+        Przejdź dalej
         <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1 6.5h11M7.5 2l4.5 4.5L7.5 11" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
     </div>

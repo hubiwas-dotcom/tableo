@@ -3,11 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kody QR z druku 3D — zapytanie — Qreat</title>
+  <title>Kody QR z druku 3D — kontakt — Qreat</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
   <style>
     :root {
       --navy:#1B2A4A; --navy-deep:#0f1d33; --navy-mid:#243761;
@@ -24,43 +23,45 @@
     .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 28px;background:white;border-bottom:1px solid rgba(27,42,74,.08);position:sticky;top:0;z-index:20;}
     .backlink{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--navy);text-decoration:none;padding:8px 14px;border-radius:100px;border:1px solid rgba(27,42,74,.14);transition:background .15s;}
     .backlink:hover{background:var(--cream-mid);}
+    .backlink:focus-visible{outline:3px solid rgba(123,170,143,.5);outline-offset:2px;}
 
-    .wrap{max-width:960px;margin:0 auto;padding:36px 28px 70px;}
-    .grid{display:grid;grid-template-columns:minmax(0,380px) 1fr;gap:28px;align-items:start;}
+    .wrap{max-width:620px;margin:0 auto;padding:44px 28px 80px;}
 
-    /* Wizualizacja produktu */
-    .show-col{position:sticky;top:96px;}
-    .show-card{background:linear-gradient(160deg,#eef1f5,#e2e6ec);border:1px solid rgba(27,42,74,.1);border-radius:20px;box-shadow:0 10px 40px rgba(27,42,74,.08);padding:32px 28px;text-align:center;}
-    .plate{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:190px;height:250px;border-radius:16px;background:var(--navy);padding:20px;box-shadow:0 22px 44px rgba(15,29,51,.28), inset 0 2px 0 rgba(255,255,255,.14), inset 0 -3px 6px rgba(0,0,0,.14);}
-    .plate canvas{width:130px;height:130px;display:block;border-radius:6px;}
-    .plate .cap{margin-top:14px;font-size:12px;font-weight:700;color:rgba(255,255,255,.9);letter-spacing:.02em;}
-    .chips{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-top:20px;}
-    .chip{background:white;border:1px solid rgba(27,42,74,.12);border-radius:100px;padding:6px 13px;font-size:11.5px;font-weight:600;color:var(--navy);}
+    .intro{text-align:center;margin-bottom:26px;}
+    .intro .eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:14px;}
+    .intro .eyebrow::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--gold);}
+    .intro h1{font-size:clamp(1.6rem,4.5vw,2.1rem);font-weight:500;letter-spacing:-.02em;line-height:1.15;margin-bottom:12px;}
+    .intro p{font-size:14px;color:rgba(27,42,74,.55);line-height:1.7;max-width:440px;margin:0 auto;}
 
-    /* Formularz */
-    .panel{background:white;border:1px solid rgba(27,42,74,.09);border-radius:18px;padding:26px 28px;}
-    .panel h1{font-size:1.55rem;font-weight:500;margin-bottom:6px;}
-    .panel .lead{font-size:13.5px;color:rgba(27,42,74,.55);line-height:1.6;margin-bottom:22px;}
+    .panel{background:white;border:1px solid rgba(27,42,74,.09);border-radius:18px;padding:28px 30px;box-shadow:0 10px 34px rgba(27,42,74,.05);}
     .field-label{display:block;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(27,42,74,.45);margin-bottom:8px;}
-    .field{width:100%;padding:11px 14px;border:1.5px solid rgba(27,42,74,.13);border-radius:12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;color:var(--navy);background:white;outline:none;transition:border-color .15s;}
-    .field:focus{border-color:var(--gold);}
-    textarea.field{resize:vertical;min-height:88px;}
-    .row{margin-bottom:15px;}
+    .field-label .opt{font-weight:500;color:rgba(27,42,74,.3);text-transform:none;letter-spacing:0;}
+    .field{width:100%;padding:11px 14px;border:1.5px solid rgba(27,42,74,.13);border-radius:12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;color:var(--navy);background:white;outline:none;transition:border-color .15s,box-shadow .15s;}
+    .field:hover{border-color:rgba(27,42,74,.24);}
+    .field:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,146,74,.14);}
+    textarea.field{resize:vertical;min-height:130px;line-height:1.6;}
+    .row{margin-bottom:16px;}
     .two{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 
     .err{display:none;background:#FEF2F2;border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#991B1B;font-weight:500;}
-    .btn{width:100%;padding:13px;border-radius:12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;border:none;transition:opacity .15s,transform .15s;}
-    .btn:hover{opacity:.9;transform:translateY(-1px);}
-    .btn-primary{background:var(--gold);color:white;}
-    .foot{font-size:11.5px;color:rgba(27,42,74,.4);text-align:center;margin-top:13px;line-height:1.5;}
-    .ok{display:none;background:var(--sage-pale);border:1px solid rgba(123,170,143,.3);border-radius:12px;padding:18px;text-align:center;margin-bottom:8px;}
-    .ok .em{font-size:22px;margin-bottom:6px;}
-    .ok .t{font-size:14px;font-weight:700;color:var(--navy);}
-    .ok .s{font-size:12.5px;color:rgba(27,42,74,.55);margin-top:4px;line-height:1.55;}
+    .btn{width:100%;padding:13px;border-radius:12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13.5px;font-weight:700;cursor:pointer;border:none;background:var(--gold);color:white;
+      transition:opacity .15s,transform .18s var(--ease-out),box-shadow .18s var(--ease-out);}
+    .btn:not(:disabled):hover{opacity:.92;transform:translateY(-1px);box-shadow:0 10px 26px rgba(201,146,74,.3);}
+    .btn:not(:disabled):active{transform:translateY(0);}
+    .btn:focus-visible{outline:3px solid rgba(123,170,143,.55);outline-offset:2px;}
+    .btn:disabled{opacity:.5;cursor:not-allowed;}
+    .foot{font-size:11.5px;color:rgba(27,42,74,.4);text-align:center;margin-top:14px;line-height:1.6;}
+    .foot a{color:var(--sage);font-weight:600;text-decoration:none;}
 
-    @media(max-width:780px){
-      .grid{grid-template-columns:1fr;}
-      .show-col{position:static;}
+    .ok{display:none;background:var(--sage-pale);border:1px solid rgba(123,170,143,.3);border-radius:16px;padding:30px 26px;text-align:center;}
+    .ok .em{width:48px;height:48px;margin:0 auto 14px;border-radius:50%;background:var(--sage);display:flex;align-items:center;justify-content:center;}
+    .ok .t{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:500;color:var(--navy);}
+    .ok .s{font-size:13px;color:rgba(27,42,74,.55);margin-top:8px;line-height:1.65;}
+
+    @media(max-width:560px){
+      .wrap{padding:32px 20px 60px;}
+      .panel{padding:22px 20px;}
+      .two{grid-template-columns:1fr;gap:0;}
     }
   </style>
 </head>
@@ -79,121 +80,113 @@
   </div>
 
   <div class="wrap">
-    <div class="grid">
-      <!-- ── Wizualizacja produktu ── -->
-      <div class="show-col">
-        <div class="show-card">
-          <div class="plate">
-            <canvas id="showQr"></canvas>
-            <div class="cap">Twoje menu</div>
-          </div>
-          <div class="chips">
-            <span class="chip">Druk 3D</span>
-            <span class="chip">Twój kod QR</span>
-            <span class="chip">Trwałe</span>
-            <span class="chip">Na każdy stolik</span>
-          </div>
-        </div>
-      </div>
 
-      <!-- ── Formularz kontaktowy ── -->
-      <div class="panel">
-        <h1>Kody QR z druku 3D</h1>
-        <p class="lead">Trwałe, drukowane 3D tabliczki z Twoim kodem QR — gość skanuje i widzi menu. Zostaw dane, a skontaktujemy się z wyceną i szczegółami (rozmiar, kolory, ilość).</p>
-
-        <div id="ok" class="ok">
-          <div class="em">✅</div>
-          <div class="t">Zapytanie gotowe do wysłania</div>
-          <div class="s">Otworzyliśmy Twój program pocztowy z gotową wiadomością. Jeśli się nie otworzył, napisz na <b>hubiwas@gmail.com</b>.</div>
-        </div>
-
-        <div id="form">
-          <div class="row">
-            <label class="field-label">Imię i nazwa restauracji</label>
-            <input id="cName" type="text" class="field" placeholder="Jan Kowalski — Pizzeria Roma">
-          </div>
-          <div class="two">
-            <div class="row">
-              <label class="field-label">Email</label>
-              <input id="cEmail" type="email" class="field" placeholder="twoj@email.pl">
-            </div>
-            <div class="row">
-              <label class="field-label">Telefon</label>
-              <input id="cPhone" type="tel" class="field" placeholder="600 100 200">
-            </div>
-          </div>
-          <div class="row">
-            <label class="field-label">Liczba sztuk <span style="font-weight:500;color:rgba(27,42,74,.4);text-transform:none;letter-spacing:0;">(orientacyjnie)</span></label>
-            <input id="cQty" type="number" min="1" class="field" placeholder="np. 10">
-          </div>
-          <div class="row">
-            <label class="field-label">Uwagi</label>
-            <textarea id="cNotes" class="field" placeholder="np. kolor tabliczki, rozmiar, logo restauracji…"></textarea>
-          </div>
-
-          <div id="err" class="err"></div>
-          <button class="btn btn-primary" id="sendBtn" onclick="sendInquiry()">Wyślij zapytanie →</button>
-          <p class="foot">Odpowiadamy zwykle w ciągu 24 godzin w dni robocze.</p>
-        </div>
-      </div>
+    <div class="intro">
+      <span class="eyebrow">Kody QR z druku 3D</span>
+      <h1>Napisz, czego potrzebujesz</h1>
+      <p>Trwałe, drukowane 3D tabliczki z Twoim kodem QR — gość skanuje i widzi menu.
+         Opisz, co Cię interesuje, a odpiszemy z wyceną i szczegółami.</p>
     </div>
+
+    <div id="ok" class="ok">
+      <div class="em">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11.5l4.5 4.5L18 6.5" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="t">Wiadomość wysłana</div>
+      <div class="s">Mamy Twoje zapytanie i odpiszemy na podany adres e-mail, zwykle w ciągu 24 godzin w dni robocze.</div>
+      <a href="/editor" class="backlink" style="margin-top:18px;">Wróć do edytora</a>
+    </div>
+
+    <div id="form" class="panel">
+      <div class="row">
+        <label class="field-label" for="cName">Imię i nazwa restauracji</label>
+        <input id="cName" type="text" class="field" placeholder="Jan Kowalski — Pizzeria Roma" autocomplete="name">
+      </div>
+      <div class="two">
+        <div class="row">
+          <label class="field-label" for="cEmail">Email</label>
+          <input id="cEmail" type="email" class="field" placeholder="twoj@email.pl" autocomplete="email">
+        </div>
+        <div class="row">
+          <label class="field-label" for="cPhone">Telefon <span class="opt">(opcjonalnie)</span></label>
+          <input id="cPhone" type="tel" class="field" placeholder="600 100 200" autocomplete="tel">
+        </div>
+      </div>
+      <div class="row">
+        <label class="field-label" for="cMessage">Wiadomość</label>
+        <textarea id="cMessage" class="field" placeholder="Napisz, czego potrzebujesz — np. ile tabliczek, jaki rozmiar i kolor, czy ma być logo restauracji, na kiedy…"></textarea>
+      </div>
+
+      <div id="err" class="err"></div>
+      <button class="btn" id="sendBtn" onclick="sendInquiry()">Wyślij wiadomość →</button>
+      <p class="foot">
+        Odpowiadamy zwykle w ciągu 24 godzin w dni robocze.<br>
+        Wolisz e-mail? <a href="mailto:hubiwas@gmail.com">hubiwas@gmail.com</a>
+      </p>
+    </div>
+
   </div>
 
 <script>
-  /* Prefill email + adres menu do wizualizacji z sesji (jeśli zalogowany) */
+  /* Kontekst dla nas: e-mail zalogowanego użytkownika i adres jego menu.
+     Adres menu leci w tle — dzięki niemu wiemy, dla kogo drukujemy kod. */
   let menuUrl = new URLSearchParams(location.search).get('url') || '';
+
   (async function init(){
     try {
-      const auth = JSON.parse(localStorage.getItem('tableo_auth')||'null');
+      const auth = JSON.parse(localStorage.getItem('tableo_auth') || 'null');
       if (auth?.email) document.getElementById('cEmail').value = auth.email;
-      if (!menuUrl && auth?.token){
-        const r = await fetch('/api/account', { headers:{ Authorization:`Bearer ${auth.token}` } });
+      if (!menuUrl && auth?.token) {
+        const r = await fetch('/api/account', { headers: { Authorization: `Bearer ${auth.token}` } });
         const d = await r.json();
         menuUrl = d?.account?.published_url || '';
       }
     } catch {}
-    drawShowQr();
   })();
 
-  async function drawShowQr(){
-    if (typeof QRCode==='undefined'){ setTimeout(drawShowQr,200); return; }
-    await QRCode.toCanvas(document.getElementById('showQr'), menuUrl || 'https://qreat.pl', {
-      width: 260, margin: 1, color:{ dark:'#FFFFFF', light:'#1B2A4A' }
-    });
-  }
-
-  function sendInquiry(){
-    const name  = document.getElementById('cName').value.trim();
-    const email = document.getElementById('cEmail').value.trim();
-    const phone = document.getElementById('cPhone').value.trim();
-    const qty   = document.getElementById('cQty').value.trim();
-    const notes = document.getElementById('cNotes').value.trim();
-    const err   = document.getElementById('err');
+  async function sendInquiry(){
+    const name    = document.getElementById('cName').value.trim();
+    const email   = document.getElementById('cEmail').value.trim();
+    const phone   = document.getElementById('cPhone').value.trim();
+    const message = document.getElementById('cMessage').value.trim();
+    const err     = document.getElementById('err');
+    const btn     = document.getElementById('sendBtn');
     err.style.display = 'none';
 
-    if (!name || !email){
-      err.textContent = 'Podaj imię i adres email.'; err.style.display = 'block'; return;
+    if (!name)    { return fail('Podaj imię i nazwę restauracji.', 'cName'); }
+    if (!email)   { return fail('Podaj adres e-mail — bez niego nie odpiszemy.', 'cEmail'); }
+    if (!message) { return fail('Napisz, czego potrzebujesz.', 'cMessage'); }
+
+    btn.disabled = true; btn.textContent = 'Wysyłam…';
+    try {
+      const res  = await fetch('/api/account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event: 'inquiry', topic: 'kody-3d', name, email, phone, message, menu_url: menuUrl }),
+      });
+      const data = await res.json();
+      if (!data.ok) { fail(data.error || 'Nie udało się wysłać wiadomości.'); return; }
+      document.getElementById('form').style.display = 'none';
+      document.getElementById('ok').style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch {
+      fail('Błąd połączenia. Spróbuj ponownie lub napisz na hubiwas@gmail.com.');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Wyślij wiadomość →';
     }
-
-    const subject = encodeURIComponent(`Zapytanie: kody QR z druku 3D — ${name}`);
-    const bodyLines = [
-      'Zapytanie o kody QR z druku 3D',
-      '',
-      `Imię / Restauracja: ${name}`,
-      `Email: ${email}`,
-      `Telefon: ${phone || '—'}`,
-      `Liczba sztuk: ${qty || '—'}`,
-      `Adres menu: ${menuUrl || '—'}`,
-      '',
-      `Uwagi: ${notes || '—'}`,
-      '',
-      '— wysłane z qreat.pl',
-    ];
-    window.location.href = `mailto:hubiwas@gmail.com?subject=${subject}&body=${encodeURIComponent(bodyLines.join('\n'))}`;
-
-    document.getElementById('form').style.display = 'none';
-    document.getElementById('ok').style.display = 'block';
   }
+
+  function fail(msg, focusId){
+    const err = document.getElementById('err');
+    err.textContent = msg;
+    err.style.display = 'block';
+    if (focusId) document.getElementById(focusId).focus();
+  }
+
+  /* Ctrl/Cmd+Enter wysyła z pola wiadomości */
+  document.getElementById('cMessage').addEventListener('keydown', e => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') sendInquiry();
+  });
 </script>
 </body>
 </html>

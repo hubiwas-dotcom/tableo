@@ -2470,14 +2470,85 @@
     /* ── Zamówienia stojaków + audyt linków (na żądanie) ── */
     const auditHtml = `<div style="padding:0 20px 16px;display:flex;flex-direction:column;gap:10px;">
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button onclick="loadInquiries()" id="inquiriesBtn" style="background:var(--navy);border:none;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;color:white;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">✉️ Zapytania z formularza</button>
         <button onclick="loadStandOrders()" id="ordersBtn" style="background:var(--gold);border:none;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;color:white;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">📦 Zamówienia stojaków</button>
         <button onclick="runLinkAudit()" id="linkAuditBtn" style="background:rgba(27,42,74,.05);border:1px solid rgba(27,42,74,.14);border-radius:10px;padding:8px 14px;font-size:12px;font-weight:600;color:var(--navy);cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">🔗 Audyt stałych linków (sprawdź duplikaty slugów)</button>
       </div>
+      <div id="inquiriesResult"></div>
       <div id="ordersResult"></div>
       <div id="linkAuditResult"></div>
     </div>`;
 
     document.getElementById('adminTableWrap').innerHTML = globalsHtml + alertsHtml + auditHtml + tableHtml;
+  }
+
+  /* ── Zapytania z formularza kontaktowego (/zamow-stojaki) ──
+     Serwis nie ma dostawcy poczty, więc wiadomości lądują w KV i czyta się
+     je tutaj. Nieobsłużone są wyróżnione — po odpisaniu oznacz „załatwione". */
+  const INQUIRY_TOPICS = { 'kody-3d': 'Kody QR z druku 3D', ogolne: 'Zapytanie ogólne' };
+
+  async function loadInquiries() {
+    const btn = document.getElementById('inquiriesBtn');
+    const box = document.getElementById('inquiriesResult');
+    btn.disabled = true; btn.textContent = 'Ładuję…';
+    try {
+      const res  = await fetch('/api/account?admin=1&inquiries=1', { headers: { 'Authorization': `Bearer ${currentToken}` } });
+      const data = await res.json();
+      if (!data.ok) { box.innerHTML = `<div style="font-size:12px;color:#c0392b;">${data.error || 'Błąd.'}</div>`; return; }
+      renderInquiries(data, box);
+    } catch {
+      box.innerHTML = `<div style="font-size:12px;color:#c0392b;">Błąd połączenia.</div>`;
+    } finally {
+      btn.disabled = false; btn.textContent = '✉️ Zapytania z formularza';
+    }
+  }
+
+  function renderInquiries(data, box) {
+    const esc = s => String(s || '').replace(/[<>&"]/g, c => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;' }[c]));
+    if (!data.inquiries.length) {
+      box.innerHTML = `<div style="background:rgba(27,42,74,.03);border:1px solid rgba(27,42,74,.07);border-radius:12px;padding:14px 16px;font-size:12px;color:rgba(27,42,74,.45);">Brak zapytań.</div>`;
+      return;
+    }
+
+    const cards = data.inquiries.map(q => {
+      const done  = !!q.handled;
+      const topic = INQUIRY_TOPICS[q.topic] || q.topic || 'Zapytanie';
+      return `<div style="background:white;border:1px solid ${done ? 'rgba(27,42,74,.1)' : 'rgba(201,146,74,.45)'};border-radius:12px;padding:13px 15px;${done ? 'opacity:.62;' : ''}">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
+          <div style="font-size:12.5px;font-weight:700;color:var(--navy);">${esc(q.name)}
+            <span style="font-weight:500;color:rgba(27,42,74,.45);"> · ${_adminDate(q.created_at)}</span></div>
+          <span style="background:${done ? 'rgba(107,114,128,.12)' : 'rgba(201,146,74,.14)'};color:${done ? '#6b7280' : 'var(--gold)'};border:1px solid ${done ? 'rgba(107,114,128,.3)' : 'rgba(201,146,74,.4)'};border-radius:100px;padding:3px 10px;font-size:11px;font-weight:700;">${done ? 'Obsłużone' : 'Nowe'} · ${esc(topic)}</span>
+        </div>
+        <div style="font-size:12px;color:rgba(27,42,74,.7);line-height:1.75;">
+          <a href="mailto:${esc(q.email)}" style="color:var(--gold);font-weight:600;">${esc(q.email)}</a>${q.phone ? ` · tel. ${esc(q.phone)}` : ''}
+          ${q.menu_url ? `<br>Menu: <a href="${esc(q.menu_url)}" target="_blank" style="color:var(--sage);font-weight:600;">${esc(q.menu_url)}</a>` : ''}
+        </div>
+        <div style="background:rgba(27,42,74,.03);border-radius:9px;padding:10px 12px;margin-top:9px;font-size:12px;color:rgba(27,42,74,.75);line-height:1.65;white-space:pre-wrap;">${esc(q.message)}</div>
+        <button onclick="setInquiryHandled('${esc(q.id)}', ${done ? 'false' : 'true'})"
+          style="margin-top:10px;background:${done ? 'rgba(27,42,74,.05)' : 'var(--sage)'};color:${done ? 'var(--navy)' : 'white'};border:1px solid ${done ? 'rgba(27,42,74,.14)' : 'transparent'};border-radius:9px;padding:7px 13px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">
+          ${done ? '↩ Oznacz jako nowe' : '✓ Oznacz jako obsłużone'}
+        </button>
+      </div>`;
+    }).join('');
+
+    box.innerHTML = `<div style="background:rgba(27,42,74,.03);border:1px solid rgba(27,42,74,.07);border-radius:12px;padding:14px 16px;">
+      <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px;">✉️ Zapytania z formularza</div>
+      <div style="font-size:11.5px;color:rgba(27,42,74,.5);margin-bottom:12px;">${data.count} łącznie · <b style="color:var(--gold);">${data.new_count} nieobsłużonych</b></div>
+      <div style="display:flex;flex-direction:column;gap:9px;">${cards}</div>
+    </div>`;
+  }
+
+  async function setInquiryHandled(inquiryId, handled) {
+    try {
+      const res  = await fetch('/api/account', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentToken}` },
+        body: JSON.stringify({ admin_action: 'set_inquiry_handled', inquiry_id: inquiryId, handled })
+      });
+      const data = await res.json();
+      if (data.ok) { showToast(handled ? 'Oznaczono jako obsłużone.' : 'Przywrócono jako nowe.', 'ok'); loadInquiries(); }
+      else showToast(data.error || 'Błąd zapisu.', 'warn');
+    } catch { showToast('Błąd połączenia.', 'warn'); }
   }
 
   /* ── Zamówienia stojaków QR: lista do realizacji (druk + wysyłka) ── */

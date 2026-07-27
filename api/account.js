@@ -56,6 +56,20 @@ async function kvSetNX(key, value) {
   } catch { return false; }
 }
 
+/* INCR z TTL ustawianym przy pierwszym trafieniu — licznik do limitu zapytań */
+async function kvIncr(key, ttlSec) {
+  const { url, token } = kvCreds();
+  if (!url || !token) return 0;
+  const hdr = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+  try {
+    const res  = await fetch(url, { method: 'POST', headers: hdr, body: JSON.stringify(['INCR', key]) });
+    const data = await res.json();
+    const n    = Number(data.result) || 0;
+    if (n === 1) await fetch(url, { method: 'POST', headers: hdr, body: JSON.stringify(['EXPIRE', key, ttlSec]) });
+    return n;
+  } catch { return 0; }
+}
+
 /* Upstash SCAN — wszystkie klucze pasujące do wzorca */
 async function kvScan(pattern) {
   const { url, token } = kvCreds();
@@ -93,9 +107,51 @@ function verifyToken(token) {
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, PATCH, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') { res.status(200).end(); return; }
+
+  /* ── Zapytanie kontaktowe (PUBLICZNE — przed weryfikacją tokenu) ──
+     Formularz na /zamow-stojaki zapisuje wiadomość do KV; odbiera się ją
+     w panelu admina. Świadomie bez wysyłki e-mail — serwis nie ma
+     skonfigurowanego dostawcy poczty, a mailto: po cichu gubił zapytania. */
+  if (req.method === 'POST' && req.body && req.body.event === 'inquiry') {
+    const name    = String(req.body.name    || '').trim().slice(0, 120);
+    const email   = String(req.body.email   || '').trim().slice(0, 160);
+    const phone   = String(req.body.phone   || '').trim().slice(0, 40);
+    const message = String(req.body.message || '').trim().slice(0, 4000);
+    const topic   = String(req.body.topic   || 'ogolne').trim().slice(0, 40);
+    const menuUrl = String(req.body.menu_url || '').trim().slice(0, 300);
+
+    if (!name || !message || !/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(email)) {
+      res.status(400).json({ error: 'Podaj imię, poprawny adres e-mail i treść wiadomości.' });
+      return;
+    }
+
+    const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
+    /* Zapora na spam: 5 zapytań z jednego IP na godzinę */
+    const hits = await kvIncr(`ratelimit:inquiry:${ip}`, 3600);
+    if (hits > 5) {
+      res.status(429).json({ error: 'Wysłano zbyt wiele zapytań. Spróbuj ponownie za godzinę lub napisz na hubiwas@gmail.com.' });
+      return;
+    }
+
+    const id = `${Date.now().toString(36)}-${crypto.randomBytes(3).toString('hex')}`;
+    let saved = false;
+    try {
+      saved = await kvSet(`inquiry:${id}`, {
+        id, topic, name, email, phone, message,
+        menu_url: menuUrl || null,
+        created_at: Date.now(),
+        ip,
+        user_agent: String(req.headers['user-agent'] || '').slice(0, 300),
+        handled: false,
+      });
+    } catch { saved = false; }
+    if (!saved) { res.status(503).json({ error: 'Nie udało się zapisać zapytania. Napisz bezpośrednio na hubiwas@gmail.com.' }); return; }
+    res.json({ ok: true, id });
+    return;
+  }
 
   const token = (req.headers.authorization || '').replace('Bearer ', '');
   const user  = verifyToken(token);
@@ -128,6 +184,21 @@ module.exports = async function handler(req, res) {
         paid_count: orders.filter(o => o.status === 'paid').length,
         revenue: Number(revenue.toFixed(2)),
         orders,
+      });
+      return;
+    }
+
+    /* ── Zapytania z formularza: GET /api/account?admin=1&inquiries=1 ──
+       Skrzynka odbiorcza — tu trafiają wiadomości z /zamow-stojaki. */
+    if (req.query.inquiries === '1') {
+      const keys = await kvScan('inquiry:*');
+      const inquiries = (await Promise.all(keys.map(k => kvGet(k)))).filter(Boolean);
+      inquiries.sort((a, b) => (b.created_at || 0) - (a.created_at || 0));
+      res.json({
+        ok: true,
+        count: inquiries.length,
+        new_count: inquiries.filter(i => !i.handled).length,
+        inquiries,
       });
       return;
     }
@@ -404,6 +475,20 @@ module.exports = async function handler(req, res) {
       order.status_changed_at = Date.now();
       await kvSet(`order:${orderId}`, order);
       res.json({ ok: true, order });
+      return;
+    }
+
+    /* Admin: oznaczenie zapytania jako obsłużone (lub cofnięcie) */
+    if (req.body && req.body.admin_action === 'set_inquiry_handled') {
+      if ((user.email || '') !== 'hubiwas@gmail.com') { res.status(403).json({ error: 'Brak uprawnień.' }); return; }
+      const inquiryId = String(req.body.inquiry_id || '').trim();
+      if (!inquiryId) { res.status(400).json({ error: 'Wymagane: inquiry_id.' }); return; }
+      const inquiry = await kvGet(`inquiry:${inquiryId}`);
+      if (!inquiry) { res.status(404).json({ error: 'Zapytanie nie istnieje.' }); return; }
+      inquiry.handled = !!req.body.handled;
+      inquiry.handled_at = inquiry.handled ? Date.now() : null;
+      await kvSet(`inquiry:${inquiryId}`, inquiry);
+      res.json({ ok: true, inquiry });
       return;
     }
 

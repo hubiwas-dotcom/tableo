@@ -219,6 +219,39 @@
     .plan-card:hover{border-color:var(--sage);box-shadow:0 8px 32px rgba(123,170,143,.15);transform:translateY(-2px);}
     .plan-card.featured{border-color:var(--gold);background:linear-gradient(135deg,var(--gold-pale),white);}
 
+    /* ── Bramka zgód (regulamin + usługa płatna) ── */
+    #termsGate{position:fixed;inset:0;z-index:9200;background:rgba(10,20,40,.86);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);display:none;align-items:center;justify-content:center;padding:24px;overflow:auto;}
+    .terms-card{background:var(--cream);border-radius:28px;max-width:560px;width:100%;margin:auto;box-shadow:0 40px 110px rgba(0,0,0,.42);overflow:hidden;animation:slideInUp .42s var(--ease-out) both;}
+    .terms-head{position:relative;background:linear-gradient(135deg,var(--navy),var(--navy-mid));padding:30px 32px 26px;text-align:center;overflow:hidden;}
+    .terms-head::after{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 70% 90% at 50% 0%,rgba(201,146,74,.22) 0%,transparent 62%);}
+    .terms-body{padding:24px 30px 28px;}
+    .terms-price{display:flex;align-items:stretch;gap:10px;margin-bottom:20px;}
+    .terms-price-box{flex:1;border:1.5px solid rgba(27,42,74,.1);border-radius:14px;padding:13px 14px;background:white;}
+    .terms-price-box.accent{border-color:rgba(201,146,74,.4);background:linear-gradient(135deg,var(--gold-pale),white);}
+    .terms-check{display:flex;align-items:flex-start;gap:11px;padding:13px 14px;border:1.5px solid rgba(27,42,74,.1);border-radius:14px;background:white;cursor:pointer;margin-bottom:9px;
+      transition:border-color 180ms var(--ease-out),background 180ms var(--ease-out),box-shadow 180ms var(--ease-out);}
+    .terms-check:hover{border-color:rgba(123,170,143,.5);}
+    .terms-check:focus-within{border-color:var(--sage);box-shadow:0 0 0 3px rgba(123,170,143,.18);}
+    .terms-check.checked{border-color:var(--sage);background:var(--sage-pale);}
+    .terms-check input{width:17px;height:17px;margin-top:1px;flex-shrink:0;accent-color:var(--sage);cursor:pointer;}
+    .terms-check span{font-size:12.5px;line-height:1.6;color:rgba(27,42,74,.72);}
+    .terms-check strong{color:var(--navy);font-weight:700;}
+    .terms-check a{color:var(--sage);font-weight:700;}
+    .terms-accept{width:100%;border:none;border-radius:14px;padding:14px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;color:white;
+      background:var(--navy);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;
+      transition:transform 180ms var(--ease-out),box-shadow 180ms var(--ease-out),opacity 180ms;}
+    .terms-accept:not(:disabled):hover{transform:translateY(-2px);box-shadow:0 12px 34px rgba(27,42,74,.32);background:var(--navy-mid);}
+    .terms-accept:not(:disabled):active{transform:translateY(0);}
+    .terms-accept:focus-visible{outline:3px solid rgba(123,170,143,.5);outline-offset:2px;}
+    .terms-accept:disabled{opacity:.32;cursor:not-allowed;}
+    .terms-seller{font-size:11px;line-height:1.65;color:rgba(27,42,74,.42);text-align:center;margin-top:16px;padding-top:15px;border-top:1px solid rgba(27,42,74,.08);}
+    .terms-seller a{color:rgba(27,42,74,.55);font-weight:600;}
+    @media(max-width:520px){
+      .terms-body{padding:20px 20px 24px;}
+      .terms-head{padding:26px 22px 22px;}
+      .terms-price{flex-direction:column;}
+    }
+
     /* ── Help section ── */
     .help-faq-item{padding:14px 16px;border-radius:12px;background:rgba(27,42,74,.03);border:1px solid rgba(27,42,74,.06);transition:background 150ms,border-color 150ms;cursor:default;}
     .help-faq-item:hover{background:var(--sage-pale);border-color:rgba(123,170,143,.2);}
@@ -727,6 +760,80 @@
   </div>
 </div>
 
+<!-- ══ BRAMKA ZGÓD — wymagana przed użyciem generatora ══ -->
+<div id="termsGate" role="dialog" aria-modal="true" aria-labelledby="termsGateTitle">
+  <div class="terms-card">
+
+    <div class="terms-head">
+      <div style="position:relative;">
+        <div style="width:54px;height:54px;margin:0 auto 14px;border-radius:16px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;">
+          <svg width="25" height="25" viewBox="0 0 24 24" fill="none"><path d="M6 3h8l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" stroke="white" stroke-width="1.5" stroke-linejoin="round"/><path d="M14 3v4h4" stroke="white" stroke-width="1.5" stroke-linejoin="round"/><path d="M8.5 14.2l2.2 2.2 4.3-4.6" stroke="#C9924A" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h3 id="termsGateTitle" style="font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:500;color:white;margin-bottom:7px;letter-spacing:-.02em;">Zanim zaczniesz tworzyć menu</h3>
+        <p style="font-size:12.5px;color:rgba(255,255,255,.58);line-height:1.65;max-width:400px;margin:0 auto;">
+          Qreat to usługa <strong style="color:rgba(255,255,255,.85);font-weight:700;">płatna po okresie próbnym</strong>.
+          Potwierdź warunki, aby odblokować generator.
+        </p>
+      </div>
+    </div>
+
+    <div class="terms-body">
+
+      <!-- Ile to kosztuje -->
+      <div class="terms-price">
+        <div class="terms-price-box">
+          <div style="font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--sage);margin-bottom:5px;">Teraz</div>
+          <div style="font-family:'Playfair Display',serif;font-size:1.35rem;font-weight:600;color:var(--navy);line-height:1.1;">0 zł</div>
+          <div style="font-size:11px;color:rgba(27,42,74,.45);line-height:1.5;margin-top:3px;">7 dni próbnych od pierwszego wygenerowania menu. Bez karty.</div>
+        </div>
+        <div class="terms-price-box accent">
+          <div style="font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:5px;">Potem</div>
+          <div style="font-family:'Playfair Display',serif;font-size:1.35rem;font-weight:600;color:var(--navy);line-height:1.1;">29,99 zł<span style="font-size:.8rem;font-weight:500;color:rgba(27,42,74,.5);">/mies.</span></div>
+          <div style="font-size:11px;color:rgba(27,42,74,.45);line-height:1.5;margin-top:3px;">lub 299,99 zł/rok. Ceny brutto (zawierają VAT).</div>
+        </div>
+      </div>
+
+      <div style="font-size:11.5px;color:rgba(27,42,74,.5);line-height:1.6;background:rgba(27,42,74,.035);border-radius:12px;padding:11px 14px;margin-bottom:18px;">
+        Płatność pobierana jest <strong style="color:var(--navy);font-weight:700;">jednorazowo za wybrany okres</strong> — nic nie odnawia się automatycznie i nie zapisujemy danych Twojej karty.
+        Płatności obsługuje <strong style="color:var(--navy);font-weight:700;">Tpay</strong> (BLIK, karta, szybki przelew).
+      </div>
+
+      <!-- Zgody -->
+      <label class="terms-check" id="tcRow1">
+        <input type="checkbox" id="tcTerms" onchange="onTermsChange()">
+        <span>Zapoznałem/am się i akceptuję <a href="/regulamin" target="_blank" rel="noopener">regulamin</a> oraz <a href="/polityka-prywatnosci" target="_blank" rel="noopener">politykę prywatności</a> serwisu Qreat.</span>
+      </label>
+
+      <label class="terms-check" id="tcRow2">
+        <input type="checkbox" id="tcPaid" onchange="onTermsChange()">
+        <span>Przyjmuję do wiadomości, że po <strong>7-dniowym okresie próbnym</strong> dalsze korzystanie z generatora i utrzymanie menu online <strong>wymaga wykupienia planu</strong> — 29,99 zł miesięcznie lub 299,99 zł rocznie (ceny brutto).</span>
+      </label>
+
+      <label class="terms-check" id="tcRow3">
+        <input type="checkbox" id="tcStart" onchange="onTermsChange()">
+        <span>Żądam <strong>rozpoczęcia świadczenia usługi cyfrowej</strong> przed upływem 14-dniowego terminu odstąpienia od umowy i przyjmuję do wiadomości, że po pełnym wykonaniu usługi <strong>tracę prawo odstąpienia</strong> (art.&nbsp;38 pkt&nbsp;13 ustawy o prawach konsumenta).</span>
+      </label>
+
+      <button id="termsAcceptBtn" class="terms-accept" onclick="acceptTerms()" disabled style="margin-top:15px;">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M2 7.8l3.6 3.6L13 3.6" stroke="white" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span id="termsAcceptLabel">Akceptuję — przejdź do generatora</span>
+      </button>
+
+      <button onclick="declineTerms()" style="width:100%;margin-top:9px;background:none;border:none;padding:9px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:600;color:rgba(27,42,74,.42);cursor:pointer;border-radius:10px;transition:color 150ms,background 150ms;"
+        onmouseover="this.style.color='var(--navy)';this.style.background='rgba(27,42,74,.045)'"
+        onmouseout="this.style.color='rgba(27,42,74,.42)';this.style.background='none'">
+        Nie akceptuję — wyloguj mnie
+      </button>
+
+      <div class="terms-seller">
+        Usługodawca: <strong style="color:rgba(27,42,74,.6);">ebiuropodatkowe.pl Maciej Wąsowicz</strong> · ul. Żebrowskiego 50, 75-392 Koszalin<br>
+        NIP 6692371252 · REGON 320589114 · <a href="mailto:hubiwas@gmail.com">hubiwas@gmail.com</a> · <a href="/kontakt" target="_blank" rel="noopener">Kontakt</a>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 <!-- ══ PANEL ADMINA ══ -->
 <div id="adminOverlay" onclick="if(event.target===this)hideAdminPanel()" style="position:fixed;inset:0;z-index:8500;background:rgba(10,20,40,.85);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);display:none;align-items:flex-start;justify-content:center;padding:24px;overflow:auto;">
   <div style="background:white;border-radius:20px;max-width:1100px;width:100%;margin:auto;box-shadow:0 40px 100px rgba(0,0,0,.4);overflow:hidden;">
@@ -1058,6 +1165,9 @@
     const av = document.getElementById('userAvatar');
     if (av && !currentPicture) { av.src = ''; av.style.display = 'none'; }
     updateTrialUI();
+    /* Bramka od razu (bez czekania na /api/account) — stan z serwera
+       ją potem potwierdzi albo zamknie w syncTermsFromServer(). */
+    if (!hasAcceptedTerms()) showTermsGate();
     loadUserAccount();
 
     /* Pokaż przycisk Admin tylko dla adminów (endpoint i tak weryfikuje uprawnienia) */
@@ -1074,6 +1184,9 @@
       if (res.status === 401) { doLogout(); return; }
       const data = await res.json();
 
+      /* Zgody — serwer jest źródłem prawdy; brak zgody = bramka przed generatorem */
+      const termsOk = syncTermsFromServer(data.terms);
+
       /* Always apply trial data from server */
       if (data.trial) {
         trialData = data.trial;
@@ -1088,7 +1201,8 @@
           window._awaitingPayment = false;
           showToast('Plan aktywny! Możesz teraz korzystać z edytora.', 'ok');
         } else if (data.trial.expired && !data.trial.paid) {
-          showPaywall();
+          /* Nie nakładaj paywalla na bramkę zgód — pokaż go po akceptacji */
+          if (termsOk) showPaywall(); else window._pendingPaywall = true;
         }
       }
 
@@ -1121,6 +1235,7 @@
      zostawały: link/QR poprzedniego konta, kody QR, status triala, kolory logo. */
   function clearAccountUi() {
     trialStart = null; trialData = null;
+    termsAccepted = false; window._pendingPaywall = false; hideTermsGate();
     uploadedImages = []; currentMenu = null; currentLogo = null; currentLogoColors = null;
     currentCustomDomain = null; currentPublishedSlug = null; currentPublishedUrl = null;
     selectedLanguages = []; _previewLang = 'pl';
@@ -1234,6 +1349,119 @@
       banner.style.display = 'block';
       editorMain.style.paddingTop = '20px';
     }
+  }
+
+  /* ── Bramka zgód ──────────────────────────────────────────────────────
+     Generator jest usługą płatną po okresie próbnym, więc przed pierwszym
+     użyciem użytkownik musi potwierdzić: regulamin + politykę prywatności,
+     odpłatność po trialu oraz żądanie rozpoczęcia świadczenia przed upływem
+     terminu odstąpienia. Zgoda leci na serwer (account.terms) jako ślad
+     audytowy — data, wersja dokumentów, IP. Bez niej `generateMenu()` nie
+     rusza. Wersję podbijamy przy istotnej zmianie regulaminu — wtedy każdy
+     użytkownik akceptuje ponownie. */
+  const TERMS_VERSION = '2026-07-27';
+  let termsAccepted = false;
+
+  function _termsKey() { return `qreat_terms_${(currentEmail || '').toLowerCase()}`; }
+
+  function hasAcceptedTerms() {
+    if (termsAccepted) return true;
+    try { return localStorage.getItem(_termsKey()) === TERMS_VERSION; } catch { return false; }
+  }
+
+  /* Stan z serwera jest nadrzędny — zgoda złożona na innym urządzeniu też liczy się tutaj */
+  function syncTermsFromServer(terms) {
+    if (terms && terms.version === TERMS_VERSION) {
+      termsAccepted = true;
+      try { localStorage.setItem(_termsKey(), TERMS_VERSION); } catch {}
+      hideTermsGate();
+      return true;
+    }
+    termsAccepted = false;
+    try { localStorage.removeItem(_termsKey()); } catch {}
+    showTermsGate();
+    return false;
+  }
+
+  function onTermsChange() {
+    const ids = ['tcTerms', 'tcPaid', 'tcStart'];
+    let all = true;
+    ids.forEach((id, i) => {
+      const checked = !!document.getElementById(id)?.checked;
+      if (!checked) all = false;
+      document.getElementById(`tcRow${i + 1}`)?.classList.toggle('checked', checked);
+    });
+    const btn = document.getElementById('termsAcceptBtn');
+    if (btn) btn.disabled = !all;
+  }
+
+  function showTermsGate() {
+    const gate = document.getElementById('termsGate');
+    if (!gate || gate.style.display === 'flex') return;
+    ['tcTerms', 'tcPaid', 'tcStart'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.checked = false;
+    });
+    onTermsChange();
+    gate.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function hideTermsGate() {
+    const gate = document.getElementById('termsGate');
+    if (!gate || gate.style.display !== 'flex') return;
+    gate.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  /* Bramka przed każdą akcją generatora — true = można działać */
+  function requireTerms() {
+    if (hasAcceptedTerms()) return true;
+    showTermsGate();
+    return false;
+  }
+
+  async function acceptTerms() {
+    const all = ['tcTerms', 'tcPaid', 'tcStart'].every(id => document.getElementById(id)?.checked);
+    if (!all) { showToast('Zaznacz wszystkie trzy zgody, aby kontynuować.', 'warn'); return; }
+
+    const btn   = document.getElementById('termsAcceptBtn');
+    const label = document.getElementById('termsAcceptLabel');
+    const orig  = label ? label.textContent : '';
+    if (btn)   btn.disabled = true;
+    if (label) label.textContent = 'Zapisuję zgodę…';
+
+    termsAccepted = true;
+    try { localStorage.setItem(_termsKey(), TERMS_VERSION); } catch {}
+
+    /* Zapis serwerowy — gdy padnie, zgoda i tak obowiązuje lokalnie,
+       a przy następnym wejściu zostanie poproszona ponownie. */
+    if (currentToken) {
+      try {
+        await fetch('/api/account', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentToken}` },
+          body: JSON.stringify({
+            event: 'terms_accepted',
+            version: TERMS_VERSION,
+            consents: { terms: true, paid_service: true, immediate_start: true },
+          }),
+        });
+      } catch {}
+    }
+
+    hideTermsGate();
+    if (btn)   btn.disabled = false;
+    if (label) label.textContent = orig;
+    showToast('Dziękujemy — generator odblokowany.', 'ok');
+
+    /* Paywall wstrzymany na czas bramki (trial już wygasł) — pokaż teraz */
+    if (window._pendingPaywall) { window._pendingPaywall = false; showPaywall(); }
+  }
+
+  function declineTerms() {
+    hideTermsGate();
+    showToast('Bez akceptacji regulaminu nie możemy udostępnić generatora.', 'warn');
+    doLogout();
   }
 
   /* ── Paywall ── */
@@ -1435,6 +1663,7 @@
 
   /* ── Generate ── */
   async function generateMenu() {
+    if (!requireTerms()) return;
     if (trialData?.expired && !trialData?.paid) { showPaywall(); return; }
     const notes = document.getElementById('notes').value.trim();
     if (uploadedImages.length === 0 && !notes) { showToast('Dodaj zdjęcie menu lub wpisz opis.','warn'); return; }

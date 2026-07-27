@@ -338,7 +338,11 @@ module.exports = async function handler(req, res) {
       last_plan:          subscriptionLapsed ? paid.plan : null,
     };
 
-    if (!account?.slug) { res.json({ ok: true, account: null, menu: null, trial }); return; }
+    /* Zgody użytkownika (regulamin / usługa płatna / rozpoczęcie świadczenia).
+       Zwracane zawsze, także bez konta — edytor decyduje czy pokazać bramkę. */
+    const terms = account?.terms || null;
+
+    if (!account?.slug) { res.json({ ok: true, account: null, menu: null, trial, terms }); return; }
 
     const menuData = await kvGet(`menu:${account.slug}`);
     res.json({
@@ -352,6 +356,7 @@ module.exports = async function handler(req, res) {
       },
       menu:  menuData?.menu || null,
       trial,
+      terms,
     });
     return;
   }
@@ -415,6 +420,54 @@ module.exports = async function handler(req, res) {
         await kvSet(accountKey, account);
       }
       res.json({ ok: true });
+      return;
+    }
+
+    /* ── Zgody użytkownika (bramka przed generatorem) ──
+       Trwały ślad audytowy pod weryfikację operatora płatności: co dokładnie
+       zaakceptowano, w jakiej wersji dokumentów, kiedy, z jakiego adresu IP.
+       Zapis jest insert-friendly — konto może jeszcze nie istnieć (zgody
+       zbieramy PRZED pierwszym wygenerowaniem menu). */
+    if (req.body && req.body.event === 'terms_accepted') {
+      const version = String(req.body.version || '').slice(0, 32);
+      const c = req.body.consents || {};
+      if (!version || !c.terms || !c.paid_service || !c.immediate_start) {
+        res.status(400).json({ error: 'Wymagana akceptacja wszystkich zgód.' });
+        return;
+      }
+      const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || null;
+      const record = {
+        version,
+        accepted_at: Date.now(),
+        ip,
+        user_agent: String(req.headers['user-agent'] || '').slice(0, 300),
+        consents: {
+          /* regulamin + polityka prywatności */
+          terms: true,
+          /* przyjęcie do wiadomości, że po okresie próbnym usługa jest płatna */
+          paid_service: true,
+          /* żądanie rozpoczęcia świadczenia usługi cyfrowej przed upływem
+             14-dniowego terminu odstąpienia (art. 38 pkt 13 u.p.k.) */
+          immediate_start: true,
+        },
+      };
+      let base = account;
+      if (!base) {
+        /* Konta może naprawdę jeszcze nie być (zgoda przed pierwszym menu),
+           ale kvGet zwraca null także przy błędzie odczytu — dlatego zapis
+           insert-only, żeby w żadnym wypadku nie nadpisać istniejącego
+           konta (skasowałoby to stały slug/URL/QR). */
+        if (await kvSetNX(accountKey, { terms: record, terms_history: [record] })) {
+          res.json({ ok: true, terms: record });
+          return;
+        }
+        base = await kvGet(accountKey); /* klucz jednak istniał — dociągnij treść */
+        if (!base) { res.status(503).json({ error: 'Chwilowy problem z zapisem — spróbuj ponownie.' }); return; }
+      }
+      /* Historia zgód — kolejne wersje regulaminu dopisują się, nie nadpisują */
+      const history = [...(base.terms_history || []), record].slice(-10);
+      await kvSet(accountKey, { ...base, terms: record, terms_history: history });
+      res.json({ ok: true, terms: record });
       return;
     }
 

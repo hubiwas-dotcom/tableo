@@ -33,6 +33,33 @@ async function kvSet(key, value) {
   } catch { return false; }
 }
 
+/* Atomowy licznik dziennego limitu generowań (INCR + EXPIRE na Redisie —
+   w przeciwieństwie do kvGet/kvSet+merge nie ma tu wyścigu przy równoległych
+   requestach). Zwraca 0 gdy KV niedostępny, żeby nigdy nie blokować generowania
+   z powodu awarii Upstash. */
+async function kvIncrDaily(key) {
+  const url   = process.env.KV_REST_API_URL   || process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return 0;
+  try {
+    const res  = await fetch(url, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(['INCR', key])
+    });
+    const data  = await res.json();
+    const count = Number(data.result) || 0;
+    if (count === 1) {
+      await fetch(url, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(['EXPIRE', key, 26 * 60 * 60]) /* 26h zapas na strefy czasowe */
+      });
+    }
+    return count;
+  } catch { return 0; }
+}
+
 /* Bezpieczny zapis konta: ŚWIEŻY odczyt tuż przed zapisem + merge łatki.
    Nigdy nie zapisuje obiektu odczytanego minuty wcześniej (generowanie trwa
    60–120 s — w tym czasie inna funkcja mogła zapisać slug/domenę/liczniki).
@@ -209,6 +236,31 @@ module.exports = async function handler(req, res) {
   if (!user) {
     res.status(401).json({ error: 'Sesja wygasła. Zaloguj się ponownie.' });
     return;
+  }
+
+  /* ── Dzienny limit generowań (chroni budżet API przed nadużyciem) ── */
+  if (!isAdmin(user.email)) {
+    const dayKey       = new Date().toISOString().slice(0, 10);
+    const userLimit    = parseInt(process.env.GENERATE_LIMIT_PER_USER || '8', 10);
+    const globalLimit  = parseInt(process.env.GENERATE_LIMIT_GLOBAL   || '150', 10);
+
+    const userCount = await kvIncrDaily(`genlimit:user:${user.email}:${dayKey}`);
+    if (userCount > userLimit) {
+      res.status(429).json({
+        error: 'rate_limited',
+        message: `Osiągnięto dzienny limit ${userLimit} generowań menu. Spróbuj ponownie jutro lub napisz do nas, jeśli potrzebujesz więcej.`
+      });
+      return;
+    }
+
+    const globalCount = await kvIncrDaily(`genlimit:global:${dayKey}`);
+    if (globalCount > globalLimit) {
+      res.status(429).json({
+        error: 'rate_limited_global',
+        message: 'Chwilowo osiągnęliśmy dzienny limit generowań menu na całej platformie. Spróbuj ponownie za kilka godzin lub napisz do nas.'
+      });
+      return;
+    }
   }
 
   /* ── Trial enforcement ── */

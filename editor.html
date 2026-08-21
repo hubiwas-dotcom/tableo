@@ -1606,6 +1606,24 @@
     `;
   }
 
+  /* ── Rate-limit error card ── */
+  function _genRateLimitCard(message) {
+    return `<div class="card fade-up" style="padding:36px 32px;text-align:center;">
+      <div style="width:48px;height:48px;margin:0 auto 16px;border-radius:13px;background:rgba(201,146,74,.1);border:1px solid rgba(201,146,74,.2);display:flex;align-items:center;justify-content:center;">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="8.5" stroke="var(--gold)" stroke-width="1.5"/><path d="M11 6.5v5l3.2 2" stroke="var(--gold)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <p style="font-size:15px;font-weight:700;color:var(--navy);margin-bottom:8px;">Limit generowań osiągnięty</p>
+      <p style="font-size:13px;color:rgba(27,42,74,.5);line-height:1.6;max-width:340px;margin:0 auto 20px;">
+        ${message || 'Osiągnięto dzienny limit generowań menu. Spróbuj ponownie jutro.'}
+      </p>
+      <a href="/kontakt" target="_blank"
+        style="display:inline-flex;align-items:center;gap:7px;background:var(--navy);color:white;padding:10px 20px;border-radius:100px;font-size:13px;font-weight:600;text-decoration:none;transition:opacity 150ms;"
+        onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+        Skontaktuj się z obsługą
+      </a>
+    </div>`;
+  }
+
   /* ── Friendly error card ── */
   function _genErrorCard() {
     return `<div class="card fade-up" style="padding:36px 32px;text-align:center;">
@@ -1722,6 +1740,7 @@
       const data = await res.json();
       if (res.status === 401) { stopGenProgress(false); doLogout(); return; }
       if (res.status === 402) { stopGenProgress(false); showPaywall(); results.innerHTML = ''; btn.disabled = false; btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1l1.5 3.5L13 6l-2.5 2.5.5 3.5L8 10.5 5 12l.5-3.5L3 6l3.5-.5L8 1z" fill="white" opacity=".9"/></svg>Generuj menu AI`; btn.className = 'btn-primary btn-magic'; return; }
+      if (res.status === 429) { stopGenProgress(false); results.innerHTML = _genRateLimitCard(data.message); btn.disabled = false; btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1l1.5 3.5L13 6l-2.5 2.5.5 3.5L8 10.5 5 12l.5-3.5L3 6l3.5-.5L8 1z" fill="white" opacity=".9"/></svg>Generuj menu AI`; btn.className = 'btn-primary btn-magic'; return; }
       if (data.ok && data.menu) {
         stopGenProgress(true);
         currentMenu = data.menu;

@@ -501,6 +501,79 @@
     'Ustaw jako stały link': ['Fijar como enlace permanente', 'Set as permanent link'],
     'Nie udało się przywrócić linku.': ['No se ha podido restaurar el enlace.', 'Could not restore the link.'],
 
+    /* ─── Nazwy języków menu (title na flagach + komunikaty tłumaczeń) ─── */
+    'Angielski': ['Inglés', 'English'],
+    'Niemiecki': ['Alemán', 'German'],
+    'Francuski': ['Francés', 'French'],
+    'Włoski': ['Italiano', 'Italian'],
+    'Hiszpański': ['Español', 'Spanish'],
+    'Rosyjski': ['Ruso', 'Russian'],
+    'angielski': ['inglés', 'English'],
+    'niemiecki': ['alemán', 'German'],
+    'francuski': ['francés', 'French'],
+    'włoski': ['italiano', 'Italian'],
+    'hiszpański': ['español', 'Spanish'],
+    'rosyjski': ['ruso', 'Russian'],
+
+    /* ─── Generator: status konta i planu ─── */
+    'Plan roczny': ['Plan anual', 'Annual plan'],
+    'Aktywny plan': ['Plan activo', 'Active plan'],
+    'Lifetime': ['Lifetime', 'Lifetime'],
+    'Kup teraz →': ['Comprar ahora →', 'Buy now →'],
+
+    /* ─── Generator: ekran generowania i komunikaty ─── */
+    'Tworzymy Twoje cyfrowe menu': ['Estamos creando tu carta digital', 'Building your digital menu'],
+    'Link skopiowany!': ['¡Enlace copiado!', 'Link copied!'],
+    'Pobrano standalone HTML menu.': ['HTML de la carta descargado.', 'Standalone menu HTML downloaded.'],
+    'Wybierz plik graficzny.': ['Elige un archivo de imagen.', 'Choose an image file.'],
+    'Logo dodane!': ['¡Logo añadido!', 'Logo added!'],
+    'Logo dodane': ['Logo añadido', 'Logo added'],
+    'Gotowe.': ['Listo.', 'Done.'],
+    'Anulowano.': ['Cancelado.', 'Cancelled.'],
+    'Brak menu do edycji.': ['No hay ninguna carta que editar.', 'No menu to edit.'],
+    'Nowa pozycja': ['Plato nuevo', 'New item'],
+    'Inne': ['Otros', 'Other'],
+    'Edytuj menu przez czat': ['Edita la carta por chat', 'Edit the menu by chat'],
+    'Twój stały link i kod QR NIE zmienią się — po ponownej publikacji zaktualizują się pod tym samym adresem, więc wydrukowane stojaki dalej działają.':
+      ['Tu enlace permanente y tu código QR NO cambiarán: al volver a publicar se actualizarán en la misma dirección, así que los soportes impresos seguirán funcionando.',
+       'Your permanent link and QR code will NOT change — republishing updates them at the same address, so printed stands keep working.'],
+
+    /* ─── Generator: własna domena ─── */
+    'Najpierw opublikuj menu': ['Publica primero la carta', 'Publish the menu first'],
+    'Nowy adres aktywny! Stary link przekierowuje na nowy.':
+      ['¡Nueva dirección activa! El enlace antiguo redirige a la nueva.',
+       'New address is live! The old link redirects to it.'],
+    'Domena zapisana!': ['¡Dominio guardado!', 'Domain saved!'],
+    'opublikuj menu': ['publica la carta', 'publish the menu'],
+    'Konfiguracja DNS u dostawcy domeny': ['Configuración DNS en tu proveedor de dominio', 'DNS setup at your domain provider'],
+    'Adres domeny': ['Dirección del dominio', 'Domain address'],
+    'Typ:': ['Tipo:', 'Type:'],
+    'Nazwa:': ['Nombre:', 'Name:'],
+    'np. menu.moja-restauracja.pl': ['p. ej. menu.mi-restaurante.es', 'e.g. menu.my-restaurant.com'],
+
+    /* ─── Panel admina: etykiety tabel ─── */
+    'Konta': ['Cuentas', 'Accounts'],
+    'Aktywne (7 dni)': ['Activas (7 días)', 'Active (7 days)'],
+    'Generacje': ['Generaciones', 'Generations'],
+    'Generacji': ['Generaciones', 'Generations'],
+    '📷 Skany QR': ['📷 Escaneos QR', '📷 QR scans'],
+    '⚠️ Alerty': ['⚠️ Alertas', '⚠️ Alerts'],
+    'Logowanie': ['Inicio de sesión', 'Login'],
+    'Ostatni login': ['Último acceso', 'Last login'],
+    'Skan QR / link': ['Escaneo QR / enlace', 'QR scan / link'],
+    'Status / trial': ['Estado / prueba', 'Status / trial'],
+    'Problem': ['Problema', 'Issue'],
+    'Status:': ['Estado:', 'Status:'],
+    'Zapytanie': ['Consulta', 'Enquiry'],
+    'Nowe': ['Nuevo', 'New'],
+    '↩ Oznacz jako nowe': ['↩ Marcar como nuevo', '↩ Mark as new'],
+    'W druku': ['En impresión', 'In production'],
+    'Anulowane': ['Cancelado', 'Cancelled'],
+    '✉️ Zapytania z formularza': ['✉️ Consultas del formulario', '✉️ Form enquiries'],
+    'brak opublikowanego menu': ['sin carta publicada', 'no published menu'],
+    '· kod:': ['· código:', '· code:'],
+    '· płytka:': ['· placa:', '· plaque:'],
+
     /* ─── Strona kodu QR (/kody-qr) ─── */
     'Wróć do edytora': ['Volver al editor', 'Back to the editor'],
     '← Wróć do edytora': ['← Volver al editor', '← Back to the editor'],
@@ -706,8 +779,26 @@
     ]
   };
 
-  /* ── Komunikaty tylko dla JS (confirm/alert) ──────────────────────────── */
+  /* ── Komunikaty budowane w JS ({0} = podstawiana wartość) ─────────────── */
   var M = {
+    /* Odznaka okresu próbnego — polska odmiana (1 dzień / N dni) nie ma
+       odpowiednika 1:1, więc każdy język dostaje własne dwie formy. */
+    'trial.day1':      ['1 día de prueba', '1 trial day'],
+    'trial.days':      ['{0} días de prueba', '{0} trial days'],
+    'trial.dayLeft1':  ['queda 1 día', '1 day left'],
+    'trial.daysLeft':  ['quedan {0} días', '{0} days left'],
+    'photos.count':    ['{0} / {1} con foto', '{0} / {1} with a photo'],
+
+    /* Czat AI — odpowiedzi o nieudanych operacjach */
+    'chat.failed':     ['No he podido aplicar este cambio ({0}). Descríbelo de otra forma, p. ej. «cambia el color de los precios a dorado».',
+                        'I couldn\'t apply that change ({0}). Try describing it differently, e.g. "change the price colour to gold".'],
+    'chat.noOps':      ['ninguna operación', 'no operations'],
+    'chat.noItem':     ['no he encontrado el plato «{0}»', 'couldn\'t find the item "{0}"'],
+    'chat.noCat':      ['no he encontrado la categoría «{0}»', 'couldn\'t find the category "{0}"'],
+    'chat.catExists':  ['la categoría «{0}» ya existe', 'the category "{0}" already exists'],
+    'confirm.remove':  ['¿Seguro que quieres eliminar: {0}? Esta acción no se puede deshacer.',
+                        'Are you sure you want to remove: {0}? This cannot be undone.'],
+
     'confirm.reset': [
       '⚠️ ¿Borrar la carta actual y empezar de cero?\n\nSe eliminarán: las fotos subidas, los platos generados y la descripción.\n\nTu enlace permanente y tu código QR NO cambiarán: al volver a publicar se actualizarán en la misma dirección, así que los soportes impresos seguirán funcionando.',
       '⚠️ Clear the current menu and start over?\n\nThis removes: uploaded photos, generated items and the description.\n\nYour permanent link and QR code will NOT change — republishing updates the same address, so printed stands keep working.'
@@ -888,11 +979,19 @@
     return LANGS.indexOf(n) >= 0 ? n : 'pl';
   }
 
-  /* t() dla stringów, które nigdy nie trafiają do DOM (confirm / alert) */
+  /* t() dla stringów, które nie trafiają do DOM jako gotowy węzeł tekstowy:
+     confirm/alert oraz komunikaty sklejane ze zmiennymi.
+     Argumenty po kluczu podstawiają się pod {0}, {1}, ...
+     Zwraca null przy polskim — wywołujący używa wtedy oryginału. */
   function t(key) {
     if (idx < 0) return null;
     var e = M[key] || T[key];
-    return e ? e[idx] : null;
+    if (!e) return null;
+    var s = e[idx];
+    for (var i = 1; i < arguments.length; i++) {
+      s = s.split('{' + (i - 1) + '}').join(String(arguments[i]));
+    }
+    return s;
   }
 
   window.qreatSetLang = setLang;

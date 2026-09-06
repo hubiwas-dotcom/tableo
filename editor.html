@@ -867,6 +867,9 @@
   let currentCustomDomain = null, currentPublishedSlug = null, currentPublishedUrl = null;
   const TRIAL_DAYS = 7;
 
+  /* Tłumaczenie komunikatów sklejanych w JS; null przy polskim → oryginał. */
+  function _t() { return window.qreatT ? window.qreatT.apply(null, arguments) : null; }
+
   /* ── Language picker ── */
   let selectedLanguages = [];
   const LANG_OPTIONS = [
@@ -1329,9 +1332,9 @@
       }
       const days = t.days_left;
       if (days > 3) {
-        badge.innerHTML = `<span class="trial-badge trial-ok">${days} dni próbnych</span>`;
+        badge.innerHTML = `<span class="trial-badge trial-ok">${_t('trial.days', days) || days + ' dni próbnych'}</span>`;
       } else {
-        badge.innerHTML = `<span class="trial-badge trial-warn">${days} ${days === 1 ? 'dzień' : 'dni'} próbny</span>`;
+        badge.innerHTML = `<span class="trial-badge trial-warn">${(days === 1 ? _t('trial.day1') : _t('trial.days', days)) || days + ' ' + (days === 1 ? 'dzień' : 'dni') + ' próbny'}</span>`;
       }
       editorMain.style.paddingTop = '80px';
       return;
@@ -1345,10 +1348,10 @@
     const daysUsed = Math.floor((Date.now() - trialStart) / 86400000);
     const daysLeft = TRIAL_DAYS - daysUsed;
     if (daysLeft > 3) {
-      badge.innerHTML = `<span class="trial-badge trial-ok">${daysLeft} dni próbnych</span>`;
+      badge.innerHTML = `<span class="trial-badge trial-ok">${_t('trial.days', daysLeft) || daysLeft + ' dni próbnych'}</span>`;
       editorMain.style.paddingTop = '80px';
     } else if (daysLeft > 0) {
-      badge.innerHTML = `<span class="trial-badge trial-warn">${daysLeft} ${daysLeft === 1 ? 'dzień' : 'dni'} próbny</span>`;
+      badge.innerHTML = `<span class="trial-badge trial-warn">${(daysLeft === 1 ? _t('trial.day1') : _t('trial.days', daysLeft)) || daysLeft + ' ' + (daysLeft === 1 ? 'dzień' : 'dni') + ' próbny'}</span>`;
       editorMain.style.paddingTop = '80px';
     } else {
       badge.innerHTML = `<span class="trial-badge trial-end">Trial wygasł</span>`;
@@ -2280,7 +2283,7 @@
             </div>
           </div>
           <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;">
-            <span id="dishPhotoCount" style="font-size:11px;color:#b07d38;font-weight:700;white-space:nowrap;background:rgba(201,146,74,.12);padding:4px 10px;border-radius:100px;">${withPhotos} / ${allDishes.length} ze&nbsp;zdjęciem</span>
+            <span id="dishPhotoCount" style="font-size:11px;color:#b07d38;font-weight:700;white-space:nowrap;background:rgba(201,146,74,.12);padding:4px 10px;border-radius:100px;">${_t('photos.count', withPhotos, allDishes.length) || withPhotos + ' / ' + allDishes.length + ' ze&nbsp;zdjęciem'}</span>
             <svg id="dishPhotoChevron" width="16" height="16" viewBox="0 0 16 16" fill="none" style="transition:transform .25s ease;flex-shrink:0;"><path d="M4 6l4 4 4-4" stroke="rgba(27,42,74,.45)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
         </button>
@@ -2764,7 +2767,7 @@
     const el = document.getElementById('dishPhotoCount');
     if (!el || !currentMenu) return;
     const all = (currentMenu.categories||[]).flatMap(c => c.items||[]);
-    el.innerHTML = `${all.filter(i=>i.image).length} / ${all.length} ze zdjęciem`;
+    el.innerHTML = (_t('photos.count', all.filter(i=>i.image).length, all.length) || `${all.filter(i=>i.image).length} / ${all.length} ze zdjęciem`);
   }
   /* ── Menu chat editor ── */
   function renderChatSection() {
@@ -2857,7 +2860,8 @@
             /* Nie powtarzaj "zmieniłem" po AI, jeśli operacje zostały odrzucone */
             let msg;
             if (!r.applied) {
-              msg = 'Nie udało mi się zastosować tej zmiany (' + (r.skipped.join('; ') || 'brak operacji') + '). Opisz proszę inaczej, np. „zmień kolor cen na złoty".';
+              const _sk = r.skipped.join('; ') || _t('chat.noOps') || 'brak operacji';
+              msg = _t('chat.failed', _sk) || 'Nie udało mi się zastosować tej zmiany (' + _sk + '). Opisz proszę inaczej, np. „zmień kolor cen na złoty".';
             } else {
               msg = data.reply || 'Gotowe.';
               if (r.skipped.length) msg += ' Uwaga — część się nie udała: ' + r.skipped.join('; ') + '.';
@@ -2909,7 +2913,7 @@
         removeDesc.push(`kategoria „${op.name}"${n ? ` (${n} pozycji)` : ''}`);
       }
     });
-    if (toRemove > 1 && !confirm(`Na pewno usunąć: ${removeDesc.join(', ')}? Tej operacji nie można cofnąć.`)) {
+    if (toRemove > 1 && !confirm(_t('confirm.remove', removeDesc.join(', ')) || `Na pewno usunąć: ${removeDesc.join(', ')}? Tej operacji nie można cofnąć.`)) {
       return { ok: false, msg: 'Anulowano — nic nie zmieniłem.' };
     }
 
@@ -2977,7 +2981,7 @@
           case 'update_item': {
             const it = findItem(op.item);
             if (it && ['name', 'price', 'description'].includes(op.field)) { it[op.field] = op.value; applied++; }
-            else skipped.push(it ? `nieznane pole „${op.field}"` : `nie znalazłem pozycji „${op.item}"`);
+            else skipped.push(it ? `nieznane pole „${op.field}"` : (_t('chat.noItem', op.item) || `nie znalazłem pozycji „${op.item}"`));
             break;
           }
           case 'add_item': {
@@ -2993,25 +2997,25 @@
               const i = (c.items || []).findIndex(x => norm(x.name) === norm(op.item));
               if (i >= 0) { c.items.splice(i, 1); removed = true; break; }
             }
-            if (removed) applied++; else skipped.push(`nie znalazłem pozycji „${op.item}"`);
+            if (removed) applied++; else skipped.push(_t('chat.noItem', op.item) || `nie znalazłem pozycji „${op.item}"`);
             break;
           }
           case 'rename_category': {
             const c = findCat(op.from || op.category);
             if (c) { c.name = op.to || op.name; applied++; }
-            else skipped.push(`nie znalazłem kategorii „${op.from || op.category}"`);
+            else skipped.push(_t('chat.noCat', op.from || op.category) || `nie znalazłem kategorii „${op.from || op.category}"`);
             break;
           }
           case 'add_category': {
             if (op.name && !findCat(op.name)) { currentMenu.categories.push({ name: op.name, items: [] }); applied++; }
-            else skipped.push(`kategoria „${op.name}" już istnieje`);
+            else skipped.push(_t('chat.catExists', op.name) || `kategoria „${op.name}" już istnieje`);
             break;
           }
           case 'remove_category': {
             const before = currentMenu.categories.length;
             currentMenu.categories = currentMenu.categories.filter(c => norm(c.name) !== norm(op.name));
             if (currentMenu.categories.length < before) applied++;
-            else skipped.push(`nie znalazłem kategorii „${op.name}"`);
+            else skipped.push(_t('chat.noCat', op.name) || `nie znalazłem kategorii „${op.name}"`);
             break;
           }
           case 'reorder_items': {
@@ -3021,7 +3025,7 @@
               const ordered = op.order.map(n => (c.items || []).find(i => norm(i.name) === norm(n))).filter(Boolean);
               c.items = [...ordered, ...rest];
               applied++;
-            } else skipped.push(`nie znalazłem kategorii „${op.category}"`);
+            } else skipped.push(_t('chat.noCat', op.category) || `nie znalazłem kategorii „${op.category}"`);
             break;
           }
           case 'add_language': {

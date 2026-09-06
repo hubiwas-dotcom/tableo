@@ -297,6 +297,14 @@
        'You\'ve reached the daily generation limit. Please try again tomorrow.'],
     'Dodaj zdjęcie menu lub wpisz opis.': ['Añade una foto de la carta o escribe una descripción.', 'Add a menu photo or type a description.'],
 
+    /* ─── Edytor: panel wyników po wygenerowaniu ─── */
+    'Restauracja': ['Restaurante', 'Restaurant'],
+    'Twoja Restauracja': ['Tu restaurante', 'Your restaurant'],
+    'pozycji': ['platos', 'items'],
+    'kategorii': ['categorías', 'categories'],
+    'Menu jest live': ['La carta está online', 'Your menu is live'],
+    'Kopiuj link': ['Copiar enlace', 'Copy link'],
+
     /* ─── Edytor: podgląd i publikacja ─── */
     'PODGLĄD · iPhone 17 Pro': ['VISTA PREVIA · iPhone 17 Pro', 'PREVIEW · iPhone 17 Pro'],
     'Opublikuj menu online': ['Publicar carta online', 'Publish menu online'],

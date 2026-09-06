@@ -776,10 +776,13 @@
       'Solicito <strong>el inicio de la prestación del servicio digital</strong> antes de que expire el plazo de desistimiento de 14 días y entiendo que, una vez ejecutado el servicio por completo, <strong>pierdo el derecho de desistimiento</strong> (art.&nbsp;38 pto.&nbsp;13 de la ley polaca de derechos del consumidor).',
       'I request <strong>that the digital service begins</strong> before the 14-day withdrawal period expires, and I understand that once the service has been fully performed <strong>I lose the right of withdrawal</strong> (art.&nbsp;38 pt.&nbsp;13 of the Polish Consumer Rights Act).'
     ],
-    /* ─── Ceny w EUR (ES/EN) ───────────────────────────────────────────────
-       Kurs przyjęty ~4,29 PLN/EUR: 29,99 zł ≈ 6,99 € · 299,99 zł ≈ 69,99 €.
-       To CENA ORIENTACYJNA — Tpay pobiera złotówki, więc każde miejsce z ceną
-       musi mówić, w jakiej walucie następuje obciążenie. ──────────────────── */
+    /* ─── Ceny w ES/EN ─────────────────────────────────────────────────────
+       Cena główna zostaje w ZŁOTYCH (bo Tpay pobiera złotówki), a pod spodem
+       idzie przelicznik orientacyjny. Kurs ~4,29 PLN/EUR:
+         34,99 zł ≈ 8,15 €   ·   349,99 zł ≈ 81,60 €
+       Zmieniasz cenę? Zaktualizuj RÓWNIEŻ: api/tpay.js (PLANS), regulamin.html
+       (§ z cenami + data), ceny w HTML index/editor/kontakt oraz klucze tego
+       słownika, które zawierają kwotę w polskim źródle. ───────────────────── */
     'price.monthly': [
       '<span style="font-family:\'Playfair Display\',serif;font-size:3.4rem;font-weight:600;color:var(--navy);">34<span style="font-size:1.7rem;">,99</span></span>\n            <span style="color:rgba(27,42,74,0.4);font-size:14px;font-family:\'Plus Jakarta Sans\',sans-serif;">zł / mes</span>\n            <div style="flex-basis:100%;font-size:12.5px;color:rgba(27,42,74,0.42);font-family:\'Plus Jakarta Sans\',sans-serif;margin-top:3px;">≈ 8,15 € al mes</div>',
       '<span style="font-family:\'Playfair Display\',serif;font-size:3.4rem;font-weight:600;color:var(--navy);">34<span style="font-size:1.7rem;">,99</span></span>\n            <span style="color:rgba(27,42,74,0.4);font-size:14px;font-family:\'Plus Jakarta Sans\',sans-serif;">zł / month</span>\n            <div style="flex-basis:100%;font-size:12.5px;color:rgba(27,42,74,0.42);font-family:\'Plus Jakarta Sans\',sans-serif;margin-top:3px;">≈ 8,15 € per month</div>'

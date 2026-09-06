@@ -719,7 +719,7 @@
       <div class="price-card">
         <div style="margin-bottom:24px;">
           <div style="font-size:10.5px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(27,42,74,0.4);margin-bottom:10px;font-family:'Plus Jakarta Sans',sans-serif;">Abonament miesięczny</div>
-          <div style="display:flex;align-items:baseline;gap:4px;">
+          <div style="display:flex;align-items:baseline;gap:4px;" data-i18n-key="price.monthly">
             <span style="font-family:'Playfair Display',serif;font-size:3.4rem;font-weight:600;color:var(--navy);">29<span style="font-size:1.7rem;">,99</span></span>
             <span style="color:rgba(27,42,74,0.4);font-size:14px;font-family:'Plus Jakarta Sans',sans-serif;">zł / mies</span>
           </div>
@@ -741,7 +741,7 @@
         </div>
         <div style="margin-bottom:24px;margin-top:16px;">
           <div style="font-size:10.5px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;font-family:'Plus Jakarta Sans',sans-serif;">Abonament roczny — 2 mies. gratis</div>
-          <div style="display:flex;align-items:baseline;gap:4px;">
+          <div style="display:flex;align-items:baseline;gap:4px;" data-i18n-key="price.yearly">
             <span style="font-family:'Playfair Display',serif;font-size:3.4rem;font-weight:600;color:var(--navy);">299<span style="font-size:1.7rem;">,99</span></span>
             <span style="color:rgba(27,42,74,0.4);font-size:14px;font-family:'Plus Jakarta Sans',sans-serif;">zł / rok</span>
           </div>
@@ -993,7 +993,7 @@ Link do menu: <strong>menu.twoja-restauracja.pl</strong> 🎉`;
   function getDemoReply(text, hasImage) {
     const t = text.toLowerCase();
     if (hasImage) return { delay: 2800, text: menuExample };
-    if (t.includes('cen') || t.includes('kosztuj') || t.includes('ile')) return { delay: 1200, text: 'Abonament to <strong>29,99 zł / miesiąc</strong>, albo <strong>299,99 zł / rok</strong> (2 miesiące gratis). Pierwsze menu generujesz <strong>za darmo</strong> w 7-dniowym trialu. 🎁' };
+    if (t.includes('cen') || t.includes('kosztuj') || t.includes('ile')) return { delay: 1200, text: '<span data-i18n-key="mock.price">Abonament to <strong>29,99 zł / miesiąc</strong>, albo <strong>299,99 zł / rok</strong> (2 miesiące gratis). Pierwsze menu generujesz <strong>za darmo</strong> w 7-dniowym trialu. 🎁</span>' };
     if (t.includes('zmień') || t.includes('zmien') || t.includes('edytuj') || t.includes('cen') || t.includes('zł')) return { delay: 1400, text: 'Gotowe! ✅ Zaktualizowałem cenę. Zmiana jest widoczna natychmiast dla wszystkich odwiedzających Twoje menu. Możesz też edytować dowolną pozycję w panelu admina.' };
     if (t.includes('dodaj') || t.includes('nową') || t.includes('nowa') || t.includes('pozycj')) return { delay: 1600, text: 'Dodałem nową pozycję do menu! ✅ Aby trwale zapisać zmiany, przejdź do panelu admina → Dodaj pozycję. Możesz tam też dodać zdjęcie dania i opis alergenów.' };
     if (t.includes('usuń') || t.includes('usun') || t.includes('usuwa')) return { delay: 1200, text: 'Pozycja usunięta ✅. Zmiana widoczna natychmiast. Jeśli chcesz tylko tymczasowo ukryć danie (np. sezonowe), użyj przełącznika dostępności w panelu admina zamiast usuwania.' };

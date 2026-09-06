@@ -125,11 +125,11 @@
       ['Genera el código HTML listo para publicar online', 'Generates ready-to-publish HTML for your menu'],
     'Przykładowe pytania': ['Ejemplos de instrucciones', 'Example prompts'],
     '"Dodaj kategorię Napoje z kawą 12 zł i herbatą 8 zł"':
-      ['«Añade la categoría Bebidas con café 12 zł y té 8 zł»', '"Add a Drinks category with coffee 12 zł and tea 8 zł"'],
+      ['«Añade la categoría Bebidas con café 3 € y té 2 €»', '"Add a Drinks category with coffee 3 € and tea 2 €"'],
     '"Wygeneruj menu dla restauracji włoskiej z 5 pozycjami"':
       ['«Genera una carta para un restaurante italiano con 5 platos»', '"Generate a menu for an Italian restaurant with 5 items"'],
     '"Zmień cenę tartra wołowego na 45 zł"':
-      ['«Cambia el precio del tartar de ternera a 45 zł»', '"Change the beef tartare price to 45 zł"'],
+      ['«Cambia el precio del tartar de ternera a 12 €»', '"Change the beef tartare price to 12 €"'],
 
     /* ─── Landing: panel admina ─── */
     'Prosty panel na komputer — bez technicznej wiedzy.':
@@ -150,13 +150,14 @@
     /* ─── Landing: cennik ─── */
     'Abonament': ['Suscripción', 'Subscription'],
     'Abonament miesięczny': ['Suscripción mensual', 'Monthly plan'],
-    'zł / mies': ['zł / mes', 'zł / month'],
-    'zł / rok': ['zł / año', 'zł / year'],
-    'zł/mies.': ['zł/mes', 'zł/month'],
-    'zł/rok': ['zł/año', 'zł/year'],
+    'zł / mies': ['€ / mes', '€ / month'],
+    'zł / rok': ['€ / año', '€ / year'],
+    'zł/mies.': ['€/mes', '€/month'],
+    'zł/rok': ['€/año', '€/year'],
     '/mies.': ['/mes', '/month'],
     'Pełny dostęp do edytora AI. Bez automatycznego odnawiania.':
-      ['Acceso completo al editor con IA. Sin renovación automática.', 'Full access to the AI editor. No auto-renewal.'],
+      ['Acceso completo al editor con IA. Sin renovación automática. Se cobra en PLN (29,99 zł).',
+       'Full access to the AI editor. No auto-renewal. Charged in PLN (29,99 zł).'],
     'Edytor AI — nieograniczone menu': ['Editor con IA: cartas ilimitadas', 'AI editor — unlimited menus'],
     'Analiza zdjęć papierowego menu': ['Análisis de fotos de cartas en papel', 'Paper menu photo analysis'],
     'Link publiczny + kod QR': ['Enlace público + código QR', 'Public link + QR code'],
@@ -165,10 +166,10 @@
     'Najpopularniejszy': ['El más popular', 'Most popular'],
     'Abonament roczny — 2 mies. gratis': ['Suscripción anual — 2 meses gratis', 'Annual plan — 2 months free'],
     'Płacisz za 10 miesięcy, korzystasz cały rok. Bez automatycznego odnawiania.':
-      ['Pagas 10 meses y lo usas todo el año. Sin renovación automática.',
-       'Pay for 10 months, use it all year. No auto-renewal.'],
+      ['Pagas 10 meses y lo usas todo el año. Sin renovación automática. Se cobra en PLN (299,99 zł).',
+       'Pay for 10 months, use it all year. No auto-renewal. Charged in PLN (299,99 zł).'],
     'Wszystko z planu miesięcznego': ['Todo lo del plan mensual', 'Everything in the monthly plan'],
-    '2 miesiące gratis — 60 zł taniej rocznie': ['2 meses gratis: 60 zł menos al año', '2 months free — 60 zł less per year'],
+    '2 miesiące gratis — 60 zł taniej rocznie': ['2 meses gratis: unos 14 € menos al año', '2 months free — about 14 € less per year'],
     'Własna domena restauracji': ['Dominio propio del restaurante', 'Your own restaurant domain'],
     'Panel admina bez limitu': ['Panel de administración sin límites', 'Unlimited admin panel'],
     'Priorytetowe wsparcie techniczne': ['Soporte técnico prioritario', 'Priority technical support'],
@@ -377,8 +378,8 @@
     /* ─── Edytor: czat ─── */
     'Napisz co zmienić w menu…': ['Escribe qué quieres cambiar en la carta…', 'Type what you\'d like to change…'],
     'Napisz zwykłym językiem, np. „zmień tło na granatowy", „usuń colę", „cena margherity 32 zł"':
-      ['Escribe con normalidad: «cambia el fondo a azul marino», «quita la cola», «margarita a 32 zł»',
-       'Just write normally: "change the background to navy", "remove the cola", "margherita 32 zł"'],
+      ['Escribe con normalidad: «cambia el fondo a azul marino», «quita la cola», «margarita a 9 €»',
+       'Just write normally: "change the background to navy", "remove the cola", "margherita 9 €"'],
     'Wystąpił błąd. Spróbuj ponownie.': ['Se ha producido un error. Inténtalo de nuevo.', 'Something went wrong. Please try again.'],
     'Doprecyzuj proszę, co dokładnie zmienić.': ['¿Puedes concretar qué quieres cambiar?', 'Could you be more specific about the change?'],
     'Zmianę widzisz w podglądzie — kliknij „Opublikuj menu online", aby trafiła na Twoją stronę.':
@@ -429,12 +430,14 @@
     /* ─── Edytor: bramka zgód ─── */
     'Zanim zaczniesz tworzyć menu': ['Antes de crear tu carta', 'Before you build your menu'],
     'Teraz': ['Ahora', 'Now'],
+    '0 zł': ['0 €', '0 €'],
     'Potem': ['Después', 'Then'],
     '7 dni próbnych od pierwszego wygenerowania menu. Bez karty.':
       ['7 días de prueba desde la primera carta generada. Sin tarjeta.',
        '7-day trial from your first generated menu. No card.'],
     'lub 299,99 zł/rok. Ceny brutto (zawierają VAT).':
-      ['o 299,99 zł/año. Precios con impuestos incluidos (IVA).', 'or 299,99 zł/year. Prices include VAT.'],
+      ['o 69,99 €/año. Precios con impuestos incluidos. Importe orientativo — se cobra en PLN (29,99 zł / 299,99 zł).',
+       'or 69,99 €/year. Prices include VAT. Indicative amount — charged in PLN (29,99 zł / 299,99 zł).'],
     'Akceptuję — przejdź do generatora': ['Acepto — ir al generador', 'I accept — go to the generator'],
     'Nie akceptuję — wyloguj mnie': ['No acepto — cerrar sesión', 'I don\'t accept — log me out'],
     'Zaznacz wszystkie trzy zgody, aby kontynuować.':
@@ -448,11 +451,11 @@
     'Miesięcznie': ['Mensual', 'Monthly'],
     'Rocznie · 2 mies. gratis': ['Anual · 2 meses gratis', 'Annual · 2 months free'],
     'Pełny dostęp do edytora, wielojęzyczność, aktualizacje. Bez automatycznego odnawiania.':
-      ['Acceso completo al editor, multiidioma y actualizaciones. Sin renovación automática.',
-       'Full editor access, multi-language and updates. No auto-renewal.'],
+      ['Acceso completo al editor, multiidioma y actualizaciones. Sin renovación automática. Se cobra en PLN (29,99 zł).',
+       'Full editor access, multi-language and updates. No auto-renewal. Charged in PLN (29,99 zł).'],
     'To samo co miesięczny, ale taniej — płacisz za 10 miesięcy, korzystasz cały rok. Bez automatycznego odnawiania.':
-      ['Lo mismo que el mensual pero más barato: pagas 10 meses y lo usas todo el año. Sin renovación automática.',
-       'Same as monthly but cheaper — pay for 10 months, use it all year. No auto-renewal.'],
+      ['Lo mismo que el mensual pero más barato: pagas 10 meses y lo usas todo el año. Sin renovación automática. Se cobra en PLN (299,99 zł).',
+       'Same as monthly but cheaper — pay for 10 months, use it all year. No auto-renewal. Charged in PLN (299,99 zł).'],
     'Wybierz →': ['Elegir →', 'Choose →'],
     'Twój poprzedni plan': ['Tu plan anterior', 'Your previous plan'],
     'Zamawiam z obowiązkiem zapłaty i akceptuję':
@@ -647,8 +650,8 @@
        'The 7 days start from your first generated menu. No credit card needed. After the trial the menu is unavailable until you choose a plan.'],
     'Czym różni się plan miesięczny od rocznego?': ['¿En qué se diferencian el plan mensual y el anual?', 'What\'s the difference between monthly and annual?'],
     'Oba dają pełny dostęp do edytora i aktualizacji. Plan miesięczny to 29,99 zł/mies., a roczny — 299,99 zł/rok, czyli dwa miesiące gratis (ok. 60 zł taniej). Oba możesz anulować w każdej chwili.':
-      ['Ambos dan acceso completo al editor y a las actualizaciones. El mensual cuesta 29,99 zł/mes y el anual 299,99 zł/año, es decir, dos meses gratis (unos 60 zł menos). Puedes cancelar cualquiera cuando quieras.',
-       'Both give full access to the editor and updates. Monthly is 29,99 zł/month, annual is 299,99 zł/year — two months free (about 60 zł less). You can cancel either at any time.'],
+      ['Ambos dan acceso completo al editor y a las actualizaciones. El mensual cuesta 6,99 €/mes y el anual 69,99 €/año, es decir, dos meses gratis (unos 14 € menos). El cobro se realiza en PLN (29,99 zł / 299,99 zł). Puedes cancelar cualquiera cuando quieras.',
+       'Both give full access to the editor and updates. Monthly is 6,99 €/month, annual is 69,99 €/year — two months free (about 14 € less). Payment is taken in PLN (29,99 zł / 299,99 zł). You can cancel either at any time.'],
     'Jak ustawić własną domenę?': ['¿Cómo configuro mi propio dominio?', 'How do I set up my own domain?'],
     'Po publikacji menu, w panelu bocznym edytora znajdziesz sekcję "Własna domena". Wpisz adres (np. menu.restauracja.pl), skonfiguruj CNAME i napisz do nas — aktywujemy w 24h.':
       ['Una vez publicada la carta, en el panel lateral del editor verás la sección «Dominio propio». Introduce la dirección (p. ej. menu.restaurante.es), configura el CNAME y escríbenos: lo activamos en 24 h.',
@@ -663,8 +666,8 @@
        'JPG, PNG, WEBP — up to 10 MB each. You can add several menu pages at once. Handwritten menus work too. The sharper the photo, the better the result.'],
     'Czy mogę edytować menu po generacji?': ['¿Puedo editar la carta después de generarla?', 'Can I edit the menu after generating it?'],
     'Tak. Po wygenerowaniu możesz edytować menu przez czat AI ("zmień cenę zupy na 18 zł", "dodaj język angielski") lub dodać zdjęcia dań bezpośrednio w edytorze.':
-      ['Sí. Después de generarla puedes editarla desde el chat con IA («cambia el precio de la sopa a 18 zł», «añade el idioma inglés») o añadir fotos de los platos directamente en el editor.',
-       'Yes. After generating you can edit it through the AI chat ("change the soup price to 18 zł", "add English") or add dish photos directly in the editor.'],
+      ['Sí. Después de generarla puedes editarla desde el chat con IA («cambia el precio de la sopa a 5 €», «añade el idioma inglés») o añadir fotos de los platos directamente en el editor.',
+       'Yes. After generating you can edit it through the AI chat ("change the soup price to 5 €", "add English") or add dish photos directly in the editor.'],
     '© 2025 Qreat · menu cyfrowe dla restauracji ·':
       ['© 2025 Qreat · cartas digitales para restaurantes ·', '© 2025 Qreat · digital menus for restaurants ·'],
     'np. Anna Kowalska — Pizzeria Roma': ['p. ej. Ana García — Pizzeria Roma', 'e.g. Anna Smith — Pizzeria Roma'],
@@ -730,8 +733,8 @@
       'Ready for your <em style="font-style:italic;color:var(--sage);">digital menu</em>?'
     ],
     'pricing.legal': [
-      'Todos los precios son <strong>precios finales</strong> (IVA incluido).\n      Las cuentas nuevas tienen <strong>7 días gratis</strong>, sin tarjeta.\n      El pago se cobra una sola vez por el periodo elegido, <strong>sin renovación automática</strong>.\n      Los pagos online los gestiona <strong>Tpay</strong> — BLIK, tarjeta, transferencia rápida. Factura con IVA a petición.',
-      'All prices are <strong>final prices</strong> (VAT included).\n      New accounts get <strong>7 days free</strong>, no card required.\n      Payment is charged once for the chosen period, <strong>with no auto-renewal</strong>.\n      Online payments are handled by <strong>Tpay</strong> — BLIK, card, instant transfer. VAT invoice on request.'
+      'Todos los precios son <strong>precios finales</strong> (impuestos incluidos).\n      Los importes en euros son <strong>orientativos</strong>: el cobro se realiza en eslotis polacos (PLN) — 29,99 zł al mes o 299,99 zł al año — y tu banco aplicará su tipo de cambio.\n      Las cuentas nuevas tienen <strong>7 días gratis</strong>, sin tarjeta.\n      El pago se cobra una sola vez por el periodo elegido, <strong>sin renovación automática</strong>.\n      Los pagos online los gestiona <strong>Tpay</strong> — BLIK, tarjeta, transferencia rápida. Factura con IVA a petición.',
+      'All prices are <strong>final prices</strong> (VAT included).\n      Euro amounts are <strong>indicative</strong>: payment is taken in Polish złoty (PLN) — 29,99 zł per month or 299,99 zł per year — and your bank applies its own exchange rate.\n      New accounts get <strong>7 days free</strong>, no card required.\n      Payment is charged once for the chosen period, <strong>with no auto-renewal</strong>.\n      Online payments are handled by <strong>Tpay</strong> — BLIK, card, instant transfer. VAT invoice on request.'
     ],
     'cookie.text': [
       'Solo usamos los datos imprescindibles para que el servicio funcione y estadísticas anónimas (sin cookies de seguimiento). Consulta la <a href="/polityka-prywatnosci" style="color:var(--sage);font-weight:600;">política de privacidad</a>.',
@@ -766,13 +769,43 @@
       'I have read and accept the Qreat <a href="/regulamin" target="_blank" style="color:var(--sage);font-weight:600;">terms of service</a> and <a href="/polityka-prywatnosci" target="_blank" style="color:var(--sage);font-weight:600;">privacy policy</a>.'
     ],
     'ed.gateC2': [
-      'Entiendo que, tras el <strong>periodo de prueba de 7 días</strong>, seguir usando el generador y mantener la carta online <strong>requiere contratar un plan</strong>: 29,99 zł al mes o 299,99 zł al año (impuestos incluidos).',
-      'I understand that after the <strong>7-day trial</strong>, continued use of the generator and keeping the menu online <strong>requires a paid plan</strong> — 29,99 zł per month or 299,99 zł per year (tax included).'
+      'Entiendo que, tras el <strong>periodo de prueba de 7 días</strong>, seguir usando el generador y mantener la carta online <strong>requiere contratar un plan</strong>: 6,99 €/mes o 69,99 €/año, cobrados en PLN (29,99 zł o 299,99 zł, impuestos incluidos).',
+      'I understand that after the <strong>7-day trial</strong>, continued use of the generator and keeping the menu online <strong>requires a paid plan</strong> — 6,99 €/month or 69,99 €/year, charged in PLN (29,99 zł or 299,99 zł, tax included).'
     ],
     'ed.gateC3': [
       'Solicito <strong>el inicio de la prestación del servicio digital</strong> antes de que expire el plazo de desistimiento de 14 días y entiendo que, una vez ejecutado el servicio por completo, <strong>pierdo el derecho de desistimiento</strong> (art.&nbsp;38 pto.&nbsp;13 de la ley polaca de derechos del consumidor).',
       'I request <strong>that the digital service begins</strong> before the 14-day withdrawal period expires, and I understand that once the service has been fully performed <strong>I lose the right of withdrawal</strong> (art.&nbsp;38 pt.&nbsp;13 of the Polish Consumer Rights Act).'
     ],
+    /* ─── Ceny w EUR (ES/EN) ───────────────────────────────────────────────
+       Kurs przyjęty ~4,29 PLN/EUR: 29,99 zł ≈ 6,99 € · 299,99 zł ≈ 69,99 €.
+       To CENA ORIENTACYJNA — Tpay pobiera złotówki, więc każde miejsce z ceną
+       musi mówić, w jakiej walucie następuje obciążenie. ──────────────────── */
+    'price.monthly': [
+      '<span style="font-family:\'Playfair Display\',serif;font-size:3.4rem;font-weight:600;color:var(--navy);">6<span style="font-size:1.7rem;">,99</span></span>\n            <span style="color:rgba(27,42,74,0.4);font-size:14px;font-family:\'Plus Jakarta Sans\',sans-serif;">€ / mes</span>',
+      '<span style="font-family:\'Playfair Display\',serif;font-size:3.4rem;font-weight:600;color:var(--navy);">6<span style="font-size:1.7rem;">,99</span></span>\n            <span style="color:rgba(27,42,74,0.4);font-size:14px;font-family:\'Plus Jakarta Sans\',sans-serif;">€ / month</span>'
+    ],
+    'price.yearly': [
+      '<span style="font-family:\'Playfair Display\',serif;font-size:3.4rem;font-weight:600;color:var(--navy);">69<span style="font-size:1.7rem;">,99</span></span>\n            <span style="color:rgba(27,42,74,0.4);font-size:14px;font-family:\'Plus Jakarta Sans\',sans-serif;">€ / año</span>',
+      '<span style="font-family:\'Playfair Display\',serif;font-size:3.4rem;font-weight:600;color:var(--navy);">69<span style="font-size:1.7rem;">,99</span></span>\n            <span style="color:rgba(27,42,74,0.4);font-size:14px;font-family:\'Plus Jakarta Sans\',sans-serif;">€ / year</span>'
+    ],
+    'ed.priceMonthly': [
+      '<span style="font-family:\'Playfair Display\',serif;font-size:2rem;font-weight:600;color:var(--navy);">6<span style="font-size:1.1rem;">,99</span></span>\n            <span style="font-size:13px;color:rgba(27,42,74,.5);">€/mes</span>',
+      '<span style="font-family:\'Playfair Display\',serif;font-size:2rem;font-weight:600;color:var(--navy);">6<span style="font-size:1.1rem;">,99</span></span>\n            <span style="font-size:13px;color:rgba(27,42,74,.5);">€/month</span>'
+    ],
+    'ed.priceYearly': [
+      '<span style="font-family:\'Playfair Display\',serif;font-size:2rem;font-weight:600;color:var(--navy);">69<span style="font-size:1.1rem;">,99</span></span>\n            <span style="font-size:13px;color:rgba(27,42,74,.5);">€/año</span>',
+      '<span style="font-family:\'Playfair Display\',serif;font-size:2rem;font-weight:600;color:var(--navy);">69<span style="font-size:1.1rem;">,99</span></span>\n            <span style="font-size:13px;color:rgba(27,42,74,.5);">€/year</span>'
+    ],
+    'ed.gatePrice': [
+      '6,99 €<span style="font-size:.8rem;font-weight:500;color:rgba(27,42,74,.5);">/mes</span>',
+      '6,99 €<span style="font-size:.8rem;font-weight:500;color:rgba(27,42,74,.5);">/month</span>'
+    ],
+
+    'mock.price': [
+      'La suscripción cuesta <strong>6,99 € / mes</strong> o <strong>69,99 € / año</strong> (2 meses gratis), cobrados en PLN. La primera carta la generas <strong>gratis</strong> en la prueba de 7 días. 🎁',
+      'The subscription is <strong>6,99 € / month</strong> or <strong>69,99 € / year</strong> (2 months free), charged in PLN. Your first menu is <strong>free</strong> during the 7-day trial. 🎁'
+    ],
+
     'ed.gateOrder': [
       'Realizo el pedido con obligación de pago y acepto los <a href="/regulamin" target="_blank" style="color:var(--sage);font-weight:700;">términos del servicio</a> y la <a href="/polityka-prywatnosci" target="_blank" style="color:var(--sage);font-weight:700;">política de privacidad</a>.',
       'I place the order with an obligation to pay and accept the <a href="/regulamin" target="_blank" style="color:var(--sage);font-weight:700;">terms of service</a> and <a href="/polityka-prywatnosci" target="_blank" style="color:var(--sage);font-weight:700;">privacy policy</a>.'

@@ -80,6 +80,7 @@
       .preview-col{position:static;}
     }
   </style>
+  <script src="i18n.js"></script>
 </head>
 <body>
   <div class="topbar">
@@ -89,10 +90,13 @@
       </div>
       <span style="font-family:'Playfair Display',serif;font-size:20px;font-weight:500;">qreat</span>
     </div>
-    <a href="/editor" class="backlink">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M8.5 3L4.5 7l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Wróć do edytora
-    </a>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div data-lang-switch aria-label="Język / Idioma / Language"></div>
+      <a href="/editor" class="backlink">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M8.5 3L4.5 7l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Wróć do edytora
+      </a>
+    </div>
   </div>
 
   <!-- Ekran gdy brak opublikowanego menu / sesji -->

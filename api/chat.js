@@ -100,7 +100,7 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const { menu, message } = req.body || {};
+  const { menu, message, uiLang } = req.body || {};
   if (!menu || !message) {
     res.status(400).json({ error: 'Brak menu lub wiadomości.' });
     return;
@@ -114,10 +114,19 @@ module.exports = async function handler(req, res) {
     (cat.items || []).forEach(item => delete item.image);
   });
 
+  /* Język, w którym asystent odpowiada użytkownikowi w czacie.
+     Dotyczy WYŁĄCZNIE pola "reply" — treść menu zostaje nietknięta. */
+  const REPLY_LANG = { pl: 'po polsku', es: 'po hiszpańsku', en: 'po angielsku' };
+  const replyLang = REPLY_LANG[uiLang] || REPLY_LANG.pl;
+  const systemPrompt = uiLang && uiLang !== 'pl'
+    ? SYSTEM_PROMPT + `\n\n<jezyk_odpowiedzi>\nPole "reply" napisz ${replyLang}. ` +
+      `NIE tłumacz treści menu — nazwy dań, opisy i kategorie zostaw dokładnie w języku, w którym są.\n</jezyk_odpowiedzi>`
+    : SYSTEM_PROMPT;
+
   const requestBody = JSON.stringify({
     model: 'claude-opus-4-8',
     max_tokens: 8192,
-    system: SYSTEM_PROMPT,
+    system: systemPrompt,
     messages: [{
       role: 'user',
       content: `Aktualne menu:\n${JSON.stringify(menuForAI, null, 2)}\n\nProśba: ${message}`

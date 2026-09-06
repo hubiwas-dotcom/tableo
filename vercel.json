@@ -2,6 +2,7 @@
   "version": 2,
   "builds": [
     { "src": "*.html",    "use": "@vercel/static" },
+    { "src": "i18n.js",   "use": "@vercel/static" },
     { "src": "api/*.js",  "use": "@vercel/node"   }
   ],
   "routes": [
@@ -17,6 +18,7 @@
     { "src": "/api/config",           "dest": "/api/config.js"       },
     { "src": "/api/activate",         "dest": "/api/activate.js"     },
     { "src": "/api/translate",        "dest": "/api/translate.js"    },
+    { "src": "/i18n.js",              "dest": "/i18n.js"             },
     { "src": "/editor",               "dest": "/editor.html"         },
     { "src": "/kody-qr",              "dest": "/qr.html"             },
     { "src": "/zamow-stojaki",        "dest": "/stands.html"         },

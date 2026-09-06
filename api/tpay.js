@@ -121,8 +121,8 @@ async function collectBody(req) {
    `days` to długość okresu dostępu po opłaceniu. */
 const DAY_MS = 24 * 60 * 60 * 1000;
 const PLANS = {
-  monthly: { amount: 29.99,  days: 30,  description: 'Qreat — plan miesięczny' },
-  yearly:  { amount: 299.99, days: 365, description: 'Qreat — plan roczny' },
+  monthly: { amount: 34.99,  days: 30,  description: 'Qreat — plan miesięczny' },
+  yearly:  { amount: 349.99, days: 365, description: 'Qreat — plan roczny' },
 };
 
 /* ── Stojaki na kody QR (produkt fizyczny, druk 3D) ──

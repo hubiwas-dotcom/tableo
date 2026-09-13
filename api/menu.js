@@ -514,7 +514,7 @@ module.exports = async function handler(req, res) {
 
   /* ── Trial / subscription check ── */
   const owner        = String(data.owner || '').toLowerCase().trim();
-  const adminEmails  = (process.env.ADMIN_EMAILS || 'hubiwas@gmail.com').split(',').map(e => e.trim().toLowerCase());
+  const adminEmails  = (process.env.ADMIN_EMAILS || 'hubiwas@gmail.com,tableo.pomoc@gmail.com').split(',').map(e => e.trim().toLowerCase());
   const ownerIsAdmin = adminEmails.includes(owner);
   const ownerAccount = owner ? await kvGet(`account:${owner}`) : null;
   const trialAnchor  = ownerAccount?.first_generated_at || data.published_at;

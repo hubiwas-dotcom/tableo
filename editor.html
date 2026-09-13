@@ -1179,7 +1179,7 @@
     loadUserAccount();
 
     /* Pokaż przycisk Admin tylko dla adminów (endpoint i tak weryfikuje uprawnienia) */
-    const ADMIN_EMAILS = ['hubiwas@gmail.com'];
+    const ADMIN_EMAILS = ['hubiwas@gmail.com', 'tableo.pomoc@gmail.com'];
     const adminBtn = document.getElementById('adminBtn');
     if (adminBtn) adminBtn.style.display = ADMIN_EMAILS.includes((currentEmail || '').toLowerCase()) ? 'inline-flex' : 'none';
   }

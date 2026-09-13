@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const TRIAL_MS = parseInt(process.env.TRIAL_DAYS || '7', 10) * 24 * 60 * 60 * 1000;
 
 function isAdmin(email) {
-  const admins = (process.env.ADMIN_EMAILS || 'hubiwas@gmail.com').split(',').map(e => e.trim().toLowerCase());
+  const admins = (process.env.ADMIN_EMAILS || 'hubiwas@gmail.com,tableo.pomoc@gmail.com').split(',').map(e => e.trim().toLowerCase());
   return admins.includes((email || '').toLowerCase());
 }
 

@@ -87,7 +87,7 @@ async function kvScan(pattern) {
 }
 
 function isAdmin(email) {
-  const admins = (process.env.ADMIN_EMAILS || 'hubiwas@gmail.com').split(',').map(e => e.trim().toLowerCase());
+  const admins = (process.env.ADMIN_EMAILS || 'hubiwas@gmail.com,tableo.pomoc@gmail.com').split(',').map(e => e.trim().toLowerCase());
   return admins.includes((email || '').toLowerCase());
 }
 
@@ -161,7 +161,7 @@ module.exports = async function handler(req, res) {
 
   /* ── Admin panel (tylko właściciel): GET /api/account?admin=1 ── */
   if (req.method === 'GET' && req.query && req.query.admin === '1') {
-    if ((user.email || '').toLowerCase().trim() !== 'hubiwas@gmail.com') {
+    if (!isAdmin(user.email)) {
       res.status(403).json({ error: 'Brak uprawnień.' }); return;
     }
     const TRIAL_MS = parseInt(process.env.TRIAL_DAYS || '7') * 24 * 60 * 60 * 1000;
@@ -440,7 +440,7 @@ module.exports = async function handler(req, res) {
     /* Admin: przywrócenie kanonicznego (wydrukowanego) linku dla konta.
        Jedyne miejsce w systemie, które może nadpisać rekord slug:{email}. */
     if (req.body && req.body.admin_action === 'set_slug') {
-      if ((user.email || '') !== 'hubiwas@gmail.com') { res.status(403).json({ error: 'Brak uprawnień.' }); return; }
+      if (!isAdmin(user.email)) { res.status(403).json({ error: 'Brak uprawnień.' }); return; }
       const target = String(req.body.target_email || '').toLowerCase().trim();
       const slug   = String(req.body.slug || '').trim();
       if (!target || !slug) { res.status(400).json({ error: 'Wymagane: target_email, slug.' }); return; }
@@ -462,7 +462,7 @@ module.exports = async function handler(req, res) {
 
     /* Admin: zmiana statusu zamówienia stojaków (np. po wysłaniu paczki) */
     if (req.body && req.body.admin_action === 'set_order_status') {
-      if ((user.email || '') !== 'hubiwas@gmail.com') { res.status(403).json({ error: 'Brak uprawnień.' }); return; }
+      if (!isAdmin(user.email)) { res.status(403).json({ error: 'Brak uprawnień.' }); return; }
       const orderId = String(req.body.order_id || '').trim();
       const status  = String(req.body.status || '').trim();
       const ALLOWED = ['awaiting_payment', 'paid', 'in_production', 'shipped', 'cancelled'];
@@ -480,7 +480,7 @@ module.exports = async function handler(req, res) {
 
     /* Admin: oznaczenie zapytania jako obsłużone (lub cofnięcie) */
     if (req.body && req.body.admin_action === 'set_inquiry_handled') {
-      if ((user.email || '') !== 'hubiwas@gmail.com') { res.status(403).json({ error: 'Brak uprawnień.' }); return; }
+      if (!isAdmin(user.email)) { res.status(403).json({ error: 'Brak uprawnień.' }); return; }
       const inquiryId = String(req.body.inquiry_id || '').trim();
       if (!inquiryId) { res.status(400).json({ error: 'Wymagane: inquiry_id.' }); return; }
       const inquiry = await kvGet(`inquiry:${inquiryId}`);

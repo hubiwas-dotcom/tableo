@@ -574,7 +574,7 @@
           </div>
           <div style="margin-bottom:18px;">
             <label class="field-label">Dodatkowe informacje</label>
-            <textarea id="notes" class="field" rows="4" placeholder="np. Włoska restauracja, elegancki styl, ok. 25 pozycji, ceny w złotych..."></textarea>
+            <textarea id="notes" class="field" rows="4" placeholder="np. Włoska restauracja, elegancki styl, ok. 25 pozycji..."></textarea>
           </div>
           <div style="margin-bottom:24px;">
             <label class="field-label">Styl menu</label>
@@ -585,8 +585,21 @@
               <option value="premium">Premium — luksusowy fine dining</option>
             </select>
           </div>
+          <div style="margin-bottom:18px;">
+            <label class="field-label">Główny język menu</label>
+            <p style="font-size:11.5px;color:rgba(27,42,74,.4);margin:-2px 0 10px;line-height:1.5;">AI odczyta zdjęcia i napisze menu w tym języku.</p>
+            <select id="genPrimaryLang" class="field" onchange="setPrimaryLang(this.value)">
+              <option value="pl">🇵🇱 Polski</option>
+              <option value="es">🇪🇸 Español</option>
+              <option value="en">🇬🇧 English</option>
+              <option value="de">🇩🇪 Deutsch</option>
+              <option value="fr">🇫🇷 Français</option>
+              <option value="it">🇮🇹 Italiano</option>
+              <option value="ru">🇷🇺 Русский</option>
+            </select>
+          </div>
           <div style="margin-bottom:24px;">
-            <label class="field-label">Języki menu</label>
+            <label class="field-label">Dodatkowe języki</label>
             <p style="font-size:11.5px;color:rgba(27,42,74,.4);margin:-2px 0 10px;line-height:1.5;">Goście przełączą język flagą na pasku menu — nie pisz tego w opisie.</p>
             <div id="genLangPicker" style="display:flex;flex-wrap:wrap;gap:7px;"></div>
           </div>
@@ -758,7 +771,7 @@
         <span data-i18n-key="ed.gateOrder">Zamawiam z obowiązkiem zapłaty i akceptuję <a href="/regulamin" target="_blank" style="color:var(--sage);font-weight:600;">regulamin</a> oraz <a href="/polityka-prywatnosci" target="_blank" style="color:var(--sage);font-weight:600;">politykę prywatności</a>.</span>
       </label>
       <p style="font-size:11px;color:rgba(27,42,74,.3);text-align:center;line-height:1.6;">
-        Płatność obsługuje Tpay — BLIK, karta, przelewy. Faktura VAT na życzenie.<br>
+        Płatność obsługuje Paynow (mBank) — BLIK, karta, przelewy. Faktura VAT na życzenie.<br>
         Pytania? <a href="/kontakt" target="_blank" style="color:var(--sage);font-weight:600;">Skontaktuj się z nami</a>
       </p>
     </div>
@@ -800,7 +813,7 @@
 
       <div style="font-size:11.5px;color:rgba(27,42,74,.5);line-height:1.6;background:rgba(27,42,74,.035);border-radius:12px;padding:11px 14px;margin-bottom:18px;" data-i18n-key="ed.gatePay">
         Płatność pobierana jest <strong style="color:var(--navy);font-weight:700;">jednorazowo za wybrany okres</strong> — nic nie odnawia się automatycznie i nie zapisujemy danych Twojej karty.
-        Płatności obsługuje <strong style="color:var(--navy);font-weight:700;">Tpay</strong> (BLIK, karta, szybki przelew).
+        Płatności obsługuje <strong style="color:var(--navy);font-weight:700;">Paynow</strong> (mBank) — BLIK, karta, szybki przelew.
       </div>
 
       <!-- Zgody -->
@@ -870,9 +883,16 @@
   /* Tłumaczenie komunikatów sklejanych w JS; null przy polskim → oryginał. */
   function _t() { return window.qreatT ? window.qreatT.apply(null, arguments) : null; }
 
-  /* ── Language picker ── */
+  /* ── Language picker ──────────────────────────────────────────────────
+     "Główny język" (primaryLang) to język, w którym AI odczytuje zdjęcia
+     i pisze menu — dawniej zawsze polski, teraz wybiera go restaurator.
+     currentMenu.languages[0] jest ZAWSZE tym samym co primaryLang w chwili
+     generowania; baseLang() czyta je z menu, więc podgląd/tłumaczenia
+     działają poprawnie nawet dla starych menu bez wyboru (fallback 'pl'). */
   let selectedLanguages = [];
+  let primaryLang = 'pl';
   const LANG_OPTIONS = [
+    { code:'pl', label:'PL', name:'Polski' },
     { code:'en', label:'EN', name:'Angielski' },
     { code:'de', label:'DE', name:'Niemiecki' },
     { code:'fr', label:'FR', name:'Francuski' },
@@ -880,13 +900,23 @@
     { code:'es', label:'ES', name:'Hiszpański' },
     { code:'ru', label:'RU', name:'Rosyjski' },
   ];
+  function baseLang() {
+    return (currentMenu && Array.isArray(currentMenu.languages) && currentMenu.languages[0]) || 'pl';
+  }
   function _langPillStyle(active) {
     return `padding:7px 13px;border-radius:100px;font-size:12px;font-weight:700;letter-spacing:.03em;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .15s;${active ? 'background:var(--navy);color:white;border:1px solid var(--navy);' : 'background:white;color:rgba(27,42,74,.55);border:1px solid rgba(27,42,74,.15);'}`;
+  }
+  function setPrimaryLang(code) {
+    primaryLang = code;
+    /* nie można wybrać tego samego języka jako główny i dodatkowy naraz */
+    const i = selectedLanguages.indexOf(code);
+    if (i >= 0) selectedLanguages.splice(i, 1);
+    renderGenLangPicker();
   }
   function renderGenLangPicker() {
     const el = document.getElementById('genLangPicker');
     if (!el) return;
-    el.innerHTML = LANG_OPTIONS.map(l =>
+    el.innerHTML = LANG_OPTIONS.filter(l => l.code !== primaryLang).map(l =>
       `<button type="button" onclick="toggleGenLang('${l.code}')" title="${l.name}" style="${_langPillStyle(selectedLanguages.includes(l.code))}">${l.label}</button>`
     ).join('');
   }
@@ -897,22 +927,24 @@
   }
   function buildMenuLangPickerHtml() {
     if (!currentMenu) return '';
-    const active = Array.isArray(currentMenu.languages) ? currentMenu.languages : ['pl'];
-    const plPill = `<span style="${_langPillStyle(true)}cursor:default;">PL</span>`;
-    const others = LANG_OPTIONS.map(l =>
+    const base = baseLang();
+    const active = Array.isArray(currentMenu.languages) ? currentMenu.languages : [base];
+    const baseOpt = LANG_OPTIONS.find(l => l.code === base);
+    const basePill = `<span style="${_langPillStyle(true)}cursor:default;" title="Główny język menu">${baseOpt ? baseOpt.label : base.toUpperCase()}</span>`;
+    const others = LANG_OPTIONS.filter(l => l.code !== base).map(l =>
       `<button type="button" onclick="toggleMenuLang('${l.code}')" title="${l.name}" style="${_langPillStyle(active.includes(l.code))}">${l.label}</button>`
     ).join('');
-    return plPill + others;
+    return basePill + others;
   }
   function toggleMenuLang(code) {
     if (!currentMenu) return;
-    if (!Array.isArray(currentMenu.languages)) currentMenu.languages = ['pl'];
+    if (!Array.isArray(currentMenu.languages)) currentMenu.languages = [baseLang()];
     const i = currentMenu.languages.indexOf(code);
     let added = false;
     if (i >= 0) {
       currentMenu.languages.splice(i, 1);
       if (currentMenu.translations) delete currentMenu.translations[code];
-      if (_previewLang === code) { _previewLang = 'pl'; }
+      if (_previewLang === code) { _previewLang = baseLang(); }
     } else {
       currentMenu.languages.push(code);
       added = true;
@@ -927,7 +959,7 @@
   document.addEventListener('DOMContentLoaded', () => {
     renderGenLangPicker();
 
-    /* Handle Tpay return */
+    /* Handle Paynow return */
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('payment') === 'success') {
       history.replaceState({}, '', '/editor');
@@ -1201,7 +1233,7 @@
         if (data.trial.first_generated_at) trialStart = data.trial.first_generated_at;
         updateTrialUI(data.trial);
 
-        /* After Tpay return: poll until paid flag appears (max ~30s) */
+        /* After Paynow return: poll until paid flag appears (max ~30s) */
         if (window._awaitingPayment && !data.trial.paid) {
           window._awaitingPayment = false;
           pollForPaidStatus(8, 3500);
@@ -1246,7 +1278,9 @@
     termsAccepted = false; window._pendingPaywall = false; hideTermsGate();
     uploadedImages = []; currentMenu = null; currentLogo = null; currentLogoColors = null;
     currentCustomDomain = null; currentPublishedSlug = null; currentPublishedUrl = null;
-    selectedLanguages = []; _previewLang = 'pl';
+    selectedLanguages = []; primaryLang = 'pl'; _previewLang = 'pl';
+    const primarySel = document.getElementById('genPrimaryLang'); if (primarySel) primarySel.value = 'pl';
+    renderGenLangPicker();
     const results = document.getElementById('results');
     if (results) { results.innerHTML = ''; results.style.display = ''; }
     const notes = document.getElementById('notes');   if (notes)  notes.value = '';
@@ -1283,7 +1317,9 @@
     uploadedImages = [];
     currentMenu = null;
     selectedLanguages = [];
+    primaryLang = 'pl';
     _previewLang  = 'pl';
+    const primarySel = document.getElementById('genPrimaryLang'); if (primarySel) primarySel.value = 'pl';
 
     const results = document.getElementById('results');
     if (results) { results.innerHTML = ''; results.style.display = 'none'; }
@@ -1537,7 +1573,7 @@
     if (btn) { btn.style.opacity = '.5'; btn.textContent = 'Przekierowuję…'; }
 
     try {
-      const res  = await fetch('/api/tpay/checkout', {
+      const res  = await fetch('/api/paynow/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentToken}` },
         body: JSON.stringify({ plan })
@@ -1743,6 +1779,7 @@
           images: uploadedImages.map(i => ({ data: i.data, type: i.type })),
           notes,
           style: document.getElementById('menuStyle').value,
+          lang: primaryLang,
           logo: currentLogo ? (() => { const comma = currentLogo.indexOf(','); return { data: currentLogo.substring(comma+1), type: 'image/jpeg' }; })() : null
         })
       });
@@ -1755,7 +1792,7 @@
         currentMenu = data.menu;
         if (currentLogo) currentMenu.logo = currentLogo;
         if (currentLogoColors) currentMenu.palette = { ...currentMenu.palette, ...currentLogoColors };
-        currentMenu.languages = ['pl', ...selectedLanguages];
+        currentMenu.languages = [primaryLang, ...selectedLanguages];
         renderMenu(currentMenu);
         /* przygotuj gotowe tłumaczenia wybranych języków (raz, teraz) */
         pretranslateLanguages(selectedLanguages);
@@ -1815,7 +1852,7 @@
     return { bg, accent, price, text, priceLight:fromHsl(ph,ps,pl), tRgb:`${tr},${tg},${tb}`, aRgb:`${ar},${ag},${ab}`, pRgb:`${pr},${pg},${pb}`, bgRgb:`${bgr},${bgg},${bgb}` };
   }
 
-  function buildMenuHtml(menu, activeLang = 'pl') {
+  function buildMenuHtml(menu, activeLang = (menu.languages && menu.languages[0]) || 'pl') {
     const v       = _paletteVars(menu.palette);
     const f       = _fontConfig(menu.font_style);
     const cats    = menu.categories || [];
@@ -1941,11 +1978,13 @@
 
     document.getElementById('menuLangPicker').innerHTML = buildMenuLangPickerHtml();
 
-    /* Reset preview language state for the fresh menu */
-    _previewLang  = 'pl';
+    /* Reset preview language state for the fresh menu — pokazuj GŁÓWNY język
+       menu (languages[0]), nie zawsze polski (patrz baseLang()). */
+    const initLang = (menu.languages && menu.languages[0]) || 'pl';
+    _previewLang  = initLang;
 
     /* Load menu into iframe via Blob URL */
-    const html  = buildMenuHtml(menu, 'pl');
+    const html  = buildMenuHtml(menu, initLang);
     const blob  = new Blob([html], { type: 'text/html' });
     const burl  = URL.createObjectURL(blob);
     document.getElementById('menuPreviewFrame').src = burl;
@@ -1982,7 +2021,7 @@
     try {
       /* Nie publikuj z niekompletnymi tłumaczeniami — poczekaj, aż wszystkie
          wybrane języki będą gotowe, inaczej na stronie zabraknie flag */
-      const wantedLangs  = (currentMenu.languages || []).filter(l => l && l !== 'pl');
+      const wantedLangs  = (currentMenu.languages || []).filter(l => l && l !== baseLang());
       const missingLangs = () => wantedLangs.filter(l => !(currentMenu.translations && currentMenu.translations[l]));
       if (missingLangs().length) {
         btn.innerHTML = `<svg class="spin" width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="white" stroke-width="1.5" stroke-dasharray="20" stroke-dashoffset="10"/></svg>Przygotowuję tłumaczenia...`;
@@ -2147,7 +2186,7 @@
 
   /* ── Update iframe preview ── */
   let _previewLang  = 'pl';
-  const _LANG_NAMES = { en:'angielski', de:'niemiecki', fr:'francuski', it:'włoski', es:'hiszpański', ru:'rosyjski' };
+  const _LANG_NAMES = { pl:'polski', en:'angielski', de:'niemiecki', fr:'francuski', it:'włoski', es:'hiszpański', ru:'rosyjski' };
 
   function _renderPreview(menu, lang) {
     const frame = document.getElementById('menuPreviewFrame');
@@ -2161,10 +2200,12 @@
 
   function updateMenuPreview() {
     if (!currentMenu) return;
-    /* zawsze pokazuj podgląd w bieżącym języku (albo wróć do PL, jeśli tłumaczenie zniknęło) */
-    const t = _previewLang !== 'pl' && currentMenu.translations && currentMenu.translations[_previewLang];
+    /* zawsze pokazuj podgląd w bieżącym języku (albo wróć do języka bazowego,
+       jeśli tłumaczenie zniknęło — languages[0], niekoniecznie polski) */
+    const base = baseLang();
+    const t = _previewLang !== base && currentMenu.translations && currentMenu.translations[_previewLang];
     if (t) _renderPreview(_mergeTranslation(t), _previewLang);
-    else { _previewLang = 'pl'; _renderPreview(currentMenu, 'pl'); }
+    else { _previewLang = base; _renderPreview(currentMenu, base); }
   }
 
   /* Lekki (tylko tekst) obraz menu do wysłania do tłumaczenia */
@@ -2201,7 +2242,7 @@
   /* Przełącza podgląd na gotowe (wcześniej przygotowane) tłumaczenie — natychmiast, bez sieci */
   function previewTranslate(lang) {
     if (!currentMenu || lang === _previewLang) return;
-    if (lang === 'pl') { _previewLang = 'pl'; _renderPreview(currentMenu, 'pl'); return; }
+    if (lang === baseLang()) { _previewLang = lang; _renderPreview(currentMenu, lang); return; }
     const t = currentMenu.translations && currentMenu.translations[lang];
     if (!t) { showToast('Ta wersja językowa nie jest jeszcze gotowa.', 'warn'); return; }
     _previewLang = lang;
@@ -2218,7 +2259,8 @@
   }
   async function _pretranslateRun(langs) {
     if (!currentMenu) return;
-    const todo = (langs || []).filter(l => l && l !== 'pl'
+    const base = baseLang();
+    const todo = (langs || []).filter(l => l && l !== base
       && !(currentMenu.translations && currentMenu.translations[l]));
     if (!todo.length) return;
 
@@ -2233,7 +2275,7 @@
         const res = await fetch('/api/translate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentToken}` },
-          body: JSON.stringify({ menu: slim, lang }),
+          body: JSON.stringify({ menu: slim, lang, sourceLang: base }),
           signal: ctrl.signal
         });
         if (res.status === 401) { doLogout(); return; }
@@ -2870,7 +2912,7 @@
             _chatMsg('ai', msg);
             /* Treść się zmieniła — odśwież tłumaczenia w tle, żeby flagi pokazywały aktualne menu */
             if (r.retranslate) {
-              const langs = (currentMenu.languages || selectedLanguages || []).filter(l => l !== 'pl');
+              const langs = (currentMenu.languages || selectedLanguages || []).filter(l => l !== baseLang());
               if (langs.length) pretranslateLanguages(langs);
             }
           } else {

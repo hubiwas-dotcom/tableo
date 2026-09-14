@@ -185,6 +185,7 @@
        'Turn your paper menu into a digital one in 2 minutes — powered by Claude AI.'],
     'Płatności online obsługuje': ['Pagos online gestionados por', 'Online payments handled by'],
     'BLIK · karta płatnicza · szybki przelew': ['BLIK · tarjeta · transferencia rápida', 'BLIK · card · instant transfer'],
+    '(mBank) — BLIK, karta, szybki przelew.': ['(mBank) — BLIK, tarjeta, transferencia rápida.', '(mBank) — BLIK, card, instant transfer.'],
     '© 2025 Qreat. Wszystkie prawa zastrzeżone.':
       ['© 2025 Qreat. Todos los derechos reservados.', '© 2025 Qreat. All rights reserved.'],
     'OK': ['OK', 'OK'],
@@ -253,10 +254,14 @@
       ['en Vercel → Settings → Environment Variables.', 'in Vercel → Settings → Environment Variables.'],
     'Generuj i dostosuj': ['Genera y personaliza', 'Generate and customise'],
     'Dodatkowe informacje': ['Información adicional', 'Additional details'],
-    'np. Włoska restauracja, elegancki styl, ok. 25 pozycji, ceny w złotych...':
-      ['p. ej. Restaurante italiano, estilo elegante, unos 25 platos, precios en euros...',
-       'e.g. Italian restaurant, elegant style, around 25 items, prices in euros...'],
+    'np. Włoska restauracja, elegancki styl, ok. 25 pozycji...':
+      ['p. ej. Restaurante italiano, estilo elegante, unos 25 platos...',
+       'e.g. Italian restaurant, elegant style, around 25 items...'],
     'Styl menu': ['Estilo de la carta', 'Menu style'],
+    'Główny język menu': ['Idioma principal de la carta', 'Primary menu language'],
+    'AI odczyta zdjęcia i napisze menu w tym języku.':
+      ['La IA leerá las fotos y escribirá la carta en este idioma.', 'The AI will read the photos and write the menu in this language.'],
+    'Dodatkowe języki': ['Idiomas adicionales', 'Additional languages'],
     'Klasyczny — elegancki i czytelny': ['Clásico — elegante y legible', 'Classic — elegant and readable'],
     'Nowoczesny — minimalistyczny': ['Moderno — minimalista', 'Modern — minimal'],
     'Rustykalny — ciepły i tradycyjny': ['Rústico — cálido y tradicional', 'Rustic — warm and traditional'],
@@ -468,9 +473,9 @@
     'Twój poprzedni plan': ['Tu plan anterior', 'Your previous plan'],
     'Zamawiam z obowiązkiem zapłaty i akceptuję':
       ['Realizo el pedido con obligación de pago y acepto', 'I place the order with an obligation to pay and accept'],
-    'Płatność obsługuje Tpay — BLIK, karta, przelewy. Faktura VAT na życzenie.':
-      ['Pagos gestionados por Tpay: BLIK, tarjeta y transferencias. Factura con IVA a petición.',
-       'Payments handled by Tpay — BLIK, card, transfers. VAT invoice on request.'],
+    'Płatność obsługuje Paynow (mBank) — BLIK, karta, przelewy. Faktura VAT na życzenie.':
+      ['Pagos gestionados por Paynow (mBank): BLIK, tarjeta y transferencias. Factura con IVA a petición.',
+       'Payments handled by Paynow (mBank) — BLIK, card, transfers. VAT invoice on request.'],
 
     /* ─── Panel admina (właściciel) ─── */
     'Wejścia gości': ['Visitas de clientes', 'Guest visits'],
@@ -741,8 +746,8 @@
       'Ready for your <em style="font-style:italic;color:var(--sage);">digital menu</em>?'
     ],
     'pricing.legal': [
-      'Todos los precios son <strong>precios finales</strong> (impuestos incluidos).\n      Los precios se indican en eslotis polacos (PLN) y el cobro se realiza en esa moneda; los <strong>importes en euros son orientativos</strong> y tu banco aplicará su propio tipo de cambio.\n      Las cuentas nuevas tienen <strong>7 días gratis</strong>, sin tarjeta.\n      El pago se cobra una sola vez por el periodo elegido, <strong>sin renovación automática</strong>.\n      Los pagos online los gestiona <strong>Tpay</strong> — BLIK, tarjeta, transferencia rápida. Factura con IVA a petición.',
-      'All prices are <strong>final prices</strong> (VAT included).\n      Prices are shown and charged in Polish złoty (PLN); the <strong>euro amounts are indicative</strong> and your bank will apply its own exchange rate.\n      New accounts get <strong>7 days free</strong>, no card required.\n      Payment is charged once for the chosen period, <strong>with no auto-renewal</strong>.\n      Online payments are handled by <strong>Tpay</strong> — BLIK, card, instant transfer. VAT invoice on request.'
+      'Todos los precios son <strong>precios finales</strong> (impuestos incluidos).\n      Los precios se indican en eslotis polacos (PLN) y el cobro se realiza en esa moneda; los <strong>importes en euros son orientativos</strong> y tu banco aplicará su propio tipo de cambio.\n      Las cuentas nuevas tienen <strong>7 días gratis</strong>, sin tarjeta.\n      El pago se cobra una sola vez por el periodo elegido, <strong>sin renovación automática</strong>.\n      Los pagos online los gestiona <strong>Paynow</strong> (mBank) — BLIK, tarjeta, transferencia rápida. Factura con IVA a petición.',
+      'All prices are <strong>final prices</strong> (VAT included).\n      Prices are shown and charged in Polish złoty (PLN); the <strong>euro amounts are indicative</strong> and your bank will apply its own exchange rate.\n      New accounts get <strong>7 days free</strong>, no card required.\n      Payment is charged once for the chosen period, <strong>with no auto-renewal</strong>.\n      Online payments are handled by <strong>Paynow</strong> (mBank) — BLIK, card, instant transfer. VAT invoice on request.'
     ],
     'cookie.text': [
       'Solo usamos los datos imprescindibles para que el servicio funcione y estadísticas anónimas (sin cookies de seguimiento). Consulta la <a href="/polityka-prywatnosci" style="color:var(--sage);font-weight:600;">política de privacidad</a>.',
@@ -769,8 +774,8 @@
       'Qreat is a <strong>paid service after the trial period</strong>.\n          Confirm the terms to unlock the generator.'
     ],
     'ed.gatePay': [
-      'El pago se cobra <strong>una sola vez por el periodo elegido</strong>: nada se renueva automáticamente y no guardamos los datos de tu tarjeta.\n        Los pagos los gestiona <strong>Tpay</strong> (BLIK, tarjeta, transferencia rápida).',
-      'Payment is charged <strong>once for the chosen period</strong> — nothing renews automatically and we don\'t store your card details.\n        Payments are handled by <strong>Tpay</strong> (BLIK, card, instant transfer).'
+      'El pago se cobra <strong>una sola vez por el periodo elegido</strong>: nada se renueva automáticamente y no guardamos los datos de tu tarjeta.\n        Los pagos los gestiona <strong>Paynow</strong> (mBank), mediante BLIK, tarjeta o transferencia rápida.',
+      'Payment is charged <strong>once for the chosen period</strong> — nothing renews automatically and we don\'t store your card details.\n        Payments are handled by <strong>Paynow</strong> (mBank) — BLIK, card, instant transfer.'
     ],
     'ed.gateC1': [
       'He leído y acepto los <a href="/regulamin" target="_blank" style="color:var(--sage);font-weight:600;">términos del servicio</a> y la <a href="/polityka-prywatnosci" target="_blank" style="color:var(--sage);font-weight:600;">política de privacidad</a> de Qreat.',
@@ -785,7 +790,7 @@
       'I request <strong>that the digital service begins</strong> before the 14-day withdrawal period expires, and I understand that once the service has been fully performed <strong>I lose the right of withdrawal</strong> (art.&nbsp;38 pt.&nbsp;13 of the Polish Consumer Rights Act).'
     ],
     /* ─── Ceny w ES/EN ─────────────────────────────────────────────────────
-       Cena główna zostaje w ZŁOTYCH (bo Tpay pobiera złotówki), a pod spodem
+       Cena główna zostaje w ZŁOTYCH (bo Paynow pobiera złotówki), a pod spodem
        idzie przelicznik orientacyjny. Kurs ~4,29 PLN/EUR:
          34,99 zł ≈ 8,15 €   ·   349,99 zł ≈ 81,60 €
        Zmieniasz cenę? Zaktualizuj RÓWNIEŻ: api/tpay.js (PLANS), regulamin.html

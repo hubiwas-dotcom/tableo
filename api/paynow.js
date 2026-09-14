@@ -46,68 +46,74 @@ function verifyToken(token) {
   } catch { return null; }
 }
 
-/* ── Tpay REST helper (JSON body, Bearer OAuth token) ── */
-const TPAY_API_BASE = (process.env.TPAY_API_BASE || 'https://api.tpay.com').replace(/\/+$/, '');
+/* ── Paynow REST helper ──
+   W przeciwieństwie do Tpay: brak OAuth — każde żądanie autoryzuje się parą
+   Api-Key (jawny nagłówek) + Signature (HMAC-SHA256 z Signature-Key).
+   Payload do podpisu wg dokumentacji Paynow (docs.paynow.pl/docs/v3/integration):
+     JSON.stringify({ headers: { 'Api-Key', 'Idempotency-Key' }, parameters: {}, body: <ciało jako string> })
+   podpisany kluczem Signature-Key, wynik zakodowany w Base64.
+   Dla powiadomień (webhook) podpis liczy się inaczej: HMAC-SHA256 samego
+   surowego ciała żądania (bez owijania w powyższą strukturę) — patrz verifyNotificationSignature. */
+const PAYNOW_API_BASE = (process.env.PAYNOW_API_BASE || 'https://api.paynow.pl').replace(/\/+$/, '');
 
-function tpayRequest(method, path, token, body) {
+function paynowSignature(apiKey, idempotencyKey, bodyString, signatureKey) {
+  const payload = JSON.stringify({
+    headers: { 'Api-Key': apiKey, 'Idempotency-Key': idempotencyKey },
+    parameters: {},
+    body: bodyString
+  });
+  return crypto.createHmac('sha256', signatureKey).update(payload).digest('base64');
+}
+
+function verifyNotificationSignature(rawBody, signatureHeader, signatureKey) {
+  if (!signatureHeader) return false;
+  const expected = crypto.createHmac('sha256', signatureKey).update(rawBody).digest('base64');
+  /* porównanie stałoczasowe — chroni przed timing attack na podpis */
+  const a = Buffer.from(expected), b = Buffer.from(String(signatureHeader));
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
+function paynowRequest(path, bodyObj) {
   return new Promise((resolve, reject) => {
-    const payload = body ? JSON.stringify(body) : null;
-    const url = new URL(TPAY_API_BASE + path);
+    const apiKey       = (process.env.PAYNOW_API_KEY || '').trim();
+    const signatureKey = (process.env.PAYNOW_SIGNATURE_KEY || '').trim();
+    if (!apiKey || !signatureKey) { reject(new Error('PAYNOW_NOT_CONFIGURED')); return; }
+
+    const bodyString     = JSON.stringify(bodyObj);
+    const idempotencyKey = crypto.randomBytes(18).toString('hex'); // 36 znaków, limit to 45
+    const signature      = paynowSignature(apiKey, idempotencyKey, bodyString, signatureKey);
+
+    const url = new URL(PAYNOW_API_BASE + path);
     const req = https.request({
       hostname: url.hostname,
       path:     url.pathname + url.search,
-      method,
+      method:   'POST',
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type':  'application/json',
-        ...(payload ? { 'Content-Length': Buffer.byteLength(payload) } : {}),
+        'Content-Type':     'application/json',
+        'Accept':           'application/json',
+        'Api-Key':          apiKey,
+        'Signature':        signature,
+        'Idempotency-Key':  idempotencyKey,
+        'Content-Length':   Buffer.byteLength(bodyString),
       }
     }, res => {
       let data = '';
       res.on('data', c => { data += c; });
       res.on('end', () => {
         try { resolve({ status: res.statusCode, body: data ? JSON.parse(data) : {} }); }
-        catch { reject(new Error('Tpay: invalid JSON response')); }
+        catch { reject(new Error('Paynow: invalid JSON response')); }
       });
     });
     req.on('error', reject);
-    if (payload) req.write(payload);
+    req.write(bodyString);
     req.end();
   });
 }
 
-/* Token OAuth cache'owany w KV (ważny 2h) — jedna para kluczy na cały serwis,
-   więc trzymanie go w KV zamiast pobierania za każdym razem oszczędza wywołania. */
-async function getAccessToken() {
-  const cached = await kvGet('tpay:token');
-  if (cached && cached.expires_at > Date.now() + 30000) return cached.value;
-
-  const clientId     = (process.env.TPAY_CLIENT_ID || '').trim();
-  const clientSecret = (process.env.TPAY_CLIENT_SECRET || '').trim();
-  if (!clientId || !clientSecret) throw new Error('TPAY_NOT_CONFIGURED');
-
-  const body = `client_id=${encodeURIComponent(clientId)}&client_secret=${encodeURIComponent(clientSecret)}`;
-  const result = await new Promise((resolve, reject) => {
-    const req = https.request({
-      hostname: 'api.tpay.com',
-      path: '/oauth/auth',
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(body) },
-    }, res => {
-      let data = '';
-      res.on('data', c => { data += c; });
-      res.on('end', () => { try { resolve(JSON.parse(data)); } catch { reject(new Error('Tpay: invalid oauth response')); } });
-    });
-    req.on('error', reject);
-    req.write(body);
-    req.end();
-  });
-  if (!result.access_token) throw new Error('Tpay: brak access_token w odpowiedzi OAuth');
-
-  const expiresIn = Number(result.expires_in) || 7200;
-  await kvSet('tpay:token', { value: result.access_token, expires_at: Date.now() + expiresIn * 1000 });
-  return result.access_token;
-}
+/* Grosze, nie złotówki — Paynow przyjmuje amount jako liczbę całkowitą
+   (100 = 1,00 zł). Cały reszta kodu (PLANS, ceny stojaków) trzyma złotówki
+   jak dotąd — konwersja następuje TYLKO tuż przed wysyłką do Paynow. */
+function toGrosze(zl) { return Math.round(zl * 100); }
 
 async function collectBody(req) {
   const chunks = [];
@@ -116,9 +122,8 @@ async function collectBody(req) {
 }
 
 /* ── Plany ──
-   W przeciwieństwie do Stripe, Tpay nie ma katalogu "Produktów/Cen" do
-   założenia w panelu — kwota i opis idą wprost w każdym żądaniu transakcji.
-   `days` to długość okresu dostępu po opłaceniu. */
+   Kwota i opis idą wprost w każdym żądaniu — nie ma katalogu produktów do
+   założenia w panelu. `days` to długość okresu dostępu po opłaceniu. */
 const DAY_MS = 24 * 60 * 60 * 1000;
 const PLANS = {
   monthly: { amount: 34.99,  days: 30,  description: 'Qreat — plan miesięczny' },
@@ -146,8 +151,9 @@ function priceOrder(qty) {
 const MM_MIN = 40, MM_MAX = 300;
 
 /* ══════════════════════════════════════════════════
-   CHECKOUT  →  POST /api/tpay/checkout
-   WEBHOOK   →  POST /api/tpay/webhook
+   CHECKOUT  →  POST /api/paynow/checkout
+   ORDER     →  POST /api/paynow/order
+   WEBHOOK   →  POST /api/paynow/webhook
    ══════════════════════════════════════════════════
    MVP bez auto-odnawiania: klient płaci za cały okres z góry, jednorazowo.
    Po wygaśnięciu (paid.expires_at) konto wraca do stanu "trial wygasł" w
@@ -168,8 +174,8 @@ const handler = async function(req, res) {
     const user  = verifyToken(token);
     if (!user) { res.status(401).json({ error: 'Sesja wygasła.' }); return; }
 
-    if (!process.env.TPAY_CLIENT_ID || !process.env.TPAY_CLIENT_SECRET) {
-      res.status(500).json({ error: 'Tpay nie jest skonfigurowany.' }); return;
+    if (!process.env.PAYNOW_API_KEY || !process.env.PAYNOW_SIGNATURE_KEY) {
+      res.status(500).json({ error: 'Paynow nie jest skonfigurowany.' }); return;
     }
 
     let body = {};
@@ -178,44 +184,42 @@ const handler = async function(req, res) {
     const cfg = PLANS[plan];
     if (!cfg) { res.status(400).json({ error: 'Nieprawidłowy plan.' }); return; }
 
-    const origin = `https://${req.headers.host || 'www.qreat.pl'}`;
+    const origin     = `https://${req.headers.host || 'www.qreat.pl'}`;
+    const externalId = 'SUB-' + Date.now().toString(36).toUpperCase() + '-' + crypto.randomBytes(4).toString('hex').toUpperCase();
 
     try {
-      const accessToken = await getAccessToken();
-      const result = await tpayRequest('POST', '/transactions', accessToken, {
-        amount:      cfg.amount,
+      const result = await paynowRequest('/v3/payments', {
+        amount:      toGrosze(cfg.amount),
+        currency:    'PLN',
+        externalId,
         description: cfg.description,
-        payer: {
-          email: user.email,
-          name:  user.email,
-        },
-        callbacks: {
-          notification: { url: `${origin}/api/tpay/webhook` },
-          payerUrls: {
-            success: `${origin}/editor?payment=success&plan=${plan}`,
-            error:   `${origin}/editor?payment=cancelled`,
-          },
-        },
+        buyer:       { email: user.email },
+        /* Paynow ma JEDEN url powrotu (nie osobno success/error jak Tpay) —
+           realną decyzję o aktywacji planu podejmuje WYŁĄCZNIE webhook;
+           ten redirect tylko wraca klienta do edytora, który czeka na
+           potwierdzenie (patrz istniejąca logika window._awaitingPayment). */
+        continueUrl: `${origin}/editor?payment=success&plan=${plan}`,
       });
 
-      if (result.status >= 400 || !result.body?.transactionId) {
-        res.status(400).json({ error: result.body?.errorCode ? `Błąd Tpay: ${result.body.errorCode}` : 'Błąd Tpay.' });
+      if (result.status >= 400 || !result.body?.paymentId) {
+        const msg = result.body?.errors?.[0]?.message;
+        res.status(400).json({ error: msg ? `Błąd Paynow: ${msg}` : 'Błąd Paynow.' });
         return;
       }
 
-      /* Zapamiętaj do jakiego konta/planu należy ta transakcja — webhook
-         dostaje tylko id transakcji Tpay, więc to jest jedyne wiązanie. */
-      await kvSet(`tpay_tx:${result.body.transactionId}`, { email: user.email, plan }, 7 * 24 * 60 * 60);
+      /* Zapamiętaj do jakiego konta/planu należy ta płatność — webhook
+         dostaje tylko externalId, więc to jest jedyne wiązanie. */
+      await kvSet(`paynow_tx:${externalId}`, { email: user.email, plan }, 7 * 24 * 60 * 60);
 
-      res.json({ ok: true, url: result.body.transactionPaymentUrl });
+      res.json({ ok: true, url: result.body.redirectUrl });
     } catch (e) {
-      res.status(500).json({ error: 'Błąd Tpay: ' + e.message });
+      res.status(500).json({ error: 'Błąd Paynow: ' + e.message });
     }
     return;
   }
 
   /* ── Zamówienie stojaków QR ──
-     Zamówienie zapisujemy ZAWSZE, nawet gdy Tpay nie jest jeszcze
+     Zamówienie zapisujemy ZAWSZE, nawet gdy Paynow nie jest jeszcze
      skonfigurowany (konto w weryfikacji) — wtedy czeka ze statusem
      'awaiting_payment' i właściciel wysyła link do płatności ręcznie. */
   if (path.endsWith('/order')) {
@@ -279,82 +283,87 @@ const handler = async function(req, res) {
     };
     await kvSet(`order:${orderId}`, order);
 
-    if (!process.env.TPAY_CLIENT_ID || !process.env.TPAY_CLIENT_SECRET) {
+    if (!process.env.PAYNOW_API_KEY || !process.env.PAYNOW_SIGNATURE_KEY) {
       res.json({ ok: true, order_id: orderId, total: price.total, payment_pending: true });
       return;
     }
 
     try {
-      const accessToken = await getAccessToken();
       const origin = `https://${req.headers.host || 'www.qreat.pl'}`;
-      const result = await tpayRequest('POST', '/transactions', accessToken, {
-        amount:      price.total,
+      /* externalId = orderId wprost — webhook odróżnia zamówienia stojaków
+         od subskrypcji po prefiksie "ORD-" i czyta rekord order:{orderId}
+         bezpośrednio, bez dodatkowej mapy pośredniej (patrz webhook niżej). */
+      const result = await paynowRequest('/v3/payments', {
+        amount:      toGrosze(price.total),
+        currency:    'PLN',
+        externalId:  orderId,
         description: `Qreat — stojaki QR ${STANDS[stand].label} ${widthMm}x${heightMm}mm ${qty} szt. (${orderId})`,
-        payer: { email: user.email, name: name || user.email },
-        callbacks: {
-          notification: { url: `${origin}/api/tpay/webhook` },
-          payerUrls: {
-            success: `${origin}/editor?order=success`,
-            error:   `${origin}/editor?order=cancelled`,
-          },
-        },
+        buyer:       { email: user.email, firstName: name || undefined },
+        continueUrl: `${origin}/editor?order=success`,
       });
 
-      if (result.status >= 400 || !result.body?.transactionId) {
+      if (result.status >= 400 || !result.body?.paymentId) {
         /* Zamówienie jest już zapisane — właściciel dośle link do płatności */
         res.json({ ok: true, order_id: orderId, total: price.total, payment_pending: true });
         return;
       }
 
-      await kvSet(`tpay_tx:${result.body.transactionId}`, { email: user.email, kind: 'order', orderId }, 7 * 24 * 60 * 60);
-      res.json({ ok: true, order_id: orderId, total: price.total, url: result.body.transactionPaymentUrl });
+      res.json({ ok: true, order_id: orderId, total: price.total, url: result.body.redirectUrl });
     } catch {
       res.json({ ok: true, order_id: orderId, total: price.total, payment_pending: true });
     }
     return;
   }
 
-  /* ── Webhook ── */
+  /* ── Webhook ──
+     Paynow wymaga odpowiedzi 200/202 z PUSTYM ciałem — inaczej ponawia
+     powiadomienie. Podpis liczony jest z SUROWEGO ciała żądania, więc
+     weryfikacja musi nastąpić PRZED próbą JSON.parse. */
   if (path.endsWith('/webhook')) {
-    let body = {};
-    try { const raw = await collectBody(req); body = JSON.parse(raw.toString()); } catch {}
+    const raw = await collectBody(req);
 
-    const securityCode = (process.env.TPAY_SECURITY_CODE || '').trim();
-    if (securityCode) {
-      const expected = crypto.createHash('md5')
-        .update(`${body.id || ''}${body.tr_id || ''}${body.tr_amount || ''}${body.tr_crc || ''}${securityCode}`)
-        .digest('hex');
-      if (expected !== body.md5sum) { res.status(400).send('Invalid signature'); return; }
-    }
-
-    if (body.tr_status === 'TRUE' || body.tr_status === 'true') {
-      const txMeta = await kvGet(`tpay_tx:${body.tr_id}`);
-
-      if (txMeta?.kind === 'order' && txMeta.orderId) {
-        /* Opłacone zamówienie stojaków — do realizacji przez właściciela */
-        const order = await kvGet(`order:${txMeta.orderId}`);
-        if (order) {
-          order.status = 'paid';
-          order.paid_at = Date.now();
-          order.tpay_transaction = body.tr_id;
-          await kvSet(`order:${txMeta.orderId}`, order);
-        }
-      } else if (txMeta?.email) {
-        const cfg = PLANS[txMeta.plan];
-        await kvSet(`paid:${txMeta.email}`, {
-          active: true, plan: txMeta.plan,
-          activated_at:   Date.now(),
-          expires_at:     Date.now() + (cfg ? cfg.days : 30) * DAY_MS,
-          tpay_transaction: body.tr_id,
-        });
+    const signatureKey = (process.env.PAYNOW_SIGNATURE_KEY || '').trim();
+    if (signatureKey) {
+      const sig = req.headers['signature'];
+      if (!verifyNotificationSignature(raw, sig, signatureKey)) {
+        res.status(400).end();
+        return;
       }
     }
 
-    res.status(200).send('TRUE');
+    let body = {};
+    try { body = JSON.parse(raw.toString()); } catch { res.status(400).end(); return; }
+
+    if (body.status === 'CONFIRMED') {
+      const externalId = String(body.externalId || '');
+
+      if (externalId.startsWith('ORD-')) {
+        const order = await kvGet(`order:${externalId}`);
+        if (order && order.status !== 'paid') {
+          order.status = 'paid';
+          order.paid_at = Date.now();
+          order.paynow_payment_id = body.paymentId;
+          await kvSet(`order:${externalId}`, order);
+        }
+      } else {
+        const txMeta = await kvGet(`paynow_tx:${externalId}`);
+        if (txMeta?.email) {
+          const cfg = PLANS[txMeta.plan];
+          await kvSet(`paid:${txMeta.email}`, {
+            active: true, plan: txMeta.plan,
+            activated_at:      Date.now(),
+            expires_at:        Date.now() + (cfg ? cfg.days : 30) * DAY_MS,
+            paynow_payment_id: body.paymentId,
+          });
+        }
+      }
+    }
+
+    res.status(200).end();
     return;
   }
 
-  res.status(404).json({ error: 'Nieznana akcja Tpay.' });
+  res.status(404).json({ error: 'Nieznana akcja Paynow.' });
 };
 
 handler.config = { api: { bodyParser: false } };

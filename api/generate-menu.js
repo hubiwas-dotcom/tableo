@@ -8,6 +8,19 @@ function isAdmin(email) {
   return admins.includes((email || '').toLowerCase());
 }
 
+/* Język generowania menu — klient wybiera go w edytorze (dawniej: zawsze polski).
+   Polski zostaje domyślny (fallback) dla starych wywołań bez parametru "lang". */
+const LANG_META = {
+  pl: { locative: 'POLSKIM',    diacritics: 'ą, ę, ó, ś, ź, ż, ć, ń',    currency: 'zł', est: { starter: '25-45 zł',  soup: '15-30 zł',  main: '45-90 zł',  dessert: '18-35 zł',  drink: '8-20 zł'  } },
+  en: { locative: 'ANGIELSKIM', diacritics: '(zwykle brak, sprawdź jednak nazwy własne)', currency: '€', est: { starter: '6-10 €', soup: '4-7 €', main: '10-20 €', dessert: '4-8 €', drink: '2-5 €' } },
+  de: { locative: 'NIEMIECKIM', diacritics: 'ä, ö, ü, ß',                currency: '€', est: { starter: '6-10 €', soup: '4-7 €', main: '10-20 €', dessert: '4-8 €', drink: '2-5 €' } },
+  fr: { locative: 'FRANCUSKIM', diacritics: 'é, è, ê, ë, à, â, ç',       currency: '€', est: { starter: '6-10 €', soup: '4-7 €', main: '10-20 €', dessert: '4-8 €', drink: '2-5 €' } },
+  it: { locative: 'WŁOSKIM',    diacritics: 'à, è, é, ì, ò, ù',          currency: '€', est: { starter: '6-10 €', soup: '4-7 €', main: '10-20 €', dessert: '4-8 €', drink: '2-5 €' } },
+  es: { locative: 'HISZPAŃSKIM',diacritics: 'á, é, í, ó, ú, ñ, ¿, ¡',    currency: '€', est: { starter: '6-10 €', soup: '4-7 €', main: '10-20 €', dessert: '4-8 €', drink: '2-5 €' } },
+  ru: { locative: 'ROSYJSKIM',  diacritics: 'cyrylica — а, б, в...',     currency: '₽', est: { starter: '250-450 ₽', soup: '200-350 ₽', main: '400-800 ₽', dessert: '150-300 ₽', drink: '100-250 ₽' } },
+};
+function resolveLang(code) { return LANG_META[code] ? code : 'pl'; }
+
 async function kvGet(key) {
   const url   = process.env.KV_REST_API_URL   || process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -88,7 +101,9 @@ function verifyToken(token) {
   } catch { return null; }
 }
 
-const SYSTEM_PROMPT = `<role>
+function buildSystemPrompt(langCode) {
+  const lang = LANG_META[resolveLang(langCode)];
+  return `<role>
 Jesteś ekspertem od tworzenia cyfrowych menu dla platformy Qreat. Analizujesz zdjęcia papierowych menu i tworzysz unikalne, dopasowane do charakteru każdej restauracji menu cyfrowe.
 </role>
 
@@ -99,7 +114,7 @@ Myśl krok po kroku: najpierw dokładna analiza obrazów, potem dobór palety, p
 
 <step name="1_image_analysis">
 Zanim cokolwiek zapiszesz, przeskanuj każdy obraz w całości:
-- Odczytaj KAŻDĄ nazwę dania — sprawdź polskie znaki (ą, ę, ó, ś, ź, ż, ć, ń)
+- Odczytaj KAŻDĄ nazwę dania — sprawdź znaki diakrytyczne widoczne na zdjęciu (mogą być w dowolnym języku źródłowym, nie tylko docelowym)
 - Odczytaj KAŻDY opis dania SŁOWO W SŁOWO — jeśli pod/obok nazwy jest jakikolwiek tekst (składniki, dodatki, sposób podania), to jest opis do przepisania
 - Odczytaj KAŻDĄ cenę dokładnie jak napisano (np. "28" vs "28,50" vs "28 zł") — każde danie ma cenę
 - Zidentyfikuj WSZYSTKIE kategorie i ich kolejność
@@ -158,8 +173,8 @@ Cocktail bar: bg:#0c0810, accent:#9060B0, price:#D090C0, text:#E8E0F0, mode:dark
 <prices>
 - ZAWSZE podaj cenę dla KAŻDEGO dania — pole "price" NIGDY nie może być puste ani "—".
 - Jeśli cena jest widoczna: przepisz DOKŁADNIE jak na obrazie — nie zaokrąglaj, nie zmieniaj formatu.
-- Jeśli cena jest nieczytelna lub nie ma jej w źródle: oszacuj rozsądnie (przystawka ~25-45 zł, zupa ~15-30 zł, danie główne ~45-90 zł, deser ~18-35 zł, napój ~8-20 zł). To JEDYNY wyjątek od zasady niewymyślania — ceny wypełniaj zawsze.
-- Format: "XX zł" lub "XX,XX zł"
+- Jeśli cena jest nieczytelna lub nie ma jej w źródle: oszacuj rozsądnie (przystawka ~${lang.est.starter}, zupa ~${lang.est.soup}, danie główne ~${lang.est.main}, deser ~${lang.est.dessert}, napój ~${lang.est.drink}). To JEDYNY wyjątek od zasady niewymyślania — ceny wypełniaj zawsze.
+- Format: "XX ${lang.currency}" lub "XX,XX ${lang.currency}" — ale TYLKO gdy szacujesz. Jeśli cena i waluta są widoczne na zdjęciu, przepisz je DOKŁADNIE tak jak są (nie zamieniaj waluty ze zdjęcia na ${lang.currency}).
 </prices>
 
 <categories>
@@ -170,18 +185,17 @@ Cocktail bar: bg:#0c0810, accent:#9060B0, price:#D090C0, text:#E8E0F0, mode:dark
 </step>
 
 <language_rules>
-KRYTYCZNE: Całe menu generuj WYŁĄCZNIE w JĘZYKU POLSKIM — jeden język, nigdy więcej.
-- Jeśli papierowe menu na zdjęciu jest wielojęzyczne (np. polski + angielski + niemiecki), weź TYLKO wersję polską. Zignoruj pozostałe języki.
-- Jeśli na zdjęciu nie ma polskiej wersji, przetłumacz treść na polski.
+KRYTYCZNE: Całe menu generuj WYŁĄCZNIE w JĘZYKU ${lang.locative} — jeden język, nigdy więcej.
+- Jeśli papierowe menu na zdjęciu jest wielojęzyczne (np. kilka wersji językowych obok siebie), weź TYLKO wersję w tym języku. Jeśli jej nie ma — przetłumacz treść z dowolnej dostępnej wersji.
 - ŻADNE pole (name, description, tagline, category name) nie może zawierać dwóch języków naraz. Nigdy nie pisz np. "Pierogi / Dumplings" ani "Żurek (sour soup)".
-- Tłumaczenie na inne języki robi osobny system (przyciski flag) — Ty zwracasz czysty, jednojęzyczny polski JSON.
+- Tłumaczenie na inne języki robi osobny system (przyciski flag) — Ty zwracasz czysty, jednojęzyczny JSON w tym jednym języku.
 </language_rules>
 
 <quality_rules>
 - Nie pomijaj żadnego dania, opisu ani ceny, które są w źródle — przepisz komplet
 - NIE „ujednolicaj" ani nie przerabiaj opisów — każdy opis ma brzmieć tak jak w źródle, nawet jeśli style dań się różnią
-- Zachowaj polskie znaki diakrytyczne w nazwach i opisach
-- Jeden język (polski) w całym menu — patrz language_rules
+- Zachowaj znaki diakrytyczne języka docelowego w nazwach i opisach (${lang.diacritics})
+- Jeden język w całym menu — patrz language_rules
 </quality_rules>
 
 <font_style_guide>
@@ -214,7 +228,7 @@ Umieść JSON WYŁĄCZNIE między tagami <output> i </output>. Żadnego tekstu p
         {
           "name": "Nazwa dania",
           "description": "Opis DOKŁADNIE ze źródła; pusty string \"\" jeśli danie nie ma opisu w menu",
-          "price": "XX zł"
+          "price": "XX ${lang.currency}"
         }
       ]
     }
@@ -222,6 +236,7 @@ Umieść JSON WYŁĄCZNIE między tagami <output> i </output>. Żadnego tekstu p
 }
 </output>
 </output_format>`;
+}
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -311,7 +326,8 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const { images = [], notes = '', style = 'klasyczny', logo = null } = req.body || {};
+  const { images = [], notes = '', style = 'klasyczny', logo = null, lang = 'pl' } = req.body || {};
+  const genLang = resolveLang(lang);
 
   const content = [];
 
@@ -353,7 +369,7 @@ module.exports = async function handler(req, res) {
     max_tokens: 32000,
     thinking: { type: 'adaptive' },
     output_config: { effort: 'medium' },
-    system: SYSTEM_PROMPT,
+    system: buildSystemPrompt(genLang),
     messages: [
       { role: 'user', content }
     ]

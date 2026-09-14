@@ -393,7 +393,7 @@ module.exports = async function handler(req, res) {
       : 7;
 
     /* Konto miało kiedyś aktywny płatny plan, ale okres minął bez odnowienia
-       (MVP bez auto-odnawiania kartą w Tpay — patrz api/tpay.js) — inny
+       (MVP bez auto-odnawiania kartą w Paynow — patrz api/paynow.js) — inny
        komunikat w paywallu niż dla kogoś kto nigdy nie płacił. */
     const subscriptionLapsed = !isPaid && !!paid?.plan;
 

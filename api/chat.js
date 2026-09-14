@@ -57,7 +57,7 @@ Zwracasz WYŁĄCZNIE listę operacji do wykonania — zmieniasz tylko to, o co p
 - add_category: { "name": "<nazwa>" }
 - remove_category: { "name": "<nazwa>" }
 - reorder_items: { "category": "<nazwa>", "order": ["danie1","danie2", ...] }
-- add_language: { "code": "en" | "de" | "fr" | "it" | "es" | "ru" }
+- add_language: { "code": "pl" | "en" | "de" | "fr" | "it" | "es" | "ru" }
 </typy_operacji>
 
 <format_odpowiedzi>

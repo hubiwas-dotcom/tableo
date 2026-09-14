@@ -118,6 +118,10 @@ function buildMenuPage(menu, slug, version) {
   const name    = menu.restaurant_name || 'Menu restauracji';
   const tagline = menu.tagline || '';
   const logo    = menu.logo || null;
+  /* Język, w którym AI wygenerowało to menu (dawniej zawsze polski —
+     restaurator wybiera go teraz w edytorze). Stare menu bez pola
+     languages nadal traktujemy jako polskie. */
+  const baseLang = (Array.isArray(menu.languages) && menu.languages[0]) || 'pl';
 
   const catLinks = cats.map((c, i) =>
     `<a class="cat-link" href="#s${i}" onclick="goTo(event,${i})">${c.name}</a>`
@@ -155,17 +159,18 @@ function buildMenuPage(menu, slug, version) {
 
   const LANG_LABELS = { pl:'PL', en:'EN', de:'DE', fr:'FR', it:'IT', es:'ES', ru:'RU' };
   const translations = menu.translations || {};
-  /* Pokaż flagę tylko dla PL + języków, które mają gotowe tłumaczenie (albo starych menu z menu.languages) */
+  /* Pokaż flagę tylko dla języka bazowego + języków z gotowym tłumaczeniem
+     (albo starych menu z menu.languages, gdzie [0] też jest bazą). */
   const hasBaked = Object.keys(translations).length > 0;
   const langs = hasBaked
-    ? ['pl', ...Object.keys(translations)]
+    ? [baseLang, ...Object.keys(translations)]
     : (Array.isArray(menu.languages) && menu.languages.length > 1 ? menu.languages : []);
   const langBtns = langs.map(l =>
-    `<button class="lang-btn${l === 'pl' ? ' active' : ''}" data-lang="${l}" onclick="switchLang('${l}')">${LANG_LABELS[l] || l.toUpperCase()}</button>`
+    `<button class="lang-btn${l === baseLang ? ' active' : ''}" data-lang="${l}" onclick="switchLang('${l}')">${LANG_LABELS[l] || l.toUpperCase()}</button>`
   ).join('');
 
   return `<!DOCTYPE html>
-<html lang="pl">
+<html lang="${baseLang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -292,7 +297,8 @@ function buildMenuPage(menu, slug, version) {
 <script>
   var _SLUG = '${slug}';
   var _VER  = '${version || 0}';
-  var _lang = 'pl';
+  var _BASE_LANG = '${baseLang}';
+  var _lang = _BASE_LANG;
   var _cache = ${JSON.stringify(translations).replace(/</g, '\\u003c')};
 
   function goTo(e, i) {
@@ -320,7 +326,7 @@ function buildMenuPage(menu, slug, version) {
   async function switchLang(lang) {
     if (_langBusy || lang === _lang) return;
 
-    if (lang === 'pl') { location.reload(); return; }
+    if (lang === _BASE_LANG) { location.reload(); return; }
 
     if (_cache[lang]) { _lang = lang; _setActiveLang(lang); _applyMenu(_cache[lang]); return; }
 

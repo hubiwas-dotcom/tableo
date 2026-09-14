@@ -39,7 +39,10 @@ async function kvSet(key, value) {
   } catch { return false; }
 }
 
-const LANG_NAMES = { en: 'English', de: 'German', fr: 'French', it: 'Italian', es: 'Spanish', ru: 'Russian' };
+/* "pl" dołączony jako pełnoprawny język — teraz może być zarówno źródłem
+   (menu wygenerowane w innym języku niż polski), jak i celem tłumaczenia
+   (dopisanie polskiej wersji do menu wygenerowanego np. po hiszpańsku). */
+const LANG_NAMES = { pl: 'Polish', en: 'English', de: 'German', fr: 'French', it: 'Italian', es: 'Spanish', ru: 'Russian' };
 
 function callClaude(apiKey, prompt) {
   return new Promise((resolve, reject) => {
@@ -79,8 +82,11 @@ function callClaude(apiKey, prompt) {
   });
 }
 
-/* Build slim (text-only) menu and translate it via Claude. Returns translated slim menu. */
-async function translateSlim(apiKey, sourceMenu, lang) {
+/* Build slim (text-only) menu and translate it via Claude. Returns translated slim menu.
+   sourceLang = język, w którym AI wygenerowało menu (dawniej zawsze polski —
+   teraz wybiera go restaurator, więc trzeba go jawnie podać, inaczej Claude
+   dostanie błędną instrukcję "translate from Polish" dla menu hiszpańskiego itp.). */
+async function translateSlim(apiKey, sourceMenu, lang, sourceLang = 'pl') {
   const slim = {
     restaurant_name: sourceMenu.restaurant_name,
     tagline:         sourceMenu.tagline,
@@ -94,10 +100,11 @@ async function translateSlim(apiKey, sourceMenu, lang) {
     }))
   };
 
-  const prompt = `Translate this Polish restaurant menu JSON to ${LANG_NAMES[lang]}.
+  const fromName = LANG_NAMES[sourceLang] || 'Polish';
+  const prompt = `Translate this ${fromName} restaurant menu JSON to ${LANG_NAMES[lang]}.
 Rules:
 - Translate: restaurant_name, tagline, category names, dish names, dish descriptions
-- Keep prices EXACTLY as-is (do not translate "zł" or any currency)
+- Keep prices EXACTLY as-is (do not translate the currency symbol/code or reformat the number)
 - Keep JSON structure identical
 - Return ONLY valid JSON, no markdown, no comments
 
@@ -130,13 +137,17 @@ module.exports = async function handler(req, res) {
     const token = (req.headers.authorization || '').replace('Bearer ', '');
     if (!verifyToken(token)) { res.status(401).json({ error: 'Sesja wygasła.' }); return; }
 
-    const { menu, lang } = req.body || {};
+    const { menu, lang, sourceLang = 'pl' } = req.body || {};
     if (!menu || !Object.keys(LANG_NAMES).includes(lang)) {
       res.status(400).json({ error: 'Wymagane: menu, lang.' });
       return;
     }
+    if (lang === sourceLang) {
+      res.status(400).json({ error: 'Język docelowy jest taki sam jak język bazowy menu.' });
+      return;
+    }
     try {
-      const translated = await translateSlim(apiKey, menu, lang);
+      const translated = await translateSlim(apiKey, menu, lang, sourceLang);
       res.json({ ok: true, menu: translated });
     } catch (e) {
       res.status(500).json({ error: 'Błąd tłumaczenia: ' + e.message });
@@ -169,8 +180,15 @@ module.exports = async function handler(req, res) {
     return;
   }
 
+  /* Bazowy język TEGO menu (languages[0]) — dawniej zawsze zakładany jako polski. */
+  const sourceLang = (Array.isArray(original.menu.languages) && original.menu.languages[0]) || 'pl';
+  if (lang === sourceLang) {
+    res.status(400).json({ error: 'Język docelowy jest taki sam jak język bazowy menu.' });
+    return;
+  }
+
   try {
-    const translated = await translateSlim(apiKey, original.menu, lang);
+    const translated = await translateSlim(apiKey, original.menu, lang, sourceLang);
 
     /* Merge images back from original */
     (translated.categories || []).forEach((cat, ci) => {

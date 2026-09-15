@@ -930,11 +930,68 @@
     const base = baseLang();
     const active = Array.isArray(currentMenu.languages) ? currentMenu.languages : [base];
     const baseOpt = LANG_OPTIONS.find(l => l.code === base);
-    const basePill = `<span style="${_langPillStyle(true)}cursor:default;" title="Główny język menu">${baseOpt ? baseOpt.label : base.toUpperCase()}</span>`;
+    const baseLabel = baseOpt ? baseOpt.label : base.toUpperCase();
+    /* Główny język da się usunąć TYLKO gdy jest już inny język do awansu —
+       inaczej pigułka zostaje nieklikalna (menu musi mieć jakiś język). */
+    const basePill = active.length > 1
+      ? `<button type="button" onclick="removeBaseLang()" title="Usuń ${baseOpt ? baseOpt.name : base.toUpperCase()} jako główny język" style="${_langPillStyle(true)}">${baseLabel} ×</button>`
+      : `<span style="${_langPillStyle(true)}cursor:default;" title="Główny język menu">${baseLabel}</span>`;
     const others = LANG_OPTIONS.filter(l => l.code !== base).map(l =>
       `<button type="button" onclick="toggleMenuLang('${l.code}')" title="${l.name}" style="${_langPillStyle(active.includes(l.code))}">${l.label}</button>`
     ).join('');
     return basePill + others;
+  }
+  /* Usuwa GŁÓWNY język menu — treść AI napisało w tym języku, więc "usunięcie"
+     oznacza awans kolejnego języka z listy na główny: jego (gotowe albo
+     dogenerowane na poczekaniu) tłumaczenie zastępuje nazwę/opisy/tagline.
+     Ceny i zdjęcia zostają bez zmian (jak w _mergeTranslation). */
+  async function removeBaseLang() {
+    if (!currentMenu || !Array.isArray(currentMenu.languages) || currentMenu.languages.length < 2) {
+      showToast(_t('lang.needAnother') || 'Dodaj inny język, zanim usuniesz ten.', 'warn');
+      return;
+    }
+    const oldBase = currentMenu.languages[0];
+    const newBase = currentMenu.languages[1];
+    const oldOpt  = LANG_OPTIONS.find(l => l.code === oldBase);
+    const newOpt  = LANG_OPTIONS.find(l => l.code === newBase);
+    const oldName = oldOpt ? oldOpt.name : oldBase.toUpperCase();
+    const newName = newOpt ? newOpt.name : newBase.toUpperCase();
+
+    if (!confirm(
+      (window.qreatT && window.qreatT('confirm.removeBaseLang', oldName, newName)) ||
+      `⚠️ Usunąć ${oldName} jako główny język menu?\n\n` +
+      `Głównym językiem stanie się ${newName} — nazwy dań, opisy i tagline zostaną zastąpione tą wersją.\n\n` +
+      `Tej zmiany nie można cofnąć (chyba że wygenerujesz menu od nowa).`
+    )) return;
+
+    if (!(currentMenu.translations && currentMenu.translations[newBase])) {
+      showToast(_t('lang.preparing', newName) || ('Przygotowuję wersję: ' + newName + '…'), 'ok');
+      await pretranslateLanguages([newBase]);
+    }
+    const t = currentMenu.translations && currentMenu.translations[newBase];
+    if (!t) { showToast(_t('lang.prepareFailed', newName) || ('Nie udało się przygotować wersji ' + newName + '. Spróbuj ponownie.'), 'warn'); return; }
+
+    currentMenu.restaurant_name = t.restaurant_name || currentMenu.restaurant_name;
+    currentMenu.tagline = t.tagline ?? currentMenu.tagline;
+    (currentMenu.categories || []).forEach((c, ci) => {
+      c.name = t.categories?.[ci]?.name || c.name;
+      (c.items || []).forEach((it, ii) => {
+        it.name = t.categories?.[ci]?.items?.[ii]?.name || it.name;
+        it.description = t.categories?.[ci]?.items?.[ii]?.description ?? it.description;
+        /* cena i zdjęcie zostają z oryginału — nietknięte */
+      });
+    });
+
+    /* newBase był na indeksie 1 — po usunięciu oldBase automatycznie ląduje na [0] */
+    currentMenu.languages = currentMenu.languages.filter(l => l !== oldBase);
+    if (currentMenu.translations) delete currentMenu.translations[newBase];
+    if (_previewLang === oldBase || _previewLang === newBase) _previewLang = newBase;
+
+    const el = document.getElementById('menuLangPicker');
+    if (el) el.innerHTML = buildMenuLangPickerHtml();
+    updateMenuPreview();
+    renderDishPhotoEditor();
+    showToast(_t('lang.nowPrimary', newName) || (newName + ' jest teraz głównym językiem menu.'), 'ok');
   }
   function toggleMenuLang(code) {
     if (!currentMenu) return;

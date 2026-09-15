@@ -855,7 +855,15 @@
     'confirm.resetAddress': [
       '⚠️ ¿Restablecer la dirección de la carta y el código QR?\n\n• Se creará un enlace NUEVO y un código QR NUEVO.\n• La dirección antigua NO desaparecerá: redirigirá automáticamente a la nueva, así que los soportes y códigos QR impresos seguirán funcionando.\n• Si quieres usar el código nuevo, descárgalo y vuelve a imprimirlo.\n\n¿Continuar?',
       '⚠️ Reset the menu address and QR code?\n\n• A NEW link and a NEW QR code will be created.\n• The old address will NOT disappear — it redirects automatically to the new one, so printed stands and QR codes keep working.\n• If you want to use the new code, download and reprint it.\n\nContinue?'
-    ]
+    ],
+    'confirm.removeBaseLang': [
+      '⚠️ ¿Eliminar {0} como idioma principal de la carta?\n\nEl idioma principal pasará a ser {1} — los nombres de los platos, las descripciones y el eslogan se sustituirán por esa versión.\n\nEste cambio no se puede deshacer (salvo que vuelvas a generar la carta desde cero).',
+      '⚠️ Remove {0} as the menu\'s primary language?\n\n{1} will become the primary language — dish names, descriptions and the tagline will be replaced with that version.\n\nThis cannot be undone (unless you regenerate the menu from scratch).'
+    ],
+    'lang.needAnother': ['Añade otro idioma antes de eliminar este.', 'Add another language before removing this one.'],
+    'lang.preparing': ['Preparando la versión: {0}…', 'Preparing version: {0}…'],
+    'lang.prepareFailed': ['No se ha podido preparar la versión {0}. Inténtalo de nuevo.', 'Could not prepare the {0} version. Please try again.'],
+    'lang.nowPrimary': ['{0} es ahora el idioma principal de la carta.', '{0} is now the menu\'s primary language.']
   };
 
   /* ── Stan ─────────────────────────────────────────────────────────────── */

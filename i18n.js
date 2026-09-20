@@ -449,8 +449,8 @@
       ['7 días de prueba desde la primera carta generada. Sin tarjeta.',
        '7-day trial from your first generated menu. No card.'],
     'lub 349,99 zł/rok. Ceny brutto (zawierają VAT).':
-      ['o 349,99 PLN/año (≈ 81,60 €). Precios con impuestos incluidos. El cobro se realiza en eslotis polacos (PLN).',
-       'or 349,99 PLN/year (≈ 81,60 €). Prices include VAT. Payment is taken in Polish złoty (PLN).'],
+      ['o 120 €/año (se cobra 349,99 zł). Precios con impuestos incluidos.',
+       'or 120 €/year (charged as 349,99 zł). Prices include VAT.'],
     'Akceptuję — przejdź do generatora': ['Acepto — ir al generador', 'I accept — go to the generator'],
     'Nie akceptuję — wyloguj mnie': ['No acepto — cerrar sesión', 'I don\'t accept — log me out'],
     'Zaznacz wszystkie trzy zgody, aby kontynuować.':
@@ -663,8 +663,8 @@
        'The 7 days start from your first generated menu. No credit card needed. After the trial the menu is unavailable until you choose a plan.'],
     'Czym różni się plan miesięczny od rocznego?': ['¿En qué se diferencian el plan mensual y el anual?', 'What\'s the difference between monthly and annual?'],
     'Oba dają pełny dostęp do edytora i aktualizacji. Plan miesięczny to 34,99 zł/mies., a roczny — 349,99 zł/rok, czyli dwa miesiące gratis (ok. 70 zł taniej). Oba możesz anulować w każdej chwili.':
-      ['Ambos dan acceso completo al editor y a las actualizaciones. El mensual cuesta 34,99 PLN/mes (≈ 8,15 €) y el anual 349,99 PLN/año (≈ 81,60 €), es decir, dos meses gratis (unos 70 PLN menos). El cobro se realiza en eslotis polacos (PLN). Puedes cancelar cualquiera cuando quieras.',
-       'Both give full access to the editor and updates. Monthly is 34,99 PLN/month (≈ 8,15 €), annual is 349,99 PLN/year (≈ 81,60 €) — two months free (about 70 PLN less). Payment is taken in Polish złoty (PLN). You can cancel either at any time.'],
+      ['Ambos dan acceso completo al editor y a las actualizaciones. El mensual cuesta 12 €/mes (se cobra 34,99 zł) y el anual 120 €/año (se cobra 349,99 zł), es decir, dos meses gratis. El cobro se realiza en eslotis polacos (PLN). Puedes cancelar cualquiera cuando quieras.',
+       'Both give full access to the editor and updates. Monthly is 12 €/month (charged as 34,99 zł), annual is 120 €/year (charged as 349,99 zł) — two months free. Payment is taken in Polish złoty (PLN). You can cancel either at any time.'],
     'Jak ustawić własną domenę?': ['¿Cómo configuro mi propio dominio?', 'How do I set up my own domain?'],
     'Po publikacji menu, w panelu bocznym edytora znajdziesz sekcję "Własna domena". Wpisz adres (np. menu.restauracja.pl), skonfiguruj CNAME i napisz do nas — aktywujemy w 24h.':
       ['Una vez publicada la carta, en el panel lateral del editor verás la sección «Dominio propio». Introduce la dirección (p. ej. menu.restaurante.es), configura el CNAME y escríbenos: lo activamos en 24 h.',
@@ -782,44 +782,46 @@
       'I have read and accept the Qreat <a href="/regulamin" target="_blank" style="color:var(--sage);font-weight:600;">terms of service</a> and <a href="/polityka-prywatnosci" target="_blank" style="color:var(--sage);font-weight:600;">privacy policy</a>.'
     ],
     'ed.gateC2': [
-      'Entiendo que, tras el <strong>periodo de prueba de 7 días</strong>, seguir usando el generador y mantener la carta online <strong>requiere contratar un plan</strong>: 34,99 PLN al mes (≈ 8,15 €) o 349,99 PLN al año (≈ 81,60 €), impuestos incluidos. El cobro se realiza en eslotis polacos (PLN).',
-      'I understand that after the <strong>7-day trial</strong>, continued use of the generator and keeping the menu online <strong>requires a paid plan</strong> — 34,99 PLN per month (≈ 8,15 €) or 349,99 PLN per year (≈ 81,60 €), tax included. Payment is taken in Polish złoty (PLN).'
+      'Entiendo que, tras el <strong>periodo de prueba de 7 días</strong>, seguir usando el generador y mantener la carta online <strong>requiere contratar un plan</strong>: 12 € al mes o 120 € al año, impuestos incluidos. El cobro se realiza en eslotis polacos (PLN): 34,99 zł al mes o 349,99 zł al año.',
+      'I understand that after the <strong>7-day trial</strong>, continued use of the generator and keeping the menu online <strong>requires a paid plan</strong> — 12 € per month or 120 € per year, tax included. Payment is taken in Polish złoty (PLN): 34,99 zł per month or 349,99 zł per year.'
     ],
     'ed.gateC3': [
       'Solicito <strong>el inicio de la prestación del servicio digital</strong> antes de que expire el plazo de desistimiento de 14 días y entiendo que, una vez ejecutado el servicio por completo, <strong>pierdo el derecho de desistimiento</strong> (art.&nbsp;38 pto.&nbsp;13 de la ley polaca de derechos del consumidor).',
       'I request <strong>that the digital service begins</strong> before the 14-day withdrawal period expires, and I understand that once the service has been fully performed <strong>I lose the right of withdrawal</strong> (art.&nbsp;38 pt.&nbsp;13 of the Polish Consumer Rights Act).'
     ],
     /* ─── Ceny w ES/EN ─────────────────────────────────────────────────────
-       Cena główna zostaje w ZŁOTYCH (bo Paynow pobiera złotówki), a pod spodem
-       idzie przelicznik orientacyjny. Kurs ~4,29 PLN/EUR:
-         34,99 zł ≈ 8,15 €   ·   349,99 zł ≈ 81,60 €
-       Zmieniasz cenę? Zaktualizuj RÓWNIEŻ: api/tpay.js (PLANS), regulamin.html
+       Cena główna to teraz OKRĄGŁA kwota w EURO (12 €/mies., 120 €/rok —
+       12x10, ta sama historia "2 miesiące gratis" co w złotówkach), pod
+       spodem mniejszym drukiem realna kwota pobierana przez Paynow w PLN
+       (34,99 zł / 349,99 zł — BEZ ZMIAN, to nie jest przelicznik kursowy,
+       tylko jawne wskazanie faktycznej waluty i kwoty obciążenia).
+       Zmieniasz cenę? Zaktualizuj RÓWNIEŻ: api/paynow.js (PLANS), regulamin.html
        (§ z cenami + data), ceny w HTML index/editor/kontakt oraz klucze tego
        słownika, które zawierają kwotę w polskim źródle. ───────────────────── */
     'price.monthly': [
-      '<span style="font-family:\'Playfair Display\',serif;font-size:3.4rem;font-weight:600;color:var(--navy);">34<span style="font-size:1.7rem;">,99</span></span>\n            <span style="color:rgba(27,42,74,0.4);font-size:14px;font-family:\'Plus Jakarta Sans\',sans-serif;">PLN / mes</span>\n            <div style="flex-basis:100%;font-size:16px;font-weight:600;color:rgba(27,42,74,0.55);font-family:\'Plus Jakarta Sans\',sans-serif;margin-top:5px;">≈ 8,15 € al mes</div>',
-      '<span style="font-family:\'Playfair Display\',serif;font-size:3.4rem;font-weight:600;color:var(--navy);">34<span style="font-size:1.7rem;">,99</span></span>\n            <span style="color:rgba(27,42,74,0.4);font-size:14px;font-family:\'Plus Jakarta Sans\',sans-serif;">PLN / month</span>\n            <div style="flex-basis:100%;font-size:16px;font-weight:600;color:rgba(27,42,74,0.55);font-family:\'Plus Jakarta Sans\',sans-serif;margin-top:5px;">≈ 8,15 € per month</div>'
+      '<span style="font-family:\'Playfair Display\',serif;font-size:3.4rem;font-weight:600;color:var(--navy);">12</span>\n            <span style="color:rgba(27,42,74,0.4);font-size:14px;font-family:\'Plus Jakarta Sans\',sans-serif;">€ / mes</span>\n            <div style="flex-basis:100%;font-size:16px;font-weight:600;color:rgba(27,42,74,0.55);font-family:\'Plus Jakarta Sans\',sans-serif;margin-top:5px;">Se cobra en PLN: 34,99 zł</div>',
+      '<span style="font-family:\'Playfair Display\',serif;font-size:3.4rem;font-weight:600;color:var(--navy);">12</span>\n            <span style="color:rgba(27,42,74,0.4);font-size:14px;font-family:\'Plus Jakarta Sans\',sans-serif;">€ / month</span>\n            <div style="flex-basis:100%;font-size:16px;font-weight:600;color:rgba(27,42,74,0.55);font-family:\'Plus Jakarta Sans\',sans-serif;margin-top:5px;">Charged in PLN: 34,99 zł</div>'
     ],
     'price.yearly': [
-      '<span style="font-family:\'Playfair Display\',serif;font-size:3.4rem;font-weight:600;color:var(--navy);">349<span style="font-size:1.7rem;">,99</span></span>\n            <span style="color:rgba(27,42,74,0.4);font-size:14px;font-family:\'Plus Jakarta Sans\',sans-serif;">PLN / año</span>\n            <div style="flex-basis:100%;font-size:16px;font-weight:600;color:rgba(27,42,74,0.55);font-family:\'Plus Jakarta Sans\',sans-serif;margin-top:5px;">≈ 81,60 € al año</div>',
-      '<span style="font-family:\'Playfair Display\',serif;font-size:3.4rem;font-weight:600;color:var(--navy);">349<span style="font-size:1.7rem;">,99</span></span>\n            <span style="color:rgba(27,42,74,0.4);font-size:14px;font-family:\'Plus Jakarta Sans\',sans-serif;">PLN / year</span>\n            <div style="flex-basis:100%;font-size:16px;font-weight:600;color:rgba(27,42,74,0.55);font-family:\'Plus Jakarta Sans\',sans-serif;margin-top:5px;">≈ 81,60 € per year</div>'
+      '<span style="font-family:\'Playfair Display\',serif;font-size:3.4rem;font-weight:600;color:var(--navy);">120</span>\n            <span style="color:rgba(27,42,74,0.4);font-size:14px;font-family:\'Plus Jakarta Sans\',sans-serif;">€ / año</span>\n            <div style="flex-basis:100%;font-size:16px;font-weight:600;color:rgba(27,42,74,0.55);font-family:\'Plus Jakarta Sans\',sans-serif;margin-top:5px;">Se cobra en PLN: 349,99 zł</div>',
+      '<span style="font-family:\'Playfair Display\',serif;font-size:3.4rem;font-weight:600;color:var(--navy);">120</span>\n            <span style="color:rgba(27,42,74,0.4);font-size:14px;font-family:\'Plus Jakarta Sans\',sans-serif;">€ / year</span>\n            <div style="flex-basis:100%;font-size:16px;font-weight:600;color:rgba(27,42,74,0.55);font-family:\'Plus Jakarta Sans\',sans-serif;margin-top:5px;">Charged in PLN: 349,99 zł</div>'
     ],
     'ed.priceMonthly': [
-      '<span style="font-family:\'Playfair Display\',serif;font-size:2rem;font-weight:600;color:var(--navy);">34<span style="font-size:1.1rem;">,99</span></span>\n            <span style="font-size:13px;color:rgba(27,42,74,.5);">PLN/mes</span>\n            <div style="flex-basis:100%;font-size:13.5px;font-weight:600;color:rgba(27,42,74,.55);margin-top:4px;">≈ 8,15 €</div>',
-      '<span style="font-family:\'Playfair Display\',serif;font-size:2rem;font-weight:600;color:var(--navy);">34<span style="font-size:1.1rem;">,99</span></span>\n            <span style="font-size:13px;color:rgba(27,42,74,.5);">PLN/month</span>\n            <div style="flex-basis:100%;font-size:13.5px;font-weight:600;color:rgba(27,42,74,.55);margin-top:4px;">≈ 8,15 €</div>'
+      '<span style="font-family:\'Playfair Display\',serif;font-size:2rem;font-weight:600;color:var(--navy);">12</span>\n            <span style="font-size:13px;color:rgba(27,42,74,.5);">€/mes</span>\n            <div style="flex-basis:100%;font-size:13.5px;font-weight:600;color:rgba(27,42,74,.55);margin-top:4px;">34,99 zł</div>',
+      '<span style="font-family:\'Playfair Display\',serif;font-size:2rem;font-weight:600;color:var(--navy);">12</span>\n            <span style="font-size:13px;color:rgba(27,42,74,.5);">€/month</span>\n            <div style="flex-basis:100%;font-size:13.5px;font-weight:600;color:rgba(27,42,74,.55);margin-top:4px;">34,99 zł</div>'
     ],
     'ed.priceYearly': [
-      '<span style="font-family:\'Playfair Display\',serif;font-size:2rem;font-weight:600;color:var(--navy);">349<span style="font-size:1.1rem;">,99</span></span>\n            <span style="font-size:13px;color:rgba(27,42,74,.5);">PLN/año</span>\n            <div style="flex-basis:100%;font-size:13.5px;font-weight:600;color:rgba(27,42,74,.55);margin-top:4px;">≈ 81,60 €</div>',
-      '<span style="font-family:\'Playfair Display\',serif;font-size:2rem;font-weight:600;color:var(--navy);">349<span style="font-size:1.1rem;">,99</span></span>\n            <span style="font-size:13px;color:rgba(27,42,74,.5);">PLN/year</span>\n            <div style="flex-basis:100%;font-size:13.5px;font-weight:600;color:rgba(27,42,74,.55);margin-top:4px;">≈ 81,60 €</div>'
+      '<span style="font-family:\'Playfair Display\',serif;font-size:2rem;font-weight:600;color:var(--navy);">120</span>\n            <span style="font-size:13px;color:rgba(27,42,74,.5);">€/año</span>\n            <div style="flex-basis:100%;font-size:13.5px;font-weight:600;color:rgba(27,42,74,.55);margin-top:4px;">349,99 zł</div>',
+      '<span style="font-family:\'Playfair Display\',serif;font-size:2rem;font-weight:600;color:var(--navy);">120</span>\n            <span style="font-size:13px;color:rgba(27,42,74,.5);">€/year</span>\n            <div style="flex-basis:100%;font-size:13.5px;font-weight:600;color:rgba(27,42,74,.55);margin-top:4px;">349,99 zł</div>'
     ],
     'ed.gatePrice': [
-      '34,99 PLN<span style="font-size:.8rem;font-weight:500;color:rgba(27,42,74,.5);">/mes</span><span style="display:block;font-size:.82rem;font-weight:600;color:rgba(27,42,74,.55);margin-top:3px;">≈ 8,15 €</span>',
-      '34,99 PLN<span style="font-size:.8rem;font-weight:500;color:rgba(27,42,74,.5);">/month</span><span style="display:block;font-size:.82rem;font-weight:600;color:rgba(27,42,74,.55);margin-top:3px;">≈ 8,15 €</span>'
+      '12 €<span style="font-size:.8rem;font-weight:500;color:rgba(27,42,74,.5);">/mes</span><span style="display:block;font-size:.82rem;font-weight:600;color:rgba(27,42,74,.55);margin-top:3px;">34,99 zł</span>',
+      '12 €<span style="font-size:.8rem;font-weight:500;color:rgba(27,42,74,.5);">/month</span><span style="display:block;font-size:.82rem;font-weight:600;color:rgba(27,42,74,.55);margin-top:3px;">34,99 zł</span>'
     ],
 
     'mock.price': [
-      'La suscripción cuesta <strong>34,99 PLN / mes</strong> (≈ 8,15 €) o <strong>349,99 PLN / año</strong> (≈ 81,60 €, 2 meses gratis). La primera carta la generas <strong>gratis</strong> en la prueba de 7 días. 🎁',
-      'The subscription is <strong>34,99 PLN / month</strong> (≈ 8,15 €) or <strong>349,99 PLN / year</strong> (≈ 81,60 €, 2 months free). Your first menu is <strong>free</strong> during the 7-day trial. 🎁'
+      'La suscripción cuesta <strong>12 € / mes</strong> o <strong>120 € / año</strong> (2 meses gratis), cobrados en PLN (34,99 zł / 349,99 zł). La primera carta la generas <strong>gratis</strong> en la prueba de 7 días. 🎁',
+      'The subscription is <strong>12 € / month</strong> or <strong>120 € / year</strong> (2 months free), charged in PLN (34,99 zł / 349,99 zł). Your first menu is <strong>free</strong> during the 7-day trial. 🎁'
     ],
 
     'ed.gateOrder': [
